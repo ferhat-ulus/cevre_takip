@@ -41,19 +41,14 @@ Route::middleware(['auth'])->group(function () {
     
     // EXCEL, RAPOR VE LOG SAYFALARI
     Route::get('/excel-aktar', [ExcelController::class, 'index'])->name('excel.index'); 
-    
-    // GÖRSEL RAPORLAR (Grafikli Sayfa)
     Route::get('/raporlar', [ReportController::class, 'index'])->name('reports.index'); 
-    
-    // RAPOR İNDİR (Sadece İndirme Butonları Sayfası)
     Route::get('/rapor-indir', function () {
         return Inertia::render('RaporIndir');
     })->name('rapor-indir'); 
-    
     Route::get('/islem-gecmisi', [LogController::class, 'index'])->name('logs.index');
 
     // SADECE ADMIN YETKİSİ GEREKTİREN SAYFALAR VE İŞLEMLER
-    Route::middleware(['can:admin'])->group(function () {
+    Route::middleware(['admin'])->group(function () { // BURASI 'admin' OLARAK DEĞİŞTİRİLDİ
         Route::get('/ayarlar', [SettingsController::class, 'index'])->name('settings.index');
         Route::get('/kullanicilar', [UserController::class, 'index'])->name('users.index');
         Route::get('/yedekler', [BackupController::class, 'index'])->name('backups.index');
@@ -91,7 +86,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/excel/destroy-all', [ExcelController::class, 'destroyAll']);
     Route::get('/api/download-backup/{filename}', [ExcelController::class, 'downloadBackup']);
 
-    // RAPOR İNDİRME API
     Route::get('/api/export-excel', [ExportController::class, 'exportExcel']);
     Route::get('/api/export-pdf', [ReportController::class, 'exportPdf']);
 });

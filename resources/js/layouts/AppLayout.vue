@@ -4,9 +4,13 @@ import { Link, usePage } from '@inertiajs/vue3';
 
 const isDark = ref(false);
 const page = usePage();
-const user = page.props.auth?.user || { name: 'Kullanıcı', role: 'Yönetici' };
+
+// Kullanıcı verisini al
+const user = computed(() => page.props.auth?.user || null);
+
 const currentUrl = computed(() => page.url);
-const isAdmin = computed(() => user.role === 'admin');
+// Admin kontrolü (Büyük/küçük harf duyarsız)
+const isAdmin = computed(() => user.value?.role?.toLowerCase() === 'admin');
 
 onMounted(() => {
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -56,13 +60,15 @@ const menuGroups = computed(() => {
         }
     ];
 
+    // Eğer admin ise Yönetim menüsünü ekle
     if (isAdmin.value) {
         groups.push({
             title: 'Yönetim',
             items: [
                 { name: 'Kullanıcı Yönetimi', href: '/kullanicilar', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-                { name: 'Sistem Logları', href: '/islem-gecmisi', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' }, // YENİ EKLENDİ
+                { name: 'Sistem Logları', href: '/islem-gecmisi', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
                 { name: 'Sistem Ayarları', href: '/ayarlar', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' }, 
+                { name: 'Yedekler', href: '/yedekler', icon: 'M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4' },
             ]
         });
     }
@@ -75,7 +81,6 @@ const menuGroups = computed(() => {
     <div class="min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] text-slate-600 dark:text-slate-200 flex transition-colors duration-300 font-sans text-sm">
         
         <aside class="w-64 bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-700 hidden lg:flex flex-col shadow-sm">
-            <!-- YENİ LOGO ALANI -->
             <div class="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-700/50 shrink-0">
                 <img src="/logo.png" alt="Logo" class="h-8 mr-3 object-contain">
                 <span class="text-lg font-bold text-slate-800 dark:text-white tracking-tight">
@@ -128,11 +133,11 @@ const menuGroups = computed(() => {
                     
                     <div class="flex items-center space-x-3 pl-4 border-l border-slate-200 dark:border-slate-700">
                         <div class="w-8 h-8 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-xs shadow-sm ring-2 ring-white dark:ring-slate-800">
-                            {{ user.name.charAt(0) }}
+                            {{ user?.name ? user.name.charAt(0) : 'U' }}
                         </div>
                         <div class="hidden md:block">
-                            <p class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ user.name }}</p>
-                            <p class="text-[10px] font-medium text-brand-700 dark:text-brand-400">{{ user.role === 'admin' ? 'Sistem Yöneticisi' : 'Danışman' }}</p>
+                            <p class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ user?.name || 'Kullanıcı' }}</p>
+                            <p class="text-[10px] font-medium text-brand-700 dark:text-brand-400">{{ isAdmin ? 'Sistem Yöneticisi' : 'Danışman' }}</p>
                         </div>
                     </div>
                 </div>

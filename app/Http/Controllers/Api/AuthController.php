@@ -18,7 +18,6 @@ class AuthController extends Controller
 
         $key = strtolower($request->username).'|'.$request->ip();
 
-        // 6 hatalı giriş sınırı (Rate Limiting)
         if (RateLimiter::tooManyAttempts($key, 6)) {
             return response()->json(['error' => 'Çok fazla hatalı deneme. 10 dakika sonra tekrar deneyin.'], 429);
         }
@@ -32,13 +31,13 @@ class AuthController extends Controller
             return response()->json([
                 'me' => [
                     'id' => $user->id, 'username' => $user->username, 'name' => $user->name,
-                    'email' => $user->email, 'role' => $user->role, 'active' => (bool) $user->active,
+                    'email' => $user->email, 'role' => strtolower($user->role), 'active' => (bool) $user->active,
                     'mustChange' => (bool) $user->must_change,
                 ],
             ]);
         }
 
-        RateLimiter::hit($key, 600); // 10 dakika kilitle
+        RateLimiter::hit($key, 600);
 
         return response()->json(['error' => 'Kullanıcı adı veya şifre hatalı'], 401);
     }
@@ -49,24 +48,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // DÜZELTME: JSON yerine Login sayfasına yönlendiriyoruz
         return redirect('/login');
-    }
-
-    public function me(Request $request)
-    {
-        $user = $request->user();
-        if (! $user) {
-            return response()->json(['me' => null]);
-        }
-
-        return response()->json([
-            'me' => [
-                'id' => $user->id, 'username' => $user->username, 'name' => $user->name,
-                'email' => $user->email, 'role' => $user->role, 'active' => (bool) $user->active,
-                'mustChange' => (bool) $user->must_change,
-            ],
-            'calToken' => $user->cal_token,
-        ]);
     }
 }

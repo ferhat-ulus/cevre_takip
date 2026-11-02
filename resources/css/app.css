@@ -20,18 +20,16 @@
     --color-brand-950: #052e16;
 }
 
-/* YUMUŞAK AÇIK TEMA (PAPER-LIKE) AYARLARI */
+/* YUMUŞAK AÇIK TEMA AYARLARI */
 html:not(.dark) body {
-    background-color: #f4f6f4; /* Çok hafif yeşilimsi gri arka plan */
-    color: #475569; /* slate-600 */
+    background-color: #f4f6f4; 
+    color: #475569; 
 }
 
-/* Kartların arka planını hafif kırık beyaz yap */
 html:not(.dark) .bg-white {
     background-color: #ffffff !important;
 }
 
-/* Saf siyah/koyu metinleri yumuşat */
 html:not(.dark) .text-slate-900 {
     color: #1e293b !important;
 }
@@ -39,7 +37,6 @@ html:not(.dark) .text-slate-800 {
     color: #334155 !important;
 }
 
-/* Buton ve bağlantı renklerini kurumsal yeşile çek */
 html:not(.dark) .bg-indigo-600 {
     background-color: var(--color-brand-600) !important;
 }

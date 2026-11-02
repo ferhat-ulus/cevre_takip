@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
-import tailwindcss from '@tailwindcss/vite'; // YENİ EKLENDİ
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
     plugins: [
@@ -17,6 +17,10 @@ export default defineConfig({
                 },
             },
         }),
-        tailwindcss(), // YENİ EKLENDİ
+        tailwindcss(),
     ],
+    build: {
+        // LightningCSS yerine Vite'ın kendi (esbuild) sıkıştırıcısını kullanıyoruz
+        cssMinify: 'esbuild', 
+    }
 });
