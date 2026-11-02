@@ -1,0 +1,57 @@
+@import 'tailwindcss';
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+    /* Kurumsal Font: Open Sans */
+    --font-sans: 'Open Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    
+    /* Kurumsal Renk Paleti (Yeşil Tonları) */
+    --color-brand-50: #f0fdf4;
+    --color-brand-100: #dcfce7;
+    --color-brand-200: #bbf7d0;
+    --color-brand-300: #86efac;
+    --color-brand-400: #4ade80;
+    --color-brand-500: #22c55e;
+    --color-brand-600: #16a34a;
+    --color-brand-700: #15803d;
+    --color-brand-800: #166534;
+    --color-brand-900: #14532d;
+    --color-brand-950: #052e16;
+}
+
+/* YUMUŞAK AÇIK TEMA (PAPER-LIKE) AYARLARI */
+html:not(.dark) body {
+    background-color: #f4f6f4; /* Çok hafif yeşilimsi gri arka plan */
+    color: #475569; /* slate-600 */
+}
+
+/* Kartların arka planını hafif kırık beyaz yap */
+html:not(.dark) .bg-white {
+    background-color: #ffffff !important;
+}
+
+/* Saf siyah/koyu metinleri yumuşat */
+html:not(.dark) .text-slate-900 {
+    color: #1e293b !important;
+}
+html:not(.dark) .text-slate-800 {
+    color: #334155 !important;
+}
+
+/* Buton ve bağlantı renklerini kurumsal yeşile çek */
+html:not(.dark) .bg-indigo-600 {
+    background-color: var(--color-brand-600) !important;
+}
+html:not(.dark) .hover\:bg-indigo-700:hover {
+    background-color: var(--color-brand-700) !important;
+}
+html:not(.dark) .text-indigo-600 {
+    color: var(--color-brand-600) !important;
+}
+html:not(.dark) .bg-indigo-50 {
+    background-color: var(--color-brand-50) !important;
+}
+html:not(.dark) .border-indigo-100 {
+    border-color: var(--color-brand-100) !important;
+}

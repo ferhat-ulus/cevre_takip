@@ -1,0 +1,447 @@
+<script setup>
+import { ref, computed } from 'vue';
+import { Head, usePage } from '@inertiajs/vue3';
+
+const props = defineProps({
+    users: Array,
+    isAdmin: Boolean
+});
+
+const page = usePage();
+const currentUser = page.props.auth?.user;
+
+// Modallar
+const showAddModal = ref(false);
+const showEditModal = ref(false);
+const showPasswordModal = ref(false);
+const showStatusModal = ref(false); // YENİ
+
+// Seçili Kullanıcı (Durum değişikliği için)
+const selectedUserForStatus = ref(null); // YENİ
+
+// Form Değişkenleri
+const form = ref({
+    id: null,
+    name: '',
+    username: '',
+    email: '',
+    role: 'employee',
+    password: '',
+    active: true,
+    new_password: ''
+});
+
+const isSaving = ref(false);
+const errorMsg = ref('');
+const successMsg = ref('');
+
+// Arama
+const search = ref('');
+const filteredUsers = computed(() => {
+    if (!search.value) return props.users;
+    const q = search.value.toLowerCase();
+    return props.users.filter(u => 
+        u.name.toLowerCase().includes(q) || 
+        u.username.toLowerCase().includes(q) || 
+        (u.email && u.email.toLowerCase().includes(q))
+    );
+});
+
+const openAddModal = () => {
+    form.value = { name: '', username: '', email: '', role: 'employee', password: '', active: true };
+    errorMsg.value = '';
+    successMsg.value = '';
+    showAddModal.value = true;
+};
+
+const openEditModal = (user) => {
+    form.value = { 
+        id: user.id, 
+        name: user.name, 
+        username: user.username, 
+        email: user.email || '', 
+        role: user.role, 
+        active: Boolean(user.active) 
+    };
+    errorMsg.value = '';
+    successMsg.value = '';
+    showEditModal.value = true;
+};
+
+const openPasswordModal = (user) => {
+    form.value = { id: user.id, name: user.name, new_password: '' };
+    errorMsg.value = '';
+    successMsg.value = '';
+    showPasswordModal.value = true;
+};
+
+// YENİ: Durum Değiştirme Modalını Açar
+const openStatusModal = (user) => {
+    if (user.id === currentUser.id) {
+        alert('Kendi hesabınızı pasife alamazsınız.');
+        return;
+    }
+    selectedUserForStatus.value = user;
+    showStatusModal.value = true;
+};
+
+// Yeni Kullanıcı Kaydet
+const saveUser = async () => {
+    if (!form.value.name || !form.value.username) {
+        errorMsg.value = 'Ad Soyad ve Kullanıcı Adı zorunludur.';
+        return;
+    }
+
+    isSaving.value = true;
+    errorMsg.value = '';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    try {
+        const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify(form.value)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showAddModal.value = false;
+            successMsg.value = `Kullanıcı başarıyla eklendi. Geçici Şifre: ${data.password}`;
+            setTimeout(() => window.location.reload(), 5000);
+        } else {
+            errorMsg.value = data.message || data.error || 'Kullanıcı eklenemedi.';
+        }
+    } catch (err) {
+        errorMsg.value = 'Sunucu hatası oluştu.';
+    } finally {
+        isSaving.value = false;
+    }
+};
+
+// Kullanıcı Güncelle
+const updateUser = async () => {
+    isSaving.value = true;
+    errorMsg.value = '';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    try {
+        const response = await fetch(`/api/users/${form.value.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({
+                email: form.value.email,
+                role: form.value.role,
+                active: form.value.active
+            })
+        });
+
+        if (response.ok) {
+            showEditModal.value = false;
+            window.location.reload();
+        } else {
+            const data = await response.json();
+            errorMsg.value = data.error || data.message || 'Güncellenemedi.';
+        }
+    } catch (err) {
+        errorMsg.value = 'Sunucu hatası oluştu.';
+    } finally {
+        isSaving.value = false;
+    }
+};
+
+// Şifre Sıfırla
+const resetPassword = async () => {
+    isSaving.value = true;
+    errorMsg.value = '';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    try {
+        const response = await fetch(`/api/users/${form.value.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({
+                resetPassword: true,
+                new_password: form.value.new_password
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showPasswordModal.value = false;
+            successMsg.value = `Şifre başarıyla sıfırlandı. Yeni Şifre: ${data.password}`;
+            setTimeout(() => window.location.reload(), 5000);
+        } else {
+            errorMsg.value = data.error || data.message || 'Şifre sıfırlanamadı.';
+        }
+    } catch (err) {
+        errorMsg.value = 'Sunucu hatası oluştu.';
+    } finally {
+        isSaving.value = false;
+    }
+};
+
+// YENİ: Durumu Onayla ve API'ye Gönder
+const confirmStatusChange = async () => {
+    if (!selectedUserForStatus.value) return;
+    
+    isSaving.value = true;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
+    try {
+        const response = await fetch(`/api/users/${selectedUserForStatus.value.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ active: !selectedUserForStatus.value.active })
+        });
+        
+        if (response.ok) {
+            showStatusModal.value = false;
+            window.location.reload();
+        } else {
+            const data = await response.json();
+            alert(data.error || 'Durum değiştirilemedi.');
+        }
+    } catch (err) { 
+        alert('Sunucu hatası.'); 
+    } finally {
+        isSaving.value = false;
+    }
+};
+</script>
+
+<template>
+    <Head title="Kullanıcı Yönetimi" />
+
+    <div class="max-w-7xl mx-auto space-y-4 pb-20">
+        
+        <!-- Başarı Mesajı -->
+        <div v-if="successMsg" class="fixed top-4 right-4 z-[100] bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl shadow-lg font-bold flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>{{ successMsg }}</span>
+        </div>
+
+        <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+            <div>
+                <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Kullanıcı Yönetimi</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs">Sistemdeki danışmanları ve yöneticileri yönetin.</p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                <div class="relative w-full sm:w-64">
+                    <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input v-model="search" type="text" placeholder="İsim veya kullanıcı adı ara..." class="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                </div>
+
+                <button @click="openAddModal" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition w-full sm:w-auto whitespace-nowrap">
+                    + Yeni Kullanıcı
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-semibold">
+                            <th class="px-4 py-3">Ad Soyad</th>
+                            <th class="px-4 py-3">Kullanıcı Adı</th>
+                            <th class="px-4 py-3">E-Posta</th>
+                            <th class="px-4 py-3">Rol</th>
+                            <th class="px-4 py-3 text-center">Durum</th>
+                            <th class="px-4 py-3 text-right">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                        <tr v-for="user in filteredUsers" :key="user.id" :class="['hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-xs', !user.active ? 'opacity-50 bg-slate-50 dark:bg-slate-800/20' : '']">
+                            <td class="px-4 py-3 font-bold text-slate-800 dark:text-slate-200">{{ user.name }}</td>
+                            <td class="px-4 py-3 text-slate-600 dark:text-slate-400 font-mono text-[11px]">{{ user.username }}</td>
+                            <td class="px-4 py-3 text-slate-600 dark:text-slate-400">{{ user.email || '-' }}</td>
+                            <td class="px-4 py-3">
+                                <span v-if="user.role === 'admin'" class="px-2 py-1 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Yönetici</span>
+                                <span v-else class="px-2 py-1 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Danışman</span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <span v-if="!user.active" class="px-2 py-1 rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Pasif (Arşiv)</span>
+                                <span v-else class="px-2 py-1 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Aktif</span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button @click="openPasswordModal(user)" class="text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 p-1.5 rounded-md transition-colors" title="Şifre Sıfırla">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                                    </button>
+                                    <button @click="openEditModal(user)" class="text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 p-1.5 rounded-md transition-colors" title="Düzenle">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                    <button @click="openStatusModal(user)" :disabled="user.id === currentUser.id" class="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 p-1.5 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed" :title="user.active ? 'Pasife Al (Arşivle)' : 'Aktifleştir'">
+                                        <svg v-if="user.active" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="filteredUsers.length === 0">
+                            <td colspan="6" class="px-4 py-8 text-center text-slate-500">Kullanıcı bulunamadı.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- YENİ KULLANICI MODALI -->
+        <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-700 text-sm">
+                <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">Yeni Kullanıcı Ekle</h3>
+                    <button @click="showAddModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div v-if="errorMsg" class="mb-4 p-3 bg-rose-50 text-rose-700 text-xs rounded-lg border border-rose-200">{{ errorMsg }}</div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Ad Soyad <span class="text-rose-500">*</span></label>
+                        <input type="text" v-model="form.name" placeholder="Örn: Ahmet Yılmaz" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Kullanıcı Adı <span class="text-rose-500">*</span></label>
+                        <input type="text" v-model="form.username" placeholder="Örn: ahmet.yilmaz" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm lowercase">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">E-Posta (Opsiyonel)</label>
+                        <input type="email" v-model="form.email" placeholder="ahmet@uluscevre.com" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Rol</label>
+                        <select v-model="form.role" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
+                            <option value="employee">Danışman</option>
+                            <option value="admin">Sistem Yöneticisi</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Şifre (Boş bırakılırsa otomatik atanır)</label>
+                        <input type="text" v-model="form.password" placeholder="En az 6 karakter" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button @click="showAddModal = false" class="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition">İptal</button>
+                    <button @click="saveUser" :disabled="isSaving" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50">
+                        {{ isSaving ? 'Ekleniyor...' : 'Kullanıcı Ekle' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KULLANICI DÜZENLEME MODALI -->
+        <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-700 text-sm">
+                <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">Kullanıcıyı Düzenle</h3>
+                    <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div v-if="errorMsg" class="mb-4 p-3 bg-rose-50 text-rose-700 text-xs rounded-lg border border-rose-200">{{ errorMsg }}</div>
+
+                <div class="space-y-4">
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg mb-4">
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ form.name }}</p>
+                        <p class="text-[10px] text-slate-500">{{ form.username }}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">E-Posta</label>
+                        <input type="email" v-model="form.email" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Rol</label>
+                        <select v-model="form.role" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm" :disabled="form.id === currentUser.id">
+                            <option value="employee">Danışman</option>
+                            <option value="admin">Sistem Yöneticisi</option>
+                        </select>
+                        <p v-if="form.id === currentUser.id" class="text-[10px] text-amber-600 mt-1">Kendi rolünüzü değiştiremezsiniz.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Durum</label>
+                        <select v-model="form.active" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm" :disabled="form.id === currentUser.id">
+                            <option :value="true">Aktif (Giriş Yapabilir)</option>
+                            <option :value="false">Pasif (Giriş Yapamaz)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button @click="showEditModal = false" class="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition">İptal</button>
+                    <button @click="updateUser" :disabled="isSaving" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50">
+                        {{ isSaving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ŞİFRE SIFIRLAMA MODALI -->
+        <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-700 text-sm">
+                <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">Şifre Sıfırla</h3>
+                    <button @click="showPasswordModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div v-if="errorMsg" class="mb-4 p-3 bg-rose-50 text-rose-700 text-xs rounded-lg border border-rose-200">{{ errorMsg }}</div>
+
+                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 rounded-lg mb-4">
+                    <p class="text-xs text-amber-800 dark:text-amber-400"><strong>{{ form.name }}</strong> kullanıcısının şifresi sıfırlanacak. Kullanıcı bir sonraki girişinde bu şifreyi kullanmak zorunda kalacaktır.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium mb-1 dark:text-slate-300">Yeni Şifre (Boş bırakılırsa otomatik atanır)</label>
+                    <input type="text" v-model="form.new_password" placeholder="En az 6 karakter" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
+                </div>
+
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button @click="showPasswordModal = false" class="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition">İptal</button>
+                    <button @click="resetPassword" :disabled="isSaving" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition disabled:opacity-50">
+                        {{ isSaving ? 'Sıfırlanıyor...' : 'Şifreyi Sıfırla' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- YENİ: DURUM DEĞİŞTİRME ONAY MODALI (Siyah uyarı yerine) -->
+        <div v-if="showStatusModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl p-6 w-full max-w-sm shadow-xl border border-slate-200 dark:border-slate-700 text-sm text-center">
+                
+                <div :class="['w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4', selectedUserForStatus?.active ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600']">
+                    <svg v-if="selectedUserForStatus?.active" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <svg v-else class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">
+                    {{ selectedUserForStatus?.active ? 'Kullanıcıyı Pasife Al' : 'Kullanıcıyı Aktifleştir' }}
+                </h3>
+                
+                <p class="text-slate-600 dark:text-slate-400 mb-6 text-xs">
+                    <strong>{{ selectedUserForStatus?.name }}</strong> adlı kullanıcının durumunu <strong>{{ selectedUserForStatus?.active ? 'Pasif (Arşiv)' : 'Aktif' }}</strong> olarak değiştirmek üzeresiniz. Bu işlem Sistem Loglarına kaydedilecektir.
+                </p>
+
+                <div class="flex space-x-2">
+                    <button @click="showStatusModal = false" class="flex-1 py-2.5 text-slate-600 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition font-medium">
+                        Vazgeç
+                    </button>
+                    <button @click="confirmStatusChange" :disabled="isSaving" :class="['flex-1 py-2.5 text-white rounded-lg transition font-medium disabled:opacity-50 flex items-center justify-center', selectedUserForStatus?.active ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700']">
+                        <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        {{ isSaving ? 'İşleniyor...' : 'Evet, Onayla' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</template>
