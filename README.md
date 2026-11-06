@@ -31,6 +31,7 @@ Projenin beyni `app/Services/ComplianceEngine.php` dosyasıdır.
 - Rotalarda `auth` (giriş yapmış olma) ve `admin` (Sistem Yöneticisi olma) korumaları vardır.
 - Admin koruması `app/Http/Middleware/EnsureUserIsAdmin.php` dosyasındadır ve rol kontrolü büyük/küçük harf duyarsız (`strtolower`) yapılır.
 - `app/Http/Middleware/HandleInertiaRequests.php` dosyası, kullanıcı oturumunu ve rollerini (her zaman küçük harf olarak) Vue tarafına aktarır.
+- Kullanıcı hesapları yönetici tarafından oluşturulur ve giriş kullanıcı adıyla yapılır. Genel kayıt, parola sıfırlama, e-posta doğrulama, iki aşamalı giriş ve passkey akışları henüz etkin değildir.
 - Yetkisiz erişimlerde 403 hatası yerine kullanıcı dostu yönlendirmeler ve "Toast" (kırmızı uyarı) mesajları gösterilir.
 
 ### 5. Rotalar (Routing)
@@ -38,7 +39,7 @@ Projenin beyni `app/Services/ComplianceEngine.php` dosyasıdır.
 - Inertia.js ile sayfa yönlendirmeleri (redirect) yapılırken dikkatli olunmalı, JSON dönen yerlerde `return response()->json()` kullanılmalıdır.
 
 ## 🚀 Tamamlanan Ana Modüller
-1. **Dashboard (Genel Bakış):** Gecikmiş, Kritik (14 Gün), Yaklaşan (30 Gün) işler. (Süreçteki işler Dashboard'da gösterilmez).
+1. **Dashboard (Genel Bakış):** Gecikmiş, Kritik (14 Gün), Yaklaşan (30 Gün) işler.
 2. **Tesisler (Firms):** Tesis ekleme, silme, arşivleme ve tesis detay sayfası. Tesis detayında mevzuat takibi (Tarih, Kapsam Dışı, Notlar) yapılır. Yetki kontrolü mevcuttur.
 3. **Ziyaret Takvimi:** FullCalendar kullanılarak yapıldı. Hafta sonu ve resmi tatil kontrolü vardır. Çift aşamalı silme onayı mevcuttur.
 4. **Kullanıcı Yönetimi:** Admin, danışmanları yönetebilir (pasife alma/loglama, şifre sıfırlama).

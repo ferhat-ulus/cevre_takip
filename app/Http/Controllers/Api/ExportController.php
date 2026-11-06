@@ -7,11 +7,11 @@ use Illuminate\Http\Request;
 use App\Models\Firm;
 use App\Models\Config;
 use App\Services\ComplianceEngine;
+use App\Services\FirmExcelTemplateMapper;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use Carbon\Carbon;
 use Throwable;
@@ -24,7 +24,8 @@ class ExportController extends Controller
             $user = $request->user();
             $consultantFilter = $request->input('consultant', 'all');
             $statusFilter = $request->input('status', 'all');
-            $useTemplate = filter_var($request->input('use_template'), FILTER_VALIDATE_BOOLEAN);
+            $templatePath = storage_path('app/templates/master_template.xlsx');
+            $useTemplate = filter_var($request->input('use_template', file_exists($templatePath)), FILTER_VALIDATE_BOOLEAN);
 
             $firmsRaw = Firm::all();
             $firms = [];
@@ -61,8 +62,6 @@ class ExportController extends Controller
                 return response()->json(['error' => 'Seçilen kriterlere uygun tesis bulunamadı.'], 400);
             }
 
-            $templatePath = storage_path('app/templates/master_template.xlsx');
-            
             if ($useTemplate && file_exists($templatePath)) {
                 $spreadsheet = IOFactory::load($templatePath);
                 $worksheet = $spreadsheet->getSheet(0);
@@ -78,7 +77,8 @@ class ExportController extends Controller
                 }
 
                 // 1. Şablondaki mevcut sütunları bul
-                $colMap = $this->findColumnMappings($worksheet, $headerRow);
+                $colMap = FirmExcelTemplateMapper::findColumnMappings($worksheet, $headerRow);
+                FirmExcelTemplateMapper::repairExternalDropdowns($spreadsheet, $worksheet);
                 
                 // 2. Sistemdeki tüm mevzuatları çek
                 $allObligations = ComplianceEngine::getAll();
@@ -88,6 +88,7 @@ class ExportController extends Controller
                 
                 foreach ($allObligations as $ob) {
                     $k = $ob['k'];
+                    if (($ob['kind'] ?? null) === 'linked_izin') continue;
                     // Eğer şablonda bu mevzuat için bir sütun bulunamadıysa
                     if (!isset($colMap['items'][$k]) || $colMap['items'][$k] === null) {
                         $lastColIndex++;
@@ -136,15 +137,28 @@ class ExportController extends Controller
                             $prevRow = $nextEmptyRow - 1;
                             if ($prevRow > $headerRow) {
                                 $worksheet->getRowDimension($nextEmptyRow)->setRowHeight($worksheet->getRowDimension($prevRow)->getRowHeight());
-                                // Tüm sütunlar için stil ve formülleri kopyala
-                                foreach (range('A', Coordinate::stringFromColumnIndex($lastColIndex)) as $colLetter) {
-                                    if ($worksheet->getCell("{$colLetter}{$prevRow}")->getStyle()) {
-                                        $worksheet->duplicateStyle($worksheet->getStyle("{$colLetter}{$prevRow}"), "{$colLetter}{$nextEmptyRow}");
+                                
+                                // Tüm sütunlar için stil, formül ve AÇILIR LİSTELERİ kopyala
+                                for ($i = 1; $i <= $lastColIndex; $i++) {
+                                    $colLetter = Coordinate::stringFromColumnIndex($i);
+                                    $prevCoordinate = "{$colLetter}{$prevRow}";
+                                    $newCoordinate = "{$colLetter}{$nextEmptyRow}";
+
+                                    // 1. Stili Kopyala
+                                    $worksheet->duplicateStyle($worksheet->getStyle($prevCoordinate), $newCoordinate);
+
+                                    // 2. Açılır Listeleri (Data Validation) Kopyala
+                                    $validation = clone $worksheet->getCell($prevCoordinate)->getDataValidation();
+                                    if ($validation->getType() !== \PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_NONE) {
+                                        $worksheet->getCell($newCoordinate)->setDataValidation($validation);
                                     }
-                                    $formula = $worksheet->getCell("{$colLetter}{$prevRow}")->getValue();
+
+                                    // 3. Formülleri Kopyala
+                                    $formula = $worksheet->getCell($prevCoordinate)->getValue();
                                     if (is_string($formula) && str_starts_with($formula, '=')) {
+                                        // Formül içindeki satır numaralarını yeni satıra göre güncelle
                                         $newFormula = preg_replace('/([A-Z]+)' . $prevRow . '/', '${1}' . $nextEmptyRow, $formula);
-                                        $worksheet->getCell("{$colLetter}{$nextEmptyRow}")->setValue($newFormula);
+                                        $worksheet->getCell($newCoordinate)->setValue($newFormula);
                                     }
                                 }
                             }
@@ -175,7 +189,7 @@ class ExportController extends Controller
         }
     }
 
-    private function writeFirmDataToRow($worksheet, $row, $firm, $colMap)
+        private function writeFirmDataToRow($worksheet, $row, $firm, $colMap)
     {
         if (isset($colMap['danisman'])) $worksheet->getCell("{$colMap['danisman']}{$row}")->setValue($firm['consultant'] ?? '');
         if (isset($colMap['sektor'])) $worksheet->getCell("{$colMap['sektor']}{$row}")->setValue($firm['sector'] ?? '');
@@ -185,28 +199,45 @@ class ExportController extends Controller
             if (!$col) continue;
             $item = $firm['items'][$k] ?? null;
             $cell = $worksheet->getCell("{$col}{$row}");
-            
-            $cell->setValueExplicit('', DataType::TYPE_STRING); 
 
-            if ($item && $item['s'] === 'tarih' && !empty($item['d'])) {
+            if (!$item || empty($item['s']) || $item['s'] === 'surec') {
+                $cell->setValue(null);
+                continue;
+            }
+
+            if ($item['s'] === 'tarih' && !empty($item['d'])) {
                 $cell->setValue(Date::PHPToExcel(Carbon::parse($item['d'])));
                 $cell->getStyle()->getNumberFormat()->setFormatCode('DD.MM.YYYY');
-            } elseif ($item && $item['s'] === 'muaf') {
-                if (!empty($item['d'])) {
-                    $cell->setValue(Date::PHPToExcel(Carbon::parse($item['d'])));
-                    $cell->getStyle()->getNumberFormat()->setFormatCode('DD.MM.YYYY');
-                } else {
-                    $cell->setValue('KD');
-                }
-            } elseif ($item && $item['s'] === 'surec') {
-                $cell->setValue('SÜREÇTE');
+            } elseif ($item['s'] === 'muaf') {
+                $defaultValue = match ($k) {
+                    'kapasite', 'izin', 'syd' => 'KAPSAMDIŞI',
+                    'tayp' => 'REVİR YOK',
+                    default => 'MUAF',
+                };
+                $cell->setValue($item['v'] ?? $defaultValue);
+            } elseif ($item['s'] === 'secim' && !empty($item['v'])) {
+                $cell->setValue($item['v']);
             }
         }
 
-        if (isset($colMap['cedKarari']) && !empty($firm['profile']['cedKarari'])) $worksheet->getCell("{$colMap['cedKarari']}{$row}")->setValue($firm['profile']['cedKarari']);
-        if (isset($colMap['cedTarihi']) && !empty($firm['profile']['cedTarihi'])) {
-            $worksheet->getCell("{$colMap['cedTarihi']}{$row}")->setValue(Date::PHPToExcel(Carbon::parse($firm['profile']['cedTarihi'])));
-            $worksheet->getCell("{$colMap['cedTarihi']}{$row}")->getStyle()->getNumberFormat()->setFormatCode('DD.MM.YYYY');
+        $cedKarari = $firm['profile']['cedKarari'] ?? null;
+        $cedTarihi = $firm['profile']['cedTarihi'] ?? null;
+        $clearLegacyCed = ComplianceEngine::isLegacyMissingValue(is_string($cedKarari) ? $cedKarari : null);
+        if ($clearLegacyCed) {
+            $cedKarari = null;
+            $cedTarihi = null;
+        }
+        if (isset($colMap['cedKarari'])) {
+            $worksheet->getCell("{$colMap['cedKarari']}{$row}")->setValue($cedKarari);
+        }
+        if (isset($colMap['cedTarihi'])) {
+            $dateCell = $worksheet->getCell("{$colMap['cedTarihi']}{$row}");
+            if ($clearLegacyCed) {
+                $dateCell->setValue(null);
+            } elseif (!empty($cedTarihi)) {
+                $dateCell->setValue(Date::PHPToExcel(Carbon::parse($cedTarihi)));
+                $dateCell->getStyle()->getNumberFormat()->setFormatCode('DD.MM.YYYY');
+            }
         }
         if (isset($colMap['izinKonusu']) && !empty($firm['profile']['izinKonusu'])) $worksheet->getCell("{$colMap['izinKonusu']}{$row}")->setValue($firm['profile']['izinKonusu']);
         if (isset($colMap['atiksuKurum']) && !empty($firm['profile']['atiksuKurum'])) $worksheet->getCell("{$colMap['atiksuKurum']}{$row}")->setValue($firm['profile']['atiksuKurum']);

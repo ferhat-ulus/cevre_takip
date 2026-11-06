@@ -74,7 +74,7 @@ class SendDigest extends Command
             // İstatistikleri hesapla
             $stats = ['overdue' => 0, 'crit' => 0, 'soon' => 0];
             foreach ($filteredTasks as $t) {
-                if ($t[2]['state'] === 'overdue') $stats['overdue']++;
+                if (in_array($t[2]['state'], ['missing', 'overdue'], true)) $stats['overdue']++;
                 if ($t[2]['state'] === 'crit') $stats['crit']++;
                 if ($t[2]['state'] === 'soon') $stats['soon']++;
             }

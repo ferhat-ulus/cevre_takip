@@ -26,7 +26,7 @@ class DigestMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Çevre Takip Özeti: ' . $this->stats['overdue'] . ' Gecikmiş, ' . $this->stats['crit'] . ' Kritik İş',
+            subject: 'Çevre Takip Özeti: ' . $this->stats['overdue'] . ' Gecikmiş',
         );
     }
 

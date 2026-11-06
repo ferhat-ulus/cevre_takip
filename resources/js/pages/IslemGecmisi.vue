@@ -31,7 +31,7 @@ const getActionBadge = (action) => {
 <template>
     <Head title="İşlem Geçmişi" />
 
-    <div class="max-w-7xl mx-auto space-y-6 pb-20">
+    <div class="w-full space-y-6 pb-20">
         <div class="flex justify-between items-end">
             <div>
                 <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Sistem İşlem Geçmişi</h1>

@@ -51,7 +51,7 @@ const deleteBackup = (filename) => {
 <template>
     <Head title="Yedek Yönetimi" />
 
-    <div class="max-w-7xl mx-auto space-y-6 pb-20">
+    <div class="w-full space-y-6 pb-20">
         
         <div class="flex justify-between items-end">
             <div>

@@ -14,7 +14,7 @@ class RegistrationTest extends TestCase
     {
         parent::setUp();
 
-        $this->skipUnlessFortifyHas(Features::registration());
+        $this->skipUnlessFortifyHas(Features::registration(), 'Public registration is not enabled in this application.');
     }
 
     public function test_registration_screen_can_be_rendered()

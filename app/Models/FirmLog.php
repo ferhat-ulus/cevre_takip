@@ -9,7 +9,16 @@ class FirmLog extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['firm_id', 'user_id', 'action', 'description'];
+    protected $fillable = [
+        'firm_id',
+        'user_id',
+        'action',
+        'description',
+        'from_consultant',
+        'to_consultant',
+        'reason',
+        'history_date',
+    ];
 
     public function user()
     {

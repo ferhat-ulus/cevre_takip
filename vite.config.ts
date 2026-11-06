@@ -19,8 +19,12 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
-    build: {
-        // LightningCSS yerine Vite'ın kendi (esbuild) sıkıştırıcısını kullanıyoruz
-        cssMinify: 'esbuild', 
-    }
+    server: {
+        host: '0.0.0.0', 
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: '192.168.1.50', // SİZİN IP ADRESİNİZ BURAYA EKLENDİ
+        },
+    },
 });

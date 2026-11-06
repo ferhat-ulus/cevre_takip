@@ -42,19 +42,19 @@ Route::middleware(['auth'])->group(function () {
     // EXCEL, RAPOR VE LOG SAYFALARI
     Route::get('/excel-aktar', [ExcelController::class, 'index'])->name('excel.index'); 
     Route::get('/raporlar', [ReportController::class, 'index'])->name('reports.index'); 
-    Route::get('/rapor-indir', function () {
-        return Inertia::render('RaporIndir');
-    })->name('rapor-indir'); 
+    Route::redirect('/rapor-indir', '/raporlar');
     Route::get('/islem-gecmisi', [LogController::class, 'index'])->name('logs.index');
 
     // SADECE ADMIN YETKİSİ GEREKTİREN SAYFALAR VE İŞLEMLER
     Route::middleware(['admin'])->group(function () { // BURASI 'admin' OLARAK DEĞİŞTİRİLDİ
         Route::get('/ayarlar', [SettingsController::class, 'index'])->name('settings.index');
         Route::get('/kullanicilar', [UserController::class, 'index'])->name('users.index');
+        Route::get('/danisman-takibi', [UserController::class, 'consultantOverview'])->name('consultants.overview');
         Route::get('/yedekler', [BackupController::class, 'index'])->name('backups.index');
         
         Route::post('/api/users', [UserController::class, 'store']);
         Route::put('/api/users/{id}', [UserController::class, 'update']);
+        Route::post('/api/users/{id}/consultant-handover', [UserController::class, 'handoverConsultant']);
         Route::post('/api/settings', [SettingsController::class, 'update']);
         Route::delete('/api/settings/obligation/{key}', [SettingsController::class, 'destroyObligation']);
         Route::post('/api/backups/run', [BackupController::class, 'run']);
@@ -74,7 +74,8 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/visit-events/{id}', [VisitController::class, 'destroy']);
 
     Route::post('/api/firms', [FirmController::class, 'store']);
-    Route::put('/api/firms/{id}', [FirmController::class, 'update']);
+        Route::put('/api/firms/{id}', [FirmController::class, 'update']);
+        Route::put('/api/firms/{id}/engagement', [FirmController::class, 'updateEngagement']);
     Route::delete('/api/firms/{id}', [FirmController::class, 'destroy']);
     Route::post('/api/firms/{id}/archive', [FirmController::class, 'archive']);
     Route::get('/api/firms/{id}/logs', [FirmController::class, 'getLogs']);
@@ -83,7 +84,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/excel/upload-template', [ExcelController::class, 'uploadTemplate']);
     Route::post('/api/excel/preview', [ExcelController::class, 'preview']);
     Route::post('/api/excel/import', [ExcelController::class, 'import']);
-    Route::post('/api/excel/destroy-all', [ExcelController::class, 'destroyAll']);
+    Route::match(['post', 'delete'], '/api/excel/destroy-all', [ExcelController::class, 'destroyAll']);
     Route::get('/api/download-backup/{filename}', [ExcelController::class, 'downloadBackup']);
 
     Route::get('/api/export-excel', [ExportController::class, 'exportExcel']);

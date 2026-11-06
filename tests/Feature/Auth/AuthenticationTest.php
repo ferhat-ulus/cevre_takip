@@ -19,37 +19,38 @@ class AuthenticationTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_users_can_authenticate_using_the_login_screen()
+    public function test_optional_fortify_flows_remain_disabled(): void
+    {
+        $this->assertFalse(Features::enabled(Features::registration()));
+        $this->assertFalse(Features::enabled(Features::resetPasswords()));
+        $this->assertFalse(Features::enabled(Features::emailVerification()));
+        $this->assertFalse(Features::enabled(Features::twoFactorAuthentication()));
+        $this->assertFalse(Features::enabled(Features::passkeys()));
+    }
+
+    public function test_users_can_authenticate_with_their_username()
     {
         $user = User::factory()->create();
 
-        $response = $this->post(route('login.store'), [
-            'email' => $user->email,
+        $response = $this->postJson('/api/login', [
+            'username' => $user->username,
             'password' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertOk()->assertJsonPath('me.username', $user->username);
+        $this->assertAuthenticatedAs($user);
     }
 
-    public function test_users_with_two_factor_enabled_are_redirected_to_two_factor_challenge()
+    public function test_inactive_users_cannot_authenticate()
     {
-        $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
+        $user = User::factory()->create(['active' => false]);
 
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-        ]);
-
-        $user = User::factory()->withTwoFactor()->create();
-
-        $response = $this->post(route('login'), [
-            'email' => $user->email,
+        $response = $this->postJson('/api/login', [
+            'username' => $user->username,
             'password' => 'password',
         ]);
 
-        $response->assertRedirect(route('two-factor.login'));
-        $response->assertSessionHas('login.id', $user->id);
+        $response->assertUnauthorized();
         $this->assertGuest();
     }
 
@@ -57,11 +58,12 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->post(route('login.store'), [
-            'email' => $user->email,
+        $response = $this->postJson('/api/login', [
+            'username' => $user->username,
             'password' => 'wrong-password',
         ]);
 
+        $response->assertUnauthorized();
         $this->assertGuest();
     }
 
@@ -69,9 +71,9 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post(route('logout'));
+        $response = $this->actingAs($user)->post('/logout');
 
-        $response->assertRedirect(route('home'));
+        $response->assertRedirect('/login');
 
         $this->assertGuest();
     }
@@ -80,10 +82,16 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        RateLimiter::increment(md5('login'.implode('|', [$user->email, '127.0.0.1'])), amount: 5);
+        $key = strtolower($user->username).'|127.0.0.1';
+        RateLimiter::hit($key, 600);
+        RateLimiter::hit($key, 600);
+        RateLimiter::hit($key, 600);
+        RateLimiter::hit($key, 600);
+        RateLimiter::hit($key, 600);
+        RateLimiter::hit($key, 600);
 
-        $response = $this->post(route('login.store'), [
-            'email' => $user->email,
+        $response = $this->postJson('/api/login', [
+            'username' => $user->username,
             'password' => 'wrong-password',
         ]);
 

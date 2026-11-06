@@ -1,16 +1,38 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     firm: Object,
     evaluations: Object,
     meta: Object,
-    canEdit: Boolean
+    canEdit: Boolean,
+    canManageEngagement: Boolean
 });
 
 const form = ref(JSON.parse(JSON.stringify(props.firm)));
+const engagement = ref({
+    contract_date: props.firm.contractDate || '',
+    started_at: props.firm.serviceStartedAt || '',
+    ended_at: props.firm.serviceEndedAt || '',
+});
 const isSaving = ref(false);
+const isSavingEngagement = ref(false);
+const engagementError = ref('');
+
+const goBack = () => {
+    const historyIndex = window.navigation?.currentEntry?.index;
+    const hasPreviousPage = typeof historyIndex === 'number'
+        ? historyIndex > 0
+        : window.history.length > 1;
+
+    if (hasPreviousPage) {
+        window.history.back();
+        return;
+    }
+
+    router.visit('/tesisler');
+};
 
 const groupedObligations = computed(() => {
     const groups = {};
@@ -22,6 +44,7 @@ const groupedObligations = computed(() => {
 });
 
 const getStatusColor = (state) => {
+    if (state === 'missing') return 'text-red-700 dark:text-red-300 font-bold';
     if (state === 'overdue') return 'text-rose-600 dark:text-rose-400';
     if (state === 'crit') return 'text-orange-600 dark:text-orange-400';
     if (state === 'soon') return 'text-amber-600 dark:text-amber-400';
@@ -35,6 +58,47 @@ const formatDate = (dateString) => {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString;
     return new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+};
+
+const formatDay = (value) => {
+    if (!value) return '—';
+    const [year, month, day] = String(value).slice(0, 10).split('-');
+    return day && month && year ? `${day}.${month}.${year}` : value;
+};
+
+const engagementPeriod = computed(() => {
+    const start = formatDay(props.firm.serviceStartedAt);
+    const end = props.firm.serviceEndedAt ? formatDay(props.firm.serviceEndedAt) : 'devam ediyor';
+    return `${start} — ${end}`;
+});
+
+const saveEngagement = async () => {
+    if (!props.canManageEngagement) return;
+    isSavingEngagement.value = true;
+    engagementError.value = '';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    try {
+        const response = await fetch(`/api/firms/${props.firm.id}/engagement`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({
+                contract_date: engagement.value.contract_date || null,
+                started_at: engagement.value.started_at || null,
+                ended_at: engagement.value.ended_at || null,
+            }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            engagementError.value = data.error || 'Çalışma dönemi kaydedilemedi.';
+            isSavingEngagement.value = false;
+        }
+    } catch (err) {
+        engagementError.value = 'Sunucuya bağlanılamadı.';
+        isSavingEngagement.value = false;
+    }
 };
 
 const save = async () => {
@@ -74,6 +138,7 @@ const save = async () => {
 
 const changeItemState = (key, state) => {
     form.value.items[key].s = state;
+    if (state !== 'secim') delete form.value.items[key].v;
     // Sadece 'Girilmedi' seçilirse tarihi sil. 'Kapsam Dışı' seçilirse tarihi koru.
     if (state === 'girilmedi') {
         form.value.items[key].d = null;
@@ -84,15 +149,15 @@ const changeItemState = (key, state) => {
 <template>
     <Head :title="firm.name + ' - Detay'" />
 
-    <div class="max-w-7xl mx-auto space-y-6 pb-20">
+    <div class="w-full space-y-6 pb-20">
         
         <!-- Üst Başlık ve Geri Dön -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-[#1e293b] p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 gap-4">
             
             <div class="flex items-start md:items-center space-x-3 w-full md:w-auto md:flex-1 min-w-0">
-                <Link href="/" class="p-2.5 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors shrink-0 text-slate-600 dark:text-slate-300 mt-1 md:mt-0">
+                <button type="button" @click="goBack" aria-label="Önceki sayfaya dön" title="Önceki sayfaya dön" class="p-2.5 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors shrink-0 text-slate-600 dark:text-slate-300 mt-1 md:mt-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                </Link>
+                </button>
                 
                 <div class="min-w-0 flex-1">
                     <h1 class="text-lg md:text-xl font-bold text-slate-900 dark:text-white tracking-tight line-clamp-2 leading-tight break-words">
@@ -102,6 +167,9 @@ const changeItemState = (key, state) => {
                         <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20">
                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                             {{ firm.consultant }}
+                        </span>
+                        <span v-if="firm.serviceEndedAt || firm.status === 'sonlandi' || firm.status === 'arsiv'" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600">
+                            Çalışma sonlandı
                         </span>
                         <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-700/50 dark:text-slate-300 dark:border-slate-600">
                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
@@ -121,6 +189,29 @@ const changeItemState = (key, state) => {
             
             <!-- SOL TARAF: Profil Bilgileri -->
             <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1 border-b pb-2 dark:border-slate-700">Çalışma dönemi</h3>
+                    <p class="mt-3 text-[11px] text-slate-500">Sözleşme {{ formatDay(firm.contractDate) }} · Aralık {{ engagementPeriod }}</p>
+                    <p v-if="!canManageEngagement" class="mt-2 text-[11px] text-slate-500">Tarihleri yalnızca yönetici değiştirebilir.</p>
+                    <div v-else class="mt-4 space-y-3 text-sm">
+                        <p v-if="engagementError" class="rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700">{{ engagementError }}</p>
+                        <div>
+                            <label class="mb-1 block text-xs font-medium dark:text-slate-400" for="contract-date">Sözleşme tarihi</label>
+                            <input id="contract-date" v-model="engagement.contract_date" type="date" class="w-full rounded-md border border-slate-300 bg-slate-50 p-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-medium dark:text-slate-400" for="service-start">Çalışmaya başlama</label>
+                            <input id="service-start" v-model="engagement.started_at" type="date" class="w-full rounded-md border border-slate-300 bg-slate-50 p-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-medium dark:text-slate-400" for="service-end">Çalışma bitişi</label>
+                            <input id="service-end" v-model="engagement.ended_at" type="date" class="w-full rounded-md border border-slate-300 bg-slate-50 p-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                        </div>
+                        <button type="button" @click="saveEngagement" :disabled="isSavingEngagement" class="w-full rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-900 disabled:opacity-50 dark:bg-slate-700 dark:hover:bg-slate-600">
+                            {{ isSavingEngagement ? 'Kaydediliyor...' : 'Dönemi kaydet' }}
+                        </button>
+                    </div>
+                </div>
                 <div class="bg-white dark:bg-[#1e293b] p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
                     <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 border-b pb-2 dark:border-slate-700">Tesis Profili</h3>
                     
@@ -201,6 +292,7 @@ const changeItemState = (key, state) => {
                                     <option value="">Girilmedi</option>
                                     <option value="tarih">Tarih</option>
                                     <option value="muaf">Kapsam Dışı</option>
+                                    <option v-if="form.items[obl.k]?.s === 'secim'" value="secim">{{ form.items[obl.k].v }}</option>
                                 </select>
 
                                 <!-- DÜZELTME: Kütle Denge dahil her şey için artık her zaman tam tarih (type="date") kullanılacak -->

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -9,6 +9,7 @@ const props = defineProps({
     firms: { type: Array, default: () => [] },
     consultants: { type: Array, default: () => [] },
     holidays: { type: Array, default: () => [] },
+    timezone: { type: String, default: 'Europe/Istanbul' },
     isAdmin: Boolean
 });
 
@@ -26,6 +27,8 @@ const showEventModal = ref(false);
 const selectedEvent = ref({ id: null, title: '', consultant: '', notes: '' });
 const isDeleting = ref(false);
 const showDeleteConfirm = ref(false); 
+const currentTime = ref(Date.now());
+let clockInterval;
 
 const selectedConsultant = ref('all');
 
@@ -35,6 +38,32 @@ const form = ref({
     title: 'Tesis Ziyareti',
     notes: '',
     user_id: ''
+});
+
+const getAppDateParts = (date = new Date()) => {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: props.timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        hourCycle: 'h23'
+    }).formatToParts(date);
+    return Object.fromEntries(parts.map(part => [part.type, part.value]));
+};
+const todayInAppTimezone = computed(() => {
+    const parts = getAppDateParts(new Date(currentTime.value));
+    return `${parts.year}-${parts.month}-${parts.day}`;
+});
+const tomorrowInAppTimezone = computed(() => {
+    const tomorrow = new Date(`${todayInAppTimezone.value}T12:00:00`);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+});
+const canDeleteSelectedVisit = computed(() => {
+    if (!selectedEvent.value.date || selectedEvent.value.date < todayInAppTimezone.value) return false;
+    if (selectedEvent.value.date > todayInAppTimezone.value) return true;
+    return Number(getAppDateParts(new Date(currentTime.value)).hour) < 16;
 });
 
 const showToast = ref(false);
@@ -95,6 +124,11 @@ watch(selectedConsultant, () => {
 });
 
 const handleDateClick = (arg) => {
+    if (arg.dateStr <= todayInAppTimezone.value) {
+        triggerToast('Ziyaret yalnızca yarın ve sonraki tarihler için planlanabilir.', 'error');
+        return;
+    }
+
     const dateObj = new Date(arg.dateStr);
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
     
@@ -112,9 +146,15 @@ const handleDateClick = (arg) => {
 };
 
 const openNewVisitModal = (dateStr = '') => {
+    const selectedDate = dateStr || tomorrowInAppTimezone.value;
+    if (selectedDate <= todayInAppTimezone.value) {
+        triggerToast('Ziyaret yalnızca yarın ve sonraki tarihler için planlanabilir.', 'error');
+        return;
+    }
+
     form.value = { 
         firm_id: '', 
-        visit_date: dateStr || new Date().toISOString().split('T')[0], 
+        visit_date: selectedDate,
         title: 'Tesis Ziyareti', 
         notes: '',
         user_id: props.isAdmin ? '' : user.id
@@ -128,17 +168,38 @@ const handleEventClick = (info) => {
         id: info.event.id,
         title: info.event.title,
         consultant: info.event.extendedProps.consultant,
-        notes: info.event.extendedProps.notes
+        notes: info.event.extendedProps.notes,
+        date: info.event.startStr.slice(0, 10)
     };
     showDeleteConfirm.value = false; 
     showEventModal.value = true;
 };
 
 const askDelete = () => {
+    if (!canDeleteSelectedVisit.value) {
+        triggerToast(
+            selectedEvent.value.date < todayInAppTimezone.value
+                ? 'Geçmiş tarihli ziyaretler silinemez.'
+                : 'Bugün tarihli ziyaretler saat 16.00’dan sonra silinemez.',
+            'error'
+        );
+        return;
+    }
     showDeleteConfirm.value = true;
 };
 
 const confirmDelete = async () => {
+    if (!canDeleteSelectedVisit.value) {
+        showDeleteConfirm.value = false;
+        triggerToast(
+            selectedEvent.value.date < todayInAppTimezone.value
+                ? 'Geçmiş tarihli ziyaretler silinemez.'
+                : 'Bugün tarihli ziyaretler saat 16.00’dan sonra silinemez.',
+            'error'
+        );
+        return;
+    }
+
     isDeleting.value = true;
     try {
         const response = await fetch(`/api/visits/${selectedEvent.value.id}`, {
@@ -170,6 +231,10 @@ const saveVisit = async () => {
     }
     if (!form.value.visit_date) {
         errorMsg.value = 'Lütfen bir tarih seçin.';
+        return;
+    }
+    if (form.value.visit_date <= todayInAppTimezone.value) {
+        errorMsg.value = 'Ziyaret yalnızca yarın ve sonraki tarihler için planlanabilir.';
         return;
     }
 
@@ -204,14 +269,22 @@ const saveVisit = async () => {
 };
 
 onMounted(() => {
+    currentTime.value = Date.now();
+    clockInterval = window.setInterval(() => {
+        currentTime.value = Date.now();
+    }, 30_000);
     fetchEvents();
+});
+
+onUnmounted(() => {
+    window.clearInterval(clockInterval);
 });
 </script>
 
 <template>
     <Head title="Ziyaret Takvimi" />
 
-    <div class="max-w-7xl mx-auto space-y-4 pb-20 relative">
+    <div class="w-full space-y-4 pb-20 relative">
         
         <div v-if="showToast" class="fixed top-4 right-4 z-[100] animate-fade-in-down">
             <div :class="['px-6 py-4 rounded-xl shadow-lg border text-sm font-bold flex items-center space-x-3', 
@@ -264,7 +337,7 @@ onMounted(() => {
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs font-medium mb-1 dark:text-slate-300">Tarih <span class="text-rose-500">*</span></label>
-                        <input type="date" v-model="form.visit_date" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
+                        <input type="date" v-model="form.visit_date" :min="tomorrowInAppTimezone" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
                     </div>
                     
                     <div>
@@ -333,9 +406,12 @@ onMounted(() => {
                     <!-- DURUM 1: İlk Ekran (Silme İsteği) -->
                     <div v-if="!showDeleteConfirm" class="text-center pt-2">
                         <p class="text-xs text-slate-500 mb-3">Bu ziyaretle ilgili işlem yapmak istiyor musunuz?</p>
-                        <button @click="askDelete" class="w-full py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 rounded-lg transition font-medium text-xs">
+                        <button v-if="canDeleteSelectedVisit" @click="askDelete" class="w-full py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 rounded-lg transition font-medium text-xs">
                             Ziyareti İptal Et / Sil
                         </button>
+                        <p v-else class="text-xs text-slate-500">
+                            {{ selectedEvent.date < todayInAppTimezone ? 'Geçmiş tarihli ziyaretler silinemez.' : 'Bugün tarihli ziyaretler saat 16.00’dan sonra silinemez.' }}
+                        </p>
                     </div>
 
                     <!-- DURUM 2: İkinci Ekran (Kesin Onay) -->
@@ -348,7 +424,7 @@ onMounted(() => {
                             <button @click="showDeleteConfirm = false" class="flex-1 py-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-lg transition text-xs font-medium">
                                 Vazgeç
                             </button>
-                            <button @click="confirmDelete" :disabled="isDeleting" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition disabled:opacity-50 text-xs font-medium flex items-center justify-center space-x-1">
+                            <button @click="confirmDelete" :disabled="isDeleting || !canDeleteSelectedVisit" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition disabled:opacity-50 text-xs font-medium flex items-center justify-center space-x-1">
                                 <svg v-if="isDeleting" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 <span>{{ isDeleting ? 'Siliniyor...' : 'Evet, Sil' }}</span>
                             </button>

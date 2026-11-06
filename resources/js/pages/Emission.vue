@@ -11,6 +11,7 @@ const props = defineProps({
 const search = ref('');
 const selectedConsultant = ref('all');
 const selectedState = ref('all'); 
+const overdueCount = computed(() => props.firms.filter(firm => ['missing', 'overdue'].includes(firm.overallState)).length);
 
 const currentPage = ref(1);
 const itemsPerPage = ref(20); 
@@ -21,7 +22,8 @@ const editNoteText = ref('');
 const filteredFirms = computed(() => {
     let result = props.firms;
     if (selectedConsultant.value !== 'all') result = result.filter(f => f.consultant === selectedConsultant.value);
-    if (selectedState.value !== 'all') result = result.filter(f => f.overallState === selectedState.value);
+    if (selectedState.value === 'overdue') result = result.filter(f => ['missing', 'overdue'].includes(f.overallState));
+    else if (selectedState.value !== 'all') result = result.filter(f => f.overallState === selectedState.value);
     if (search.value) {
         const q = search.value.toLowerCase();
         result = result.filter(f => f.name.toLowerCase().includes(q) || f.consultant.toLowerCase().includes(q) || f.sector.toLowerCase().includes(q));
@@ -52,16 +54,16 @@ const saveNote = async (firm) => {
 };
 
 const getStatusColor = (state) => {
+    if (state === 'missing') return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/40';
     if (state === 'overdue') return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
     if (state === 'crit') return 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20';
     if (state === 'soon') return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
-    if (state === 'surec') return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20';
     if (state === 'muaf') return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-700/50 dark:text-slate-400 dark:border-slate-600';
     if (state === 'ok') return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
     return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700/50 dark:text-gray-400 dark:border-gray-600';
 };
 const getStatusText = (state) => {
-    const map = { 'overdue': 'Gecikmiş', 'crit': 'Kritik', 'soon': 'Yaklaşan', 'ok': 'Güncel', 'surec': 'Süreçte', 'missing': 'Veri Yok', 'noperiod': 'Periyot Yok', 'muaf': 'Kapsam Dışı' };
+    const map = { 'overdue': 'Gecikmiş', 'crit': 'Kritik', 'soon': 'Yaklaşan', 'ok': 'Güncel', 'surec': 'Veri Yok', 'missing': 'Veri Yok', 'noperiod': 'Periyot Yok', 'muaf': 'Kapsam Dışı' };
     return map[state] || state;
 };
 const getDaysColor = (days, state) => {
@@ -77,16 +79,17 @@ const formatDate = (dateString) => {
     if (isNaN(date.getTime())) return dateString;
     return new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
 };
+const formatRecordedDate = (dateString) => dateString ? formatDate(dateString) : 'Tarih girilmemiş';
 </script>
 
 <template>
     <Head title="Emisyon Süreçleri" /> <!-- BAŞLIK EKLENDİ -->
 
-    <div class="max-w-7xl mx-auto space-y-4">
+    <div class="w-full space-y-4">
         <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
             <div>
                 <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Emisyon Süreçleri</h1>
-                <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs">Tesislerin emisyon ölçüm ve rapor durumları.</p>
+                <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs">İzne esas ve teyit ölçüm tarihleri ile ilgili raporlar ve sonraki teyit tarihi.</p>
             </div>
             <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
                 <div v-if="isAdmin" class="flex items-center w-full sm:w-auto bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-sm">
@@ -105,7 +108,7 @@ const formatDate = (dateString) => {
 
         <div class="flex flex-wrap gap-2">
             <button @click="selectedState = 'all'; resetPage()" :class="['px-4 py-2 rounded-lg text-sm font-semibold transition border', selectedState === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50 dark:bg-[#1e293b] dark:text-slate-300 dark:border-slate-700']">Tümü ({{ firms.length }})</button>
-            <button @click="selectedState = 'overdue'; resetPage()" :class="['px-4 py-2 rounded-lg text-sm font-semibold transition border', selectedState === 'overdue' ? 'bg-rose-600 text-white border-rose-600 shadow-md' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800']">🔴 Gecikmiş</button>
+            <button @click="selectedState = 'overdue'; resetPage()" :class="['px-4 py-2 rounded-lg text-sm font-semibold transition border', selectedState === 'overdue' ? 'bg-rose-600 text-white border-rose-600 shadow-md' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800']">🔴 Gecikmiş ({{ overdueCount }})</button>
             <button @click="selectedState = 'crit'; resetPage()" :class="['px-4 py-2 rounded-lg text-sm font-semibold transition border', selectedState === 'crit' ? 'bg-orange-500 text-white border-orange-500 shadow-md' : 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800']">🟠 Kritik</button>
             <button @click="selectedState = 'soon'; resetPage()" :class="['px-4 py-2 rounded-lg text-sm font-semibold transition border', selectedState === 'soon' ? 'bg-amber-500 text-white border-amber-500 shadow-md' : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800']">🟡 Yaklaşan</button>
         </div>
@@ -117,8 +120,8 @@ const formatDate = (dateString) => {
                         <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-semibold">
                             <th class="px-4 py-3">Tesis Adı</th>
                             <th class="px-4 py-3">Danışman</th>
-                            <th class="px-4 py-3">Emisyon Ölçümü</th>
-                            <th class="px-4 py-3">Emisyon Raporu</th>
+                            <th class="px-4 py-3">İzne Esas Ölçüm / Rapor</th>
+                            <th class="px-4 py-3">Teyit Ölçümü / Rapor</th>
                             <th class="px-4 py-3 w-64">Notlar</th>
                         </tr>
                     </thead>
@@ -130,24 +133,46 @@ const formatDate = (dateString) => {
                             </td>
                             <td class="px-4 py-3 text-slate-600 dark:text-slate-400 font-medium">{{ firm.consultant }}</td>
                             <td class="px-4 py-3">
-                                <div class="flex items-center space-x-2">
-                                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold border', getStatusColor(firm.emisyonOlcum.state)]">{{ getStatusText(firm.emisyonOlcum.state) }}</span>
-                                    <span v-if="firm.emisyonOlcum.due" class="text-[11px]">
-                                        {{ formatDate(firm.emisyonOlcum.due) }}
-                                        <span v-if="firm.emisyonOlcum.days !== null" :class="getDaysColor(firm.emisyonOlcum.days, firm.emisyonOlcum.state)">({{ firm.emisyonOlcum.days }} gün)</span>
-                                    </span>
+                                <div class="space-y-1">
+                                    <div><span class="text-[10px] text-slate-500 dark:text-slate-400">Ölçüm: </span><span :class="['text-[11px] font-semibold', firm.izneEsasEmisyonOlcumDate ? 'text-slate-700 dark:text-slate-300' : 'text-red-700 dark:text-red-300']">{{ formatRecordedDate(firm.izneEsasEmisyonOlcumDate) }}</span></div>
+                                    <div><span class="text-[10px] text-slate-500 dark:text-slate-400">Rapor: </span><span :class="['text-[11px] font-semibold', firm.emisyonRapor.recordedDate ? 'text-slate-700 dark:text-slate-300' : 'text-red-700 dark:text-red-300']">{{ formatRecordedDate(firm.emisyonRapor.recordedDate) }}</span></div>
                                 </div>
-                                <div v-if="firm.emisyonOlcum.label" class="text-[10px] text-slate-400 mt-1 truncate max-w-[200px]" :title="firm.emisyonOlcum.label">{{ firm.emisyonOlcum.label }}</div>
                             </td>
                             <td class="px-4 py-3">
-                                <div class="flex items-center space-x-2">
-                                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold border', getStatusColor(firm.emisyonRapor.state)]">{{ getStatusText(firm.emisyonRapor.state) }}</span>
-                                    <span v-if="firm.emisyonRapor.due" class="text-[11px]">
-                                        {{ formatDate(firm.emisyonRapor.due) }}
-                                        <span v-if="firm.emisyonRapor.days !== null" :class="getDaysColor(firm.emisyonRapor.days, firm.emisyonRapor.state)">({{ firm.emisyonRapor.days }} gün)</span>
-                                    </span>
+                                <div class="space-y-2">
+                                    <div>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ölçüm</span>
+                                            <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold border', getStatusColor(firm.emisyonOlcum.state)]">{{ getStatusText(firm.emisyonOlcum.state) }}</span>
+                                        </div>
+                                        <div class="mt-1">
+                                            <span class="text-[10px] text-slate-500 dark:text-slate-400">{{ firm.emisyonOlcum.isPermitBasis ? 'Başlangıç: ' : 'Tarih: ' }}</span>
+                                            <span :class="['text-[11px] font-semibold', firm.emisyonOlcum.recordedDate || firm.emisyonOlcum.basisDate ? 'text-slate-700 dark:text-slate-300' : 'text-red-700 dark:text-red-300']">
+                                                {{ formatRecordedDate(firm.emisyonOlcum.recordedDate || firm.emisyonOlcum.basisDate) }}
+                                            </span>
+                                        </div>
+                                        <div v-if="firm.emisyonOlcum.due" class="text-[11px] text-slate-600 dark:text-slate-300">
+                                            Sonraki: {{ formatDate(firm.emisyonOlcum.due) }}
+                                            <span v-if="firm.emisyonOlcum.days !== null" :class="getDaysColor(firm.emisyonOlcum.days, firm.emisyonOlcum.state)">({{ firm.emisyonOlcum.days }} gün)</span>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-slate-100 pt-2 dark:border-slate-700/60">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Rapor</span>
+                                            <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold border', getStatusColor(firm.emisyonTeyitRaporu.state)]">{{ getStatusText(firm.emisyonTeyitRaporu.state) }}</span>
+                                        </div>
+                                        <div class="mt-1">
+                                            <span class="text-[10px] text-slate-500 dark:text-slate-400">{{ firm.emisyonTeyitRaporu.isPermitBasis ? 'Başlangıç: ' : 'Tarih: ' }}</span>
+                                            <span :class="['text-[11px] font-semibold', firm.emisyonTeyitRaporu.recordedDate || firm.emisyonTeyitRaporu.basisDate ? 'text-slate-700 dark:text-slate-300' : 'text-red-700 dark:text-red-300']">
+                                                {{ formatRecordedDate(firm.emisyonTeyitRaporu.recordedDate || firm.emisyonTeyitRaporu.basisDate) }}
+                                            </span>
+                                        </div>
+                                        <div v-if="firm.emisyonTeyitRaporu.due" class="text-[11px] text-slate-600 dark:text-slate-300">
+                                            Sonraki: {{ formatDate(firm.emisyonTeyitRaporu.due) }}
+                                            <span v-if="firm.emisyonTeyitRaporu.days !== null" :class="getDaysColor(firm.emisyonTeyitRaporu.days, firm.emisyonTeyitRaporu.state)">({{ firm.emisyonTeyitRaporu.days }} gün)</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div v-if="firm.emisyonRapor.label" class="text-[10px] text-slate-400 mt-1 truncate max-w-[200px]" :title="firm.emisyonRapor.label">{{ firm.emisyonRapor.label }}</div>
                             </td>
                             <td class="px-4 py-3">
                                 <div v-if="editingNoteId === firm.id" class="flex flex-col space-y-1">

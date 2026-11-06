@@ -155,6 +155,12 @@
 
     <!-- Detaylı Liste -->
     <div class="section-title" style="page-break-before: auto;">3. Aksiyon Gerektiren İşler Listesi</div>
+    @if($detailedTaskCount > count($detailedTasks))
+        <p class="text-muted" style="font-size: 9px; margin: 0 0 8px 0;">
+            Rapor boyutunu yönetilebilir tutmak için en yüksek öncelikli {{ count($detailedTasks) }} kayıt gösteriliyor.
+            Toplam {{ $detailedTaskCount }} kayıt bulundu; tam listeyi Excel dışa aktarımından alabilirsiniz.
+        </p>
+    @endif
     <table class="data-table">
         <thead>
             <tr>
@@ -174,14 +180,20 @@
                 </td>
                 <td style="font-weight: bold; color: #334155;">{{ $task['topic'] }}</td>
                 <td>
-                    @if($task['state'] == 'overdue')
-                        <span class="badge badge-danger">Gecikmiş</span>
+                    @if(in_array($task['state'], ['missing', 'overdue'], true))
+                        <span class="badge badge-danger">{{ $task['state'] == 'missing' ? 'Veri Yok (Gecikmiş)' : 'Gecikmiş' }}</span>
                     @elseif($task['state'] == 'crit')
                         <span class="badge badge-warning">Kritik</span>
-                    @else
+                    @elseif($task['state'] == 'soon')
                         <span class="badge badge-soon">Yaklaşan</span>
+                    @else
+                        <span class="badge badge-warning">{{ $task['state_label'] }}</span>
                     @endif
-                    <div class="text-muted" style="font-size: 8px; margin-top: 3px; font-weight: bold;">({{ $task['days'] }} gün)</div>
+                    @if($task['days'] !== null)
+                        <div class="text-muted" style="font-size: 8px; margin-top: 3px; font-weight: bold;">({{ $task['days'] }} gün)</div>
+                    @elseif($task['state'] == 'missing')
+                        <div class="text-muted" style="font-size: 8px; margin-top: 3px; font-weight: bold;">Veri girilmemiş</div>
+                    @endif
                 </td>
                 <td class="text-muted" style="font-weight: bold;">{{ $task['due'] }}</td>
                 <td style="font-size: 8px; color: #64748b; font-style: italic;">

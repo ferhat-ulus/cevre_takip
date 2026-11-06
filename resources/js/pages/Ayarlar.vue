@@ -25,19 +25,24 @@ const newObForm = ref({
     k: '', n: '', g: 'Şirket Belgeleri', custom_g: '', p: 365, red: 30, amber: 60
 });
 
-// Statik mevzuatları bulmak için (Silme butonunu gizlemek için kullanacağız)
+// SİLİNEN ESKİ MEVZUATLAR ÇIKARILDI, YENİLER EKLENDİ
 const staticObligationKeys = [
-    'kapasite', 'police', 'izin', 'ilUygunluk', 'emisyonOlcum', 'emisyonRapor', 
+    'kapasite', 'police', 'izin', 'ilUygunluk', 'syd', 'izneEsasEmisyonOlcum', 'emisyonOlcum', 'emisyonRapor', 'emisyonTeyitRaporu',
     'atiksuIzleme', 'atiksuGorus', 'aracLisans', 'eayp', 'tayp', 'sifirAtik', 
     'madenAtik', 'kutleDenge', 'bekra', 'ekomvet', 'kstk', 'gekap', 
-    'yesilDonusum', 'suVerimlilik', 'icTetkik', 'egitim'
+    'moyden', 'icTetkik', 'egitim'
 ];
 
 props.obligations.forEach(ob => {
     if (!form.value.ob[ob.k]) form.value.ob[ob.k] = {};
-    if (form.value.ob[ob.k].p === undefined && ob.p !== null) form.value.ob[ob.k].p = ob.p;
+    if (form.value.ob[ob.k].p === undefined) form.value.ob[ob.k].p = ob.p;
     if (form.value.ob[ob.k].red === undefined) form.value.ob[ob.k].red = ob.red;
     if (form.value.ob[ob.k].amber === undefined) form.value.ob[ob.k].amber = ob.amber;
+    
+    // Esnek alanların (lead, pBy, ms) forma yüklenmesi
+    if (ob.lead !== undefined && form.value.ob[ob.k].lead === undefined) form.value.ob[ob.k].lead = ob.lead;
+    if (ob.pBy !== undefined && form.value.ob[ob.k].pBy === undefined) form.value.ob[ob.k].pBy = { ...ob.pBy };
+    if (ob.ms !== undefined && form.value.ob[ob.k].ms === undefined) form.value.ob[ob.k].ms = JSON.parse(JSON.stringify(ob.ms));
 });
 
 const saveSettings = async () => {
@@ -93,7 +98,6 @@ const addNewObligation = async () => {
     finally { isSaving.value = false; }
 };
 
-// YENİ: Mevzuat Silme
 const deleteObligation = async (key, name) => {
     if (!confirm(`"${name}" mevzuatını sistemden kalıcı olarak silmek istediğinize emin misiniz?\n\nNot: Bu işlem, bu mevzuata ait girilmiş tüm verileri de görünmez yapacaktır.`)) return;
 
@@ -113,11 +117,10 @@ const deleteObligation = async (key, name) => {
     } catch (err) { alert('Sunucu hatası.'); }
 };
 </script>
-
 <template>
     <Head title="Sistem Ayarları" />
 
-    <div class="max-w-7xl mx-auto space-y-6 pb-20">
+    <div class="w-full space-y-6 pb-20">
         
         <div class="flex justify-between items-end">
             <div>
@@ -178,18 +181,66 @@ const deleteObligation = async (key, name) => {
                             <th class="px-4 py-3 text-right">İşlem</th> <!-- SİL BUTONU İÇİN -->
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-xs">
-                        <tr v-for="ob in obligations" :key="ob.k" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
-                            <td class="px-4 py-2 font-bold text-slate-800 dark:text-slate-200">{{ ob.n }}</td>
-                            <td class="px-4 py-2 text-slate-500">{{ ob.g }}</td>
-                            <td class="px-4 py-2">
-                                <input v-if="ob.p !== null" type="number" v-model="form.ob[ob.k].p" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-1 dark:text-white text-xs">
-                                <span v-else class="text-slate-400 italic text-[10px]">Esnek</span>
+                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-xs">
+                        <tr v-for="ob in obligations" :key="ob.k" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 align-top">
+                            <!-- MEVZUAT ADI -->
+                            <td class="px-4 py-3 font-bold text-slate-800 dark:text-slate-200">
+                                {{ ob.n }}
                             </td>
-                            <td class="px-4 py-2"><input type="number" v-model="form.ob[ob.k].red" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-1 dark:text-white text-xs"></td>
-                            <td class="px-4 py-2"><input type="number" v-model="form.ob[ob.k].amber" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-1 dark:text-white text-xs"></td>
-                            <td class="px-4 py-2 text-right">
-                                <!-- Sadece özel mevzuatlar için silme butonu -->
+                            <!-- GRUP -->
+                            <td class="px-4 py-3 text-slate-500 align-top">
+                                {{ ob.g }}
+                            </td>
+                            
+                            <!-- PERİYOT SÜTUNU -->
+                            <td class="px-4 py-3 align-top w-32">
+                                <!-- 1. Standart Periyot -->
+                                <span v-if="ob.kind === 'once'" class="text-slate-400">Periyot yok</span>
+                                <input v-else-if="ob.k !== 'atiksuGorus' && ob.k !== 'ilUygunluk' && ob.k !== 'izin'"
+                                       type="number"
+                                       v-model="form.ob[ob.k].p"
+                                       class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 dark:text-white text-xs"
+                                       placeholder="Esnek">
+                                
+                                <!-- 2. İl Uygunluk -->
+                                <div v-if="ob.k === 'ilUygunluk'" class="space-y-1">
+                                    <label class="text-[10px] text-slate-500">Öncesi (Gün)</label>
+                                    <input type="number" v-model="form.ob[ob.k].lead" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 dark:text-white text-xs">
+                                </div>
+
+                                <!-- 3. İzin -->
+                                <div v-if="ob.k === 'izin' && form.ob[ob.k].ms" class="space-y-1">
+                                    <label class="text-[10px] text-slate-500">Başvuru Öncesi (Gün)</label>
+                                    <input type="number" v-model="form.ob[ob.k].ms[0].lead" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 dark:text-white text-xs">
+                                </div>
+
+                                <!-- 4. Atıksu Görüşü -->
+                                <div v-if="ob.k === 'atiksuGorus' && form.ob[ob.k]?.pBy" class="space-y-1.5">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[10px] w-8 shrink-0 text-slate-500">OSB</span>
+                                        <input type="number" v-model="form.ob[ob.k].pBy.OSB" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 dark:text-white text-xs">
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[10px] w-8 shrink-0 text-slate-500">Kanal</span>
+                                        <input type="number" v-model="form.ob[ob.k].pBy['KANALİZASYON İDARESİ']" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 dark:text-white text-xs">
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- KIRMIZI EŞİK -->
+                            <td class="px-4 py-3 align-top w-24">
+                                <span v-if="ob.kind === 'once'" class="text-slate-400">—</span>
+                                <input v-else type="number" v-model="form.ob[ob.k].red" placeholder="30" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 dark:text-white text-xs">
+                            </td>
+
+                            <!-- SARI EŞİK -->
+                            <td class="px-4 py-3 align-top w-24">
+                                <span v-if="ob.kind === 'once'" class="text-slate-400">—</span>
+                                <input v-else type="number" v-model="form.ob[ob.k].amber" placeholder="60" class="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1.5 dark:text-white text-xs">
+                            </td>
+
+                            <!-- İŞLEM (SİL) -->
+                            <td class="px-4 py-3 text-right align-top w-16">
                                 <button v-if="!staticObligationKeys.includes(ob.k)" @click="deleteObligation(ob.k, ob.n)" class="text-rose-600 hover:bg-rose-50 p-1.5 rounded transition" title="Sil">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>

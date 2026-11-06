@@ -56,7 +56,7 @@
                                 <span style="color: #64748b; font-size: 11px;">{{ \App\Services\ComplianceEngine::obl($k)['n'] }}</span>
                             </td>
                             <td>
-                                <span class="badge {{ $e['state'] == 'overdue' ? 'badge-danger' : ($e['state'] == 'crit' ? 'badge-warning' : 'badge-soon') }}">
+                                <span class="badge {{ in_array($e['state'], ['missing', 'overdue'], true) ? 'badge-danger' : ($e['state'] == 'crit' ? 'badge-warning' : 'badge-soon') }}">
                                     {{ \App\Services\ComplianceEngine::STATE_L[$e['state']] }}
                                 </span>
                             </td>

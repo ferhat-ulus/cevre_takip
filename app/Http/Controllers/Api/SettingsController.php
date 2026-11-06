@@ -55,6 +55,7 @@ class SettingsController extends Controller
         }
 
         Config::updateOrCreate(['k' => 'main'], ['v' => $cfg]);
+        ComplianceEngine::clearObligationsCache();
 
         if (isset($data['new_obligation'])) {
             $newOb = $data['new_obligation'];
@@ -128,6 +129,7 @@ class SettingsController extends Controller
         }
 
         Config::updateOrCreate(['k' => 'custom_obligations'], ['v' => $newList]);
+        ComplianceEngine::clearObligationsCache();
 
         ActivityLog::create([
             'user_id' => $request->user()->id,

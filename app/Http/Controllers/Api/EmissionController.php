@@ -37,14 +37,35 @@ class EmissionController extends Controller
 
         foreach ($firmsRaw as $firm) {
             $firmData = $firm->data;
+            if (ComplianceEngine::isEngagementClosed($firmData)) {
+                continue;
+            }
             $firmData['id'] = $firm->id;
             
             $ev = ComplianceEngine::evaluateFirm($firmData, $today, $cfg);
             
             $emisyonOlcum = $ev['emisyonOlcum'] ?? [];
             $emisyonRapor = $ev['emisyonRapor'] ?? [];
+            $emisyonTeyitRaporu = $ev['emisyonTeyitRaporu'] ?? [];
+            $items = $firmData['items'] ?? [];
+            $permitMeasurementDate = ($items['izneEsasEmisyonOlcum']['s'] ?? null) === 'tarih'
+                ? ($items['izneEsasEmisyonOlcum']['d'] ?? null)
+                : null;
+            $confirmationDate = ($items['emisyonOlcum']['s'] ?? null) === 'tarih'
+                ? ($items['emisyonOlcum']['d'] ?? null)
+                : null;
+            $reportDate = ($items['emisyonRapor']['s'] ?? null) === 'tarih'
+                ? ($items['emisyonRapor']['d'] ?? null)
+                : null;
+            $confirmationReportDate = ($items['emisyonTeyitRaporu']['s'] ?? null) === 'tarih'
+                ? ($items['emisyonTeyitRaporu']['d'] ?? null)
+                : null;
 
-            $states = [$emisyonOlcum['state'] ?? 'ok', $emisyonRapor['state'] ?? 'ok'];
+            $states = [
+                $emisyonOlcum['state'] ?? 'missing',
+                $emisyonRapor['state'] ?? 'missing',
+                $emisyonTeyitRaporu['state'] ?? 'missing',
+            ];
             $worstState = 'ok';
             $ranks = ComplianceEngine::RANK;
             
@@ -53,6 +74,9 @@ class EmissionController extends Controller
                     $worstState = $s;
                 }
             }
+            if ($worstState === 'missing') {
+                $worstState = 'overdue';
+            }
 
             $data[] = [
                 'id' => $firm->id,
@@ -60,8 +84,18 @@ class EmissionController extends Controller
                 'consultant' => $firmData['consultant'] ?? 'Atanmamış',
                 'sector' => $firmData['sector'] ?? '-',
                 'note' => $firmData['note'] ?? '',
-                'emisyonOlcum' => $emisyonOlcum,
-                'emisyonRapor' => $emisyonRapor,
+                'izneEsasEmisyonOlcumDate' => $permitMeasurementDate,
+                'emisyonOlcum' => array_merge($emisyonOlcum, [
+                    'recordedDate' => $confirmationDate,
+                    'basisDate' => $emisyonOlcum['basisDate'] ?? $permitMeasurementDate,
+                    'isPermitBasis' => !$confirmationDate && !empty($emisyonOlcum['basisDate']),
+                ]),
+                'emisyonRapor' => array_merge($emisyonRapor, ['recordedDate' => $reportDate]),
+                'emisyonTeyitRaporu' => array_merge($emisyonTeyitRaporu, [
+                    'recordedDate' => $confirmationReportDate,
+                    'basisDate' => $emisyonTeyitRaporu['basisDate'] ?? $reportDate,
+                    'isPermitBasis' => !$confirmationReportDate && !empty($emisyonTeyitRaporu['basisDate']),
+                ]),
                 'overallState' => $worstState
             ];
         }

@@ -13,6 +13,8 @@ use Inertia\Inertia;
 
 class VisitController extends Controller
 {
+    private const BUSINESS_TIMEZONE = 'Europe/Istanbul';
+
     public const HOLIDAYS = [
         '2024-01-01', '2024-04-09', '2024-04-10', '2024-04-11', '2024-05-01', '2024-05-19', '2024-06-15', '2024-06-16', '2024-06-17', '2024-06-18', '2024-06-19', '2024-07-15', '2024-08-30', '2024-10-29',
         '2025-01-01', '2025-03-30', '2025-03-31', '2025-04-01', '2025-05-01', '2025-05-19', '2025-06-06', '2025-06-07', '2025-06-08', '2025-06-09', '2025-07-15', '2025-08-30', '2025-10-29',
@@ -52,7 +54,8 @@ class VisitController extends Controller
             'firms' => $firms,
             'consultants' => $consultants,
             'holidays' => self::HOLIDAYS,
-            'isAdmin' => $user->role === 'admin'
+            'isAdmin' => $user->role === 'admin',
+            'timezone' => self::BUSINESS_TIMEZONE,
         ]);
     }
 
@@ -100,13 +103,18 @@ class VisitController extends Controller
     {
         $request->validate([
             'firm_id' => 'required|exists:firms,id',
-            'visit_date' => 'required|date',
+            'visit_date' => 'required|date_format:Y-m-d',
             'title' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id' // ID kontrolü
         ]);
 
         $user = $request->user();
+        $today = Carbon::now(self::BUSINESS_TIMEZONE)->toDateString();
+        if ($request->visit_date <= $today) {
+            return response()->json(['error' => 'Ziyaret yalnızca yarın ve sonraki tarihler için planlanabilir.'], 422);
+        }
+
         $firm = Firm::findOrFail($request->firm_id);
         $firmData = is_array($firm->data) ? $firm->data : json_decode($firm->data, true);
         
@@ -160,6 +168,17 @@ class VisitController extends Controller
 
         if ($user->role !== 'admin' && $visit->user_id !== $user->id) {
             return response()->json(['error' => 'Bu ziyareti silme yetkiniz yok.'], 403);
+        }
+
+        $visitDate = Carbon::parse($visit->visit_date)->toDateString();
+        $today = Carbon::now(self::BUSINESS_TIMEZONE)->toDateString();
+
+        if ($visitDate < $today) {
+            return response()->json(['error' => 'Geçmiş tarihli ziyaretler silinemez.'], 422);
+        }
+
+        if ($visitDate === $today && Carbon::now(self::BUSINESS_TIMEZONE)->hour >= 16) {
+            return response()->json(['error' => 'Bugün tarihli ziyaretler saat 16.00’dan sonra silinemez.'], 422);
         }
 
         $visit->delete();

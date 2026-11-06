@@ -33,13 +33,16 @@ class FirmController extends Controller
                 'name' => $firm->data['name'] ?? 'İsimsiz Tesis',
                 'consultant' => $firm->data['consultant'] ?? 'Atanmamış',
                 'sector' => $firm->data['sector'] ?? '',
-                'status' => $firm->data['status'] ?? 'aktif'
+                'status' => $firm->data['status'] ?? 'aktif',
+                'contractDate' => $firm->data['contractDate'] ?? null,
+                'serviceStartedAt' => $firm->data['serviceStartedAt'] ?? null,
+                'serviceEndedAt' => $firm->data['serviceEndedAt'] ?? null,
             ];
         }
 
         usort($firms, fn($a, $b) => strcasecmp($a['name'], $b['name']));
 
-        $consultants = User::where('role', 'employee')->pluck('name');
+        $consultants = User::where('role', 'employee')->where('active', true)->pluck('name');
 
         return Inertia::render('Tesisler', [
             'firms' => $firms,
@@ -100,6 +103,12 @@ class FirmController extends Controller
             if (!isset($firmData['items'][$k])) {
                 $firmData['items'][$k] = [];
             }
+            if (($firmData['items'][$k]['s'] ?? null) === 'surec') {
+                $firmData['items'][$k]['s'] = null;
+                $firmData['items'][$k]['d'] = null;
+                $firmData['items'][$k]['note'] = null;
+                unset($firmData['items'][$k]['v']);
+            }
             $firmData['items'][$k]['s'] = $firmData['items'][$k]['s'] ?? null;
             $firmData['items'][$k]['d'] = $firmData['items'][$k]['d'] ?? null;
             $firmData['items'][$k]['note'] = $firmData['items'][$k]['note'] ?? null;
@@ -108,8 +117,16 @@ class FirmController extends Controller
         if (!isset($firmData['profile'])) $firmData['profile'] = [];
         $firmData['profile']['cedKarari'] = $firmData['profile']['cedKarari'] ?? '';
         $firmData['profile']['cedTarihi'] = $firmData['profile']['cedTarihi'] ?? null;
+        if (is_string($firmData['profile']['cedKarari'])
+            && ComplianceEngine::isLegacyMissingValue($firmData['profile']['cedKarari'])) {
+            $firmData['profile']['cedKarari'] = '';
+            $firmData['profile']['cedTarihi'] = null;
+        }
         $firmData['profile']['atiksuKurum'] = $firmData['profile']['atiksuKurum'] ?? '';
         $firmData['profile']['izinKonusu'] = $firmData['profile']['izinKonusu'] ?? '';
+        $firmData['contractDate'] = $firmData['contractDate'] ?? null;
+        $firmData['serviceStartedAt'] = $firmData['serviceStartedAt'] ?? null;
+        $firmData['serviceEndedAt'] = $firmData['serviceEndedAt'] ?? null;
 
         $today = Carbon::today();
         $cfgRow = Config::find('main');
@@ -124,7 +141,8 @@ class FirmController extends Controller
                 'obligations' => ComplianceEngine::getAll(),
                 'stateL' => ComplianceEngine::STATE_L,
             ],
-            'canEdit' => $user->role === 'admin' || ($firmData['consultant'] ?? '') === $user->name
+            'canEdit' => $user->role === 'admin' || ($firmData['consultant'] ?? '') === $user->name,
+            'canManageEngagement' => $user->role === 'admin',
         ]);
     }
 
@@ -151,7 +169,9 @@ class FirmController extends Controller
                 'firm_id' => $firm->id,
                 'user_id' => $user->id,
                 'action' => 'consultant_changed',
-                'description' => "Danışman değiştirildi: '{$oldConsultant}' yerine '{$newConsultant}' atandı."
+                'description' => "Danışman değiştirildi: '{$oldConsultant}' yerine '{$newConsultant}' atandı.",
+                'from_consultant' => $oldConsultant,
+                'to_consultant' => $newConsultant,
             ]);
             
             $data['consultant'] = mb_strtoupper(trim($patch['consultant']), 'UTF-8');
@@ -180,6 +200,51 @@ class FirmController extends Controller
         $firm->save();
 
         return response()->json(['ok' => true]);
+    }
+
+    public function updateEngagement(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['error' => 'Çalışma tarihlerini yalnızca yönetici değiştirebilir.'], 403);
+        }
+
+        $validated = $request->validate([
+            'contract_date' => ['nullable', 'date_format:Y-m-d'],
+            'started_at' => ['nullable', 'date_format:Y-m-d'],
+            'ended_at' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        $startedAt = $validated['started_at'] ?? null;
+        $endedAt = $validated['ended_at'] ?? null;
+        if ($startedAt && $endedAt && $endedAt < $startedAt) {
+            return response()->json(['error' => 'Çalışma bitişi, çalışmaya başlama tarihinden önce olamaz.'], 422);
+        }
+
+        $firm = Firm::findOrFail($id);
+        $data = $firm->data;
+        $previousEnd = $data['serviceEndedAt'] ?? null;
+        $data['contractDate'] = $validated['contract_date'] ?? null;
+        $data['serviceStartedAt'] = $startedAt;
+        $data['serviceEndedAt'] = $endedAt;
+        $data['status'] = $endedAt ? 'sonlandi' : 'aktif';
+        $data['updatedAt'] = now()->toDateTimeString();
+        $data['updatedBy'] = $request->user()->name;
+        $firm->data = $data;
+        $firm->save();
+
+        $period = ($startedAt ? Carbon::parse($startedAt)->format('d.m.Y') : 'başlangıç belirtilmedi')
+            . ' - '
+            . ($endedAt ? Carbon::parse($endedAt)->format('d.m.Y') : 'devam ediyor');
+        FirmLog::create([
+            'firm_id' => $firm->id,
+            'user_id' => $request->user()->id,
+            'action' => $endedAt && !$previousEnd ? 'engagement_ended' : 'engagement_updated',
+            'description' => $endedAt && !$previousEnd
+                ? "Çalışma sonlandırıldı. Dönem: {$period}."
+                : "Çalışma dönemi güncellendi. Dönem: {$period}.",
+        ]);
+
+        return response()->json(['ok' => true, 'status' => $data['status']]);
     }
 
     public function archive(Request $request, $id)

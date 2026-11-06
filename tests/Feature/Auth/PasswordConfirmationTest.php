@@ -11,6 +11,13 @@ class PasswordConfirmationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->skipUnlessRouteExists('password.confirm', 'Password confirmation routes are not registered by this application.');
+    }
+
     public function test_confirm_password_screen_can_be_rendered()
     {
         $user = User::factory()->create();

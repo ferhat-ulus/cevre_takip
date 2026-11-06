@@ -17,7 +17,7 @@ class PasswordResetTest extends TestCase
     {
         parent::setUp();
 
-        $this->skipUnlessFortifyHas(Features::resetPasswords());
+        $this->skipUnlessFortifyHas(Features::resetPasswords(), 'Password reset is not enabled in this application.');
     }
 
     public function test_reset_password_link_screen_can_be_rendered()

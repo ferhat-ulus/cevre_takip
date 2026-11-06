@@ -10,6 +10,13 @@ class ProfileUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->skipUnlessRouteExists('profile.edit', 'Profile settings routes are not registered by this application.');
+    }
+
     public function test_profile_page_is_displayed()
     {
         $user = User::factory()->create();

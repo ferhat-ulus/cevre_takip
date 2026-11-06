@@ -37,6 +37,9 @@ class LicenseController extends Controller
 
         foreach ($firmsRaw as $firm) {
             $firmData = $firm->data;
+            if (ComplianceEngine::isEngagementClosed($firmData)) {
+                continue;
+            }
             $firmData['id'] = $firm->id;
             
             $ev = ComplianceEngine::evaluateFirm($firmData, $today, $cfg);

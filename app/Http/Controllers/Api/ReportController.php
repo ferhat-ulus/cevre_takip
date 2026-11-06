@@ -14,7 +14,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
-    private function getReportData($user, $consultantFilter = 'all')
+    private const PDF_DETAIL_LIMIT = 300;
+
+    private function getReportData($user, $consultantFilter = 'all', $includeDetailedTasks = false)
     {
         $today = Carbon::today();
         $cfgRow = Config::find('main');
@@ -31,85 +33,130 @@ class ReportController extends Controller
             $query->where('data->consultant', $consultantFilter);
         }
         
-        $firmsRaw = $query->get();
-
-        $firms = [];
-        $evs = [];
-        $stats = ['overdue' => 0, 'crit' => 0, 'soon' => 0, 'ok' => 0];
+        $stats = ['overdue' => 0, 'crit' => 0, 'soon' => 0, 'ok' => 0, 'missing' => 0];
         $consultantStats = [];
+        $detailedTasks = [];
+        $detailedTaskCount = 0;
+        $detailedTasksSorted = false;
+        $riskyFirms = [];
+        $workItems = [];
 
-        foreach ($firmsRaw as $firm) {
+        foreach ($query->lazyById(100, 'id') as $firm) {
             $firmData = $firm->data;
+            if (ComplianceEngine::isEngagementClosed($firmData)) {
+                continue;
+            }
             $firmData['id'] = $firm->id;
             $consultant = $firmData['consultant'] ?? 'Atanmamış';
             
             if (!isset($consultantStats[$consultant])) {
-                $consultantStats[$consultant] = ['overdue' => 0, 'crit' => 0, 'soon' => 0, 'ok' => 0];
+                $consultantStats[$consultant] = ['overdue' => 0, 'crit' => 0, 'soon' => 0, 'ok' => 0, 'missing' => 0];
             }
 
             $ev = ComplianceEngine::evaluateFirm($firmData, $today, $cfg);
-            $firms[] = $firmData;
-            $evs[$firm->id] = $ev;
-            
-            foreach ($ev as $e) {
-                if ($e['state'] === 'overdue') { $stats['overdue']++; $consultantStats[$consultant]['overdue']++; }
-                if ($e['state'] === 'crit') { $stats['crit']++; $consultantStats[$consultant]['crit']++; }
-                if ($e['state'] === 'soon') { $stats['soon']++; $consultantStats[$consultant]['soon']++; }
-                if ($e['state'] === 'ok') { $stats['ok']++; $consultantStats[$consultant]['ok']++; }
-            }
-        }
-
-        $taskList = ComplianceEngine::taskList($firms, $evs);
-        $detailedTasks = [];
-        
-        foreach ($taskList as $item) {
-            $f = $item[0]; $k = $item[1]; $e = $item[2];
-            $it = $f['items'][$k] ?? [];
-            
-            $detailedTasks[] = [
-                'firm_name' => $f['name'],
-                'consultant' => $f['consultant'] ?? 'Atanmamış',
-                'topic' => ComplianceEngine::obl($k)['n'],
-                'state' => $e['state'],
-                'state_label' => ComplianceEngine::STATE_L[$e['state']],
-                'days' => $e['days'],
-                'due' => $e['due'] ? Carbon::parse($e['due'])->format('d.m.Y') : '-',
-                'note' => $it['note'] ?? ''
-            ];
-        }
-
-        $riskyFirms = [];
-        foreach ($firms as $f) {
             $firmIssues = [];
-            foreach ($evs[$f['id']] as $k => $e) {
-                if (in_array($e['state'], ['overdue', 'crit', 'soon'])) {
+            foreach ($ev as $key => $e) {
+                if (isset($stats[$e['state']])) {
+                    $stats[$e['state']]++;
+                    $consultantStats[$consultant][$e['state']]++;
+                }
+
+                if ($includeDetailedTasks && !in_array($e['state'], ['ok', 'muaf'], true)) {
+                    $item = $firmData['items'][$key] ?? [];
+                    $task = [
+                        'firm_name' => $firmData['name'] ?? 'İsimsiz',
+                        'consultant' => $consultant,
+                        'topic' => ComplianceEngine::obl($key)['n'],
+                        'state' => $e['state'],
+                        'state_label' => ComplianceEngine::STATE_L[$e['state']] ?? $e['state'],
+                        'days' => $e['days'],
+                        'due' => $e['due'] ? Carbon::parse($e['due'])->format('d.m.Y') : '-',
+                        'note' => $item['note'] ?? '',
+                    ];
+                    $detailedTaskCount++;
+
+                    if (count($detailedTasks) < self::PDF_DETAIL_LIMIT) {
+                        $detailedTasks[] = $task;
+                    } else {
+                        if (!$detailedTasksSorted) {
+                            usort($detailedTasks, self::compareDetailedTasks(...));
+                            $detailedTasksSorted = true;
+                        }
+
+                        $lastIndex = count($detailedTasks) - 1;
+                        if (self::compareDetailedTasks($task, $detailedTasks[$lastIndex]) < 0) {
+                            $low = 0;
+                            $high = $lastIndex;
+                            while ($low < $high) {
+                                $middle = intdiv($low + $high, 2);
+                                if (self::compareDetailedTasks($task, $detailedTasks[$middle]) < 0) {
+                                    $high = $middle;
+                                } else {
+                                    $low = $middle + 1;
+                                }
+                            }
+                            array_splice($detailedTasks, $low, 0, [$task]);
+                            array_pop($detailedTasks);
+                        }
+                    }
+                }
+
+                if (in_array($e['state'], ['missing', 'overdue', 'crit', 'soon'], true)) {
+                    $workItems[] = [
+                        'firm_id' => $firm->id,
+                        'firm_name' => $firmData['name'] ?? 'İsimsiz',
+                        'consultant' => $consultant,
+                        'topic' => ComplianceEngine::obl($key)['n'],
+                        'state' => $e['state'],
+                        'state_label' => ComplianceEngine::STATE_L[$e['state']] ?? $e['state'],
+                        'days' => $e['days'],
+                        'due' => $e['due'] ? Carbon::parse($e['due'])->format('d.m.Y') : null,
+                    ];
                     $firmIssues[] = [
-                        'topic' => ComplianceEngine::obl($k)['n'],
+                        'topic' => ComplianceEngine::obl($key)['n'],
                         'state' => ComplianceEngine::STATE_L[$e['state']],
                         'days' => $e['days'],
                         'due' => $e['due'] ? Carbon::parse($e['due'])->format('d.m.Y') : '-',
-                        'color' => $e['state']
+                        'color' => $e['state'],
                     ];
                 }
             }
-            if (count($firmIssues) > 0) {
+
+            if ($firmIssues) {
                 $riskyFirms[] = [
-                    'name' => $f['name'],
-                    'consultant' => $f['consultant'] ?? 'Atanmamış',
+                    'name' => $firmData['name'] ?? 'İsimsiz',
+                    'consultant' => $consultant,
                     'risky_count' => count($firmIssues),
-                    'issues' => $firmIssues
+                    'issues' => $firmIssues,
                 ];
             }
         }
+
+        if ($detailedTasks && !$detailedTasksSorted) {
+            usort($detailedTasks, self::compareDetailedTasks(...));
+        }
         usort($riskyFirms, fn($a, $b) => $b['risky_count'] <=> $a['risky_count']);
+        usort($workItems, self::compareDetailedTasks(...));
 
         return [
             'stats' => $stats,
             'consultantStats' => $consultantStats,
             'riskyFirms' => array_slice($riskyFirms, 0, 10),
+            'workItems' => $workItems,
             'detailedTasks' => $detailedTasks,
+            'detailedTaskCount' => $detailedTaskCount,
+            'detailedTaskLimit' => self::PDF_DETAIL_LIMIT,
             'consultants' => $consultants
         ];
+    }
+
+    private static function compareDetailedTasks(array $a, array $b): int
+    {
+        $rank = (ComplianceEngine::RANK[$a['state']] ?? 99) <=> (ComplianceEngine::RANK[$b['state']] ?? 99);
+        if ($rank !== 0) return $rank;
+        $days = ($a['days'] ?? PHP_INT_MAX) <=> ($b['days'] ?? PHP_INT_MAX);
+        if ($days !== 0) return $days;
+        return strcmp($a['firm_name'], $b['firm_name']);
     }
 
     public function index(Request $request)
@@ -122,7 +169,8 @@ class ReportController extends Controller
     {
         $consultantFilter = $request->query('consultant', 'all');
         
-        $data = $this->getReportData($request->user(), $consultantFilter);
+        set_time_limit(300);
+        $data = $this->getReportData($request->user(), $consultantFilter, true);
         $data['today'] = Carbon::today()->format('d.m.Y');
         $data['userName'] = $request->user()->name;
 

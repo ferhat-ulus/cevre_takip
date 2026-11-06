@@ -49,6 +49,16 @@ const uploadTemplate = async () => {
     formData.append('template_file', templateFile.value);
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+// Örnek Yükleme Kodu:
+fetch('/api/excel/preview', {
+    method: 'POST',
+    headers: { 
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': csrfToken // <--- BURASI ÇOK ÖNEMLİ
+    },
+    body: formData // FormData kullanıyorsanız Content-Type belirtmeyin, tarayıcı otomatik ayarlar.
+})
+
     try {
         const response = await fetch('/api/excel/upload-template', {
             method: 'POST',
@@ -186,11 +196,19 @@ const deleteAllData = async () => {
 
 <template>
     <Head title="Excel İçe Aktar" />
-    <div class="max-w-6xl mx-auto space-y-6 pb-20">
+    <div class="w-full space-y-6 pb-20">
         
-        <div>
-            <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Excel İşlemleri</h1>
-            <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs">Şablon yönetimi, veri aktarımı ve sistem yedekleme.</p>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Excel İşlemleri</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs">Şablon yönetimi, veri aktarımı ve sistem yedekleme.</p>
+            </div>
+            <a href="/api/export-excel" class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a2 2 0 01.707.293l5.414 5.414A2 2 0 0119 9.414V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Excel Dışa Aktar
+            </a>
         </div>
 
         <div v-if="errorMsg" class="p-4 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-sm dark:bg-rose-900/20 dark:text-rose-400">
@@ -248,7 +266,8 @@ const deleteAllData = async () => {
                 <h4 class="font-bold text-orange-800 dark:text-orange-400 text-sm mb-2">⚠️ Dikkat: Okunamayan Hücreler Var!</h4>
                 <ul class="list-disc list-inside text-xs text-orange-700 dark:text-orange-300 space-y-1">
                     <li v-for="(cell, idx) in previewData.unread_cells" :key="idx">
-                        <strong>Satır {{ cell.row }}, {{ cell.col }} Sütunu ({{ cell.topic }}):</strong> "{{ cell.value }}" değeri anlaşılamadı.
+                        <strong>Satır {{ cell.row }}, {{ cell.col }} Sütunu ({{ cell.topic }}):</strong>
+                        {{ cell.message || `"${cell.value}" değeri anlaşılamadı.` }}
                     </li>
                 </ul>
             </div>
@@ -284,7 +303,7 @@ const deleteAllData = async () => {
                                         <td class="py-2"><input type="checkbox" :checked="itemSelections[row.row]?.[key]" @change="toggleItem(row.row, key)" class="w-4 h-4 rounded"></td>
                                         <td class="py-2 font-medium text-slate-700 dark:text-slate-300">{{ key }}</td>
                                         <td class="py-2 text-slate-400">-</td>
-                                        <td class="py-2 font-semibold text-emerald-600 dark:text-emerald-400">{{ item.d || item.s || 'Girilmedi' }}</td>
+                                        <td :class="['py-2 font-semibold', item.d || (item.s && item.s !== 'surec') ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-700 dark:text-red-300']">{{ item.d || item.s || 'Girilmedi' }}</td>
                                     </tr>
                                 </template>
                                 <template v-else>
@@ -292,7 +311,7 @@ const deleteAllData = async () => {
                                         <td class="py-2"><input type="checkbox" :checked="itemSelections[row.row]?.[change.key]" @change="toggleItem(row.row, change.key)" class="w-4 h-4 rounded"></td>
                                         <td class="py-2 font-medium text-slate-700 dark:text-slate-300">{{ change.name }}</td>
                                         <td class="py-2 text-slate-500 line-through">{{ change.old }}</td>
-                                        <td class="py-2 font-semibold text-emerald-600 dark:text-emerald-400">{{ change.new }}</td>
+                                        <td :class="['py-2 font-semibold', ['Girilmedi', 'Veri Yok', 'Tarih Yok'].includes(change.new) ? 'text-red-700 dark:text-red-300' : 'text-emerald-600 dark:text-emerald-400']">{{ change.new }}</td>
                                     </tr>
                                 </template>
                             </tbody>

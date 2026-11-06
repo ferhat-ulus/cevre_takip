@@ -1,9 +1,12 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, usePage } from '@inertiajs/vue3';
 
 const props = defineProps({
     users: Array,
+    firmCounts: Object,
+    consultantFirms: { type: Array, default: () => [] },
+    consultantHistory: Array,
     isAdmin: Boolean
 });
 
@@ -15,9 +18,14 @@ const showAddModal = ref(false);
 const showEditModal = ref(false);
 const showPasswordModal = ref(false);
 const showStatusModal = ref(false); // YENİ
+const showHandoverModal = ref(false);
 
 // Seçili Kullanıcı (Durum değişikliği için)
 const selectedUserForStatus = ref(null); // YENİ
+const selectedConsultant = ref(null);
+const handoverForm = ref({ replacement_user_id: '', reason: '', deactivate: false });
+const selectedFirmIds = ref([]);
+const firmSearch = ref('');
 
 // Form Değişkenleri
 const form = ref({
@@ -45,6 +53,45 @@ const filteredUsers = computed(() => {
         u.username.toLowerCase().includes(q) || 
         (u.email && u.email.toLowerCase().includes(q))
     );
+});
+const activeConsultants = computed(() => props.users.filter(user =>
+    user.role === 'employee' && user.active && user.id !== selectedConsultant.value?.id
+));
+const consultantFirmCount = (user) => Number(props.firmCounts?.[user.name] || 0);
+const consultantFirmList = computed(() => props.consultantFirms.filter((firm) => firm.consultant === selectedConsultant.value?.name));
+const visibleConsultantFirms = computed(() => {
+    const query = firmSearch.value.trim().toLocaleLowerCase('tr-TR');
+    if (!query) return consultantFirmList.value;
+
+    return consultantFirmList.value.filter((firm) => firm.name.toLocaleLowerCase('tr-TR').includes(query));
+});
+const allFirmsSelected = computed(() =>
+    consultantFirmList.value.length > 0 && selectedFirmIds.value.length === consultantFirmList.value.length
+);
+
+const openHandoverModal = (user, deactivate = false) => {
+    selectedConsultant.value = user;
+    const firmIds = props.consultantFirms.filter((firm) => firm.consultant === user.name).map((firm) => firm.id);
+    selectedFirmIds.value = firmIds;
+    firmSearch.value = '';
+    handoverForm.value = { replacement_user_id: '', reason: '', deactivate: deactivate && firmIds.length > 0 };
+    errorMsg.value = '';
+    showStatusModal.value = false;
+    showHandoverModal.value = true;
+};
+
+const toggleFirm = (firmId) => {
+    selectedFirmIds.value = selectedFirmIds.value.includes(firmId)
+        ? selectedFirmIds.value.filter((id) => id !== firmId)
+        : [...selectedFirmIds.value, firmId];
+};
+
+const toggleAllFirms = () => {
+    selectedFirmIds.value = allFirmsSelected.value ? [] : consultantFirmList.value.map((firm) => firm.id);
+};
+
+watch(allFirmsSelected, (selected) => {
+    if (!selected) handoverForm.value.deactivate = false;
 });
 
 const openAddModal = () => {
@@ -79,6 +126,10 @@ const openPasswordModal = (user) => {
 const openStatusModal = (user) => {
     if (user.id === currentUser.id) {
         alert('Kendi hesabınızı pasife alamazsınız.');
+        return;
+    }
+    if (user.active && user.role === 'employee' && consultantFirmCount(user) > 0) {
+        openHandoverModal(user, true);
         return;
     }
     selectedUserForStatus.value = user;
@@ -209,12 +260,55 @@ const confirmStatusChange = async () => {
         isSaving.value = false;
     }
 };
+
+const submitHandover = async () => {
+    if (!selectedConsultant.value || !handoverForm.value.replacement_user_id || !handoverForm.value.reason.trim()) {
+        errorMsg.value = 'Devir yapılacak kişiyi ve gerekçeyi belirtin.';
+        return;
+    }
+    if (!selectedFirmIds.value.length) {
+        errorMsg.value = 'Devredilecek en az bir tesis seçin.';
+        return;
+    }
+
+    isSaving.value = true;
+    errorMsg.value = '';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    try {
+        const response = await fetch(`/api/users/${selectedConsultant.value.id}/consultant-handover`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({
+                replacement_user_id: handoverForm.value.replacement_user_id === '__unassigned__'
+                    ? null
+                    : Number(handoverForm.value.replacement_user_id),
+                reason: handoverForm.value.reason.trim(),
+                deactivate: handoverForm.value.deactivate && allFirmsSelected.value,
+                firm_ids: selectedFirmIds.value
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            showHandoverModal.value = false;
+            successMsg.value = `${data.transferred} tesis devredildi.`;
+            window.location.reload();
+        } else {
+            errorMsg.value = data.message || data.error || 'Tesis devri tamamlanamadı.';
+        }
+    } catch (err) {
+        errorMsg.value = 'Sunucu hatası oluştu.';
+    } finally {
+        isSaving.value = false;
+    }
+};
 </script>
 
 <template>
     <Head title="Kullanıcı Yönetimi" />
 
-    <div class="max-w-7xl mx-auto space-y-4 pb-20">
+    <div class="w-full space-y-4 pb-20">
         
         <!-- Başarı Mesajı -->
         <div v-if="successMsg" class="fixed top-4 right-4 z-[100] bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl shadow-lg font-bold flex items-center space-x-2">
@@ -268,6 +362,9 @@ const confirmStatusChange = async () => {
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-end gap-2">
+                                    <button v-if="user.role === 'employee' && consultantFirmCount(user) > 0" @click="openHandoverModal(user)" class="text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 px-2 py-1 rounded-md transition-colors text-[10px] font-semibold whitespace-nowrap" :title="`${consultantFirmCount(user)} tesisi devret`">
+                                        Devir ({{ consultantFirmCount(user) }})
+                                    </button>
                                     <button @click="openPasswordModal(user)" class="text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 p-1.5 rounded-md transition-colors" title="Şifre Sıfırla">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                                     </button>
@@ -288,6 +385,19 @@ const confirmStatusChange = async () => {
                 </table>
             </div>
         </div>
+
+        <section class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+                <h2 class="text-sm font-bold text-slate-800 dark:text-white">Danışman Görev Geçmişi</h2>
+            </div>
+            <div v-if="consultantHistory?.length" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                <div v-for="entry in consultantHistory" :key="entry.id" class="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs">
+                    <p class="text-slate-700 dark:text-slate-300">{{ entry.description }}</p>
+                    <p class="shrink-0 text-[10px] text-slate-500">{{ entry.actor }} · {{ new Date(entry.created_at).toLocaleString('tr-TR') }}</p>
+                </div>
+            </div>
+            <p v-else class="px-4 py-4 text-xs text-slate-500">Henüz danışman görevlendirme kaydı bulunmuyor.</p>
+        </section>
 
         <!-- YENİ KULLANICI MODALI -->
         <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -438,6 +548,64 @@ const confirmStatusChange = async () => {
                     <button @click="confirmStatusChange" :disabled="isSaving" :class="['flex-1 py-2.5 text-white rounded-lg transition font-medium disabled:opacity-50 flex items-center justify-center', selectedUserForStatus?.active ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700']">
                         <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         {{ isSaving ? 'İşleniyor...' : 'Evet, Onayla' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showHandoverModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-[#1e293b] rounded-xl p-6 w-full max-w-lg shadow-xl border border-slate-200 dark:border-slate-700 text-sm max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-white">Danışman Görev Devri</h3>
+                        <p class="text-xs text-slate-500 mt-1">{{ selectedConsultant?.name }} · {{ selectedFirmIds.length }} / {{ consultantFirmList.length }} tesis seçili</p>
+                    </div>
+                    <button @click="showHandoverModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" aria-label="Kapat">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div v-if="errorMsg" class="mb-4 p-3 bg-rose-50 text-rose-700 text-xs rounded-lg border border-rose-200">{{ errorMsg }}</div>
+                <div class="space-y-4">
+                    <div>
+                        <div class="mb-1 flex items-center justify-between gap-2">
+                            <label class="block text-xs font-medium dark:text-slate-300" for="handover-firm-search">Devredilecek tesisler</label>
+                            <button type="button" @click="toggleAllFirms" class="text-[11px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+                                {{ allFirmsSelected ? 'Seçimi kaldır' : 'Tümünü seç' }}
+                            </button>
+                        </div>
+                        <input id="handover-firm-search" v-model="firmSearch" type="search" placeholder="Tesis ara" class="mb-2 w-full rounded-md border border-slate-300 bg-white p-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                        <div class="max-h-48 space-y-1 overflow-y-auto rounded-md border border-slate-200 p-2 dark:border-slate-600">
+                            <label v-for="firm in visibleConsultantFirms" :key="firm.id" class="flex cursor-pointer items-start gap-2 rounded px-1 py-1.5 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">
+                                <input type="checkbox" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" :checked="selectedFirmIds.includes(firm.id)" @change="toggleFirm(firm.id)">
+                                <span>{{ firm.name }}</span>
+                            </label>
+                            <p v-if="!visibleConsultantFirms.length" class="px-1 py-3 text-center text-xs text-slate-500">Bu danışmana ait tesis bulunamadı.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Yeni danışman</label>
+                        <select v-model="handoverForm.replacement_user_id" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
+                            <option value="">Danışman seçin...</option>
+                            <option v-for="consultant in activeConsultants" :key="consultant.id" :value="String(consultant.id)">{{ consultant.name }}</option>
+                            <option value="__unassigned__">Atanmamış bırak</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Devir gerekçesi</label>
+                        <textarea v-model="handoverForm.reason" rows="3" maxlength="500" placeholder="Örn: görev değişikliği veya işten ayrılma" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm"></textarea>
+                    </div>
+                    <label v-if="selectedConsultant?.active" :class="['flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300', allFirmsSelected ? '' : 'opacity-60']">
+                        <input v-model="handoverForm.deactivate" :disabled="!allFirmsSelected" type="checkbox" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:cursor-not-allowed">
+                        Devir tamamlanınca danışmanı pasife al
+                    </label>
+                    <p v-if="selectedConsultant?.active && !allFirmsSelected" class="text-[11px] text-slate-500">Pasife almak için danışmanın bütün tesisleri bu devirde seçilmelidir. Seçilmeyen tesisler mevcut danışmanda kalır.</p>
+                    <p v-if="handoverForm.deactivate" class="text-[11px] text-amber-700 dark:text-amber-400">Danışmanın hesabı kapatılacak; işlem ve tesis devirleri geçmişe kaydedilecek.</p>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button @click="showHandoverModal = false" class="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition">Vazgeç</button>
+                    <button @click="submitHandover" :disabled="isSaving || !selectedFirmIds.length" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50">
+                        {{ isSaving ? 'Kaydediliyor...' : handoverForm.deactivate ? 'Devret ve Pasife Al' : allFirmsSelected ? 'Tesisleri Devret' : `Seçilen ${selectedFirmIds.length} tesisi devret` }}
                     </button>
                 </div>
             </div>
