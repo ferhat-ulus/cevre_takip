@@ -47,3 +47,22 @@ Projenin beyni `app/Services/ComplianceEngine.php` dosyasıdır.
 6. **Excel İşlemleri:** Şablonlu veya şablonsuz içe/dışa aktarma. Sistemde olmayan yeni mevzuatlar Excel'e otomatik sütun olarak eklenir.
 7. **Yedekleme Sistemi:** `spatie/laravel-backup` entegre edilmiştir. Admin panelinden (Yedekler sayfası) tek tıkla yedek alınabilir, indirilebilir ve silinebilir. `BackupController.php` ile yönetilir.
 8. **Güvenlik:** Yetkisiz tesis erişimleri ve admin sayfası erişimleri engellenmiştir.
+
+## Temiz Kurulum (Yönetici Hesabı)
+
+GitHub kaynak arşivi uygulama veritabanını içermez. Yeni kurulumda tesisler, ziyaretler, kullanıcılar, ayarlar ve loglar boş başlar. Projeyi indirdikten sonra `.env.example` dosyasını `.env` olarak kopyalayın; ilk yönetici hesabını oluşturmak için `.env` içindeki `INITIAL_ADMIN_USERNAME`, `INITIAL_ADMIN_NAME` ve en az 16 karakterli `INITIAL_ADMIN_PASSWORD` değerlerini doldurun. İsteğe bağlı olarak `INITIAL_ADMIN_EMAIL` ekleyin. Parolayı `.env.example` veya başka bir kaynak kodu dosyasına yazmayın.
+
+PowerShell'de SQLite dosyasını oluşturun, uygulama anahtarını üretin, boş veritabanını hazırlayın ve yalnızca ilk yönetici hesabını ekleyin:
+
+```powershell
+composer install
+Copy-Item .env.example .env
+if (!(Test-Path database\database.sqlite)) { New-Item database\database.sqlite -ItemType File }
+php artisan key:generate
+php artisan migrate --force
+php artisan db:seed --force
+npm install
+npm run build
+```
+
+Seeder, örnek/test hesabı oluşturmaz. Aynı yönetici kullanıcı adı zaten aktif bir yöneticiye aitse hesabın parolasını veya diğer bilgilerini değiştirmeden tekrar çalışır; başka bir kullanıcıya aitse işlemi açık hata ile durdurur. Mevcut veritabanını boşaltmak için `migrate:fresh` kullanmayın; bu komut tüm tabloları siler.
