@@ -16,12 +16,9 @@ const overdueCount = computed(() => props.firms.filter(firm => ['missing', 'over
 const currentPage = ref(1);
 const itemsPerPage = ref(20); 
 
-const editingNoteId = ref(null);
-const editNoteText = ref('');
-
 const filteredFirms = computed(() => {
     let result = props.firms;
-    if (selectedConsultant.value !== 'all') result = result.filter(f => f.consultant === selectedConsultant.value);
+    if (selectedConsultant.value !== 'all') result = result.filter(f => String(f.consultant_user_id || '') === selectedConsultant.value);
     if (selectedState.value === 'overdue') result = result.filter(f => ['missing', 'overdue'].includes(f.overallState));
     else if (selectedState.value !== 'all') result = result.filter(f => f.overallState === selectedState.value);
     if (search.value) {
@@ -39,19 +36,6 @@ const paginatedFirms = computed(() => {
 });
 
 const resetPage = () => { currentPage.value = 1; };
-
-const startEditing = (firm) => { editingNoteId.value = firm.id; editNoteText.value = firm.note || ''; };
-const saveNote = async (firm) => {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    try {
-        const response = await fetch(`/api/firms/${firm.id}/note`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ note: editNoteText.value })
-        });
-        if (response.ok) { firm.note = editNoteText.value; editingNoteId.value = null; } else { alert('Not kaydedilemedi.'); }
-    } catch (err) { alert('Sunucu hatası.'); }
-};
 
 const getStatusColor = (state) => {
     if (state === 'missing') return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/40';
@@ -96,7 +80,7 @@ const formatRecordedDate = (dateString) => dateString ? formatDate(dateString) :
                     <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-2 whitespace-nowrap">Danışman:</span>
                     <select v-model="selectedConsultant" @change="resetPage" class="w-full bg-transparent border-none text-sm font-medium text-indigo-600 dark:text-indigo-400 outline-none cursor-pointer">
                         <option value="all" class="dark:bg-gray-800">Tümü (Hepsi)</option>
-                        <option v-for="c in consultants" :key="c" :value="c" class="dark:bg-gray-800">{{ c }}</option>
+                        <option v-for="c in consultants" :key="c.id" :value="String(c.id)" class="dark:bg-gray-800">{{ c.name }}</option>
                     </select>
                 </div>
                 <div class="relative w-full sm:w-64">
@@ -122,7 +106,6 @@ const formatRecordedDate = (dateString) => dateString ? formatDate(dateString) :
                             <th class="px-4 py-3">Danışman</th>
                             <th class="px-4 py-3">İzne Esas Ölçüm / Rapor</th>
                             <th class="px-4 py-3">Teyit Ölçümü / Rapor</th>
-                            <th class="px-4 py-3 w-64">Notlar</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -172,20 +155,6 @@ const formatRecordedDate = (dateString) => dateString ? formatDate(dateString) :
                                             <span v-if="firm.emisyonTeyitRaporu.days !== null" :class="getDaysColor(firm.emisyonTeyitRaporu.days, firm.emisyonTeyitRaporu.state)">({{ firm.emisyonTeyitRaporu.days }} gün)</span>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div v-if="editingNoteId === firm.id" class="flex flex-col space-y-1">
-                                    <textarea v-model="editNoteText" rows="2" class="w-full text-xs rounded border border-slate-300 dark:border-slate-600 p-1 dark:bg-slate-700 dark:text-white"></textarea>
-                                    <div class="flex space-x-1">
-                                        <button @click="saveNote(firm)" class="bg-indigo-600 text-white px-2 py-1 rounded text-[10px]">Kaydet</button>
-                                        <button @click="editingNoteId = null" class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded text-[10px]">İptal</button>
-                                    </div>
-                                </div>
-                                <div v-else class="cursor-pointer group flex items-start space-x-1" @click="startEditing(firm)">
-                                    <span v-if="firm.note" class="text-xs text-slate-600 dark:text-slate-400 leading-tight">{{ firm.note }}</span>
-                                    <span v-else class="text-xs text-slate-400 italic group-hover:text-indigo-500">Not ekle...</span>
-                                    <svg class="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                 </div>
                             </td>
                         </tr>

@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -52,5 +53,10 @@ class User extends Authenticatable
             'active' => 'boolean',
             'must_change' => 'boolean',
         ];
+    }
+
+    public function moduleAccesses(): HasMany
+    {
+        return $this->hasMany(ModuleUserAccess::class, 'user_id');
     }
 }

@@ -2,12 +2,11 @@
 import { ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
 
-const props = defineProps({ auth: Object, errors: Object, hasTemplate: Boolean });
+const props = defineProps({ auth: Object, errors: Object, hasTemplate: Boolean, isAdmin: Boolean });
 
 const fileInput = ref(null);
 const file = ref(null);
 const isUploading = ref(false);
-const isDeleting = ref(false);
 const previewData = ref(null);
 const errorMsg = ref('');
 const successMsg = ref('');
@@ -48,16 +47,6 @@ const uploadTemplate = async () => {
     const formData = new FormData();
     formData.append('template_file', templateFile.value);
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-// Örnek Yükleme Kodu:
-fetch('/api/excel/preview', {
-    method: 'POST',
-    headers: { 
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': csrfToken // <--- BURASI ÇOK ÖNEMLİ
-    },
-    body: formData // FormData kullanıyorsanız Content-Type belirtmeyin, tarayıcı otomatik ayarlar.
-})
 
     try {
         const response = await fetch('/api/excel/upload-template', {
@@ -155,43 +144,6 @@ const confirmImport = async () => {
     } catch (err) { errorMsg.value = 'Sunucu hatası oluştu.'; } finally { isUploading.value = false; }
 };
 
-const deleteAllData = async () => {
-    if (!confirm('DİKKAT: Sistemdeki TÜM tesisler ve ziyaret kayıtları silinecek. İşlemden önce otomatik yedek alınacak ve indirilecektir. Onaylıyor musunuz?')) return;
-
-    isDeleting.value = true;
-    errorMsg.value = '';
-    successMsg.value = '';
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-    try {
-        const response = await fetch('/api/excel/destroy-all', {
-            method: 'DELETE',
-            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
-        });
-        
-        const data = await response.json();
-        if (response.ok && data.ok) {
-            successMsg.value = data.message;
-            previewData.value = null;
-            file.value = null;
-            if (fileInput.value) fileInput.value.value = '';
-            
-            if (data.download_url) {
-                const a = document.createElement('a');
-                a.href = data.download_url;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
-        } else {
-            errorMsg.value = data.error || 'Silme işlemi başarısız oldu.';
-        }
-    } catch (err) {
-        errorMsg.value = 'Sunucu hatası oluştu.';
-    } finally {
-        isDeleting.value = false;
-    }
-};
 </script>
 
 <template>
@@ -201,7 +153,7 @@ const deleteAllData = async () => {
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Excel İşlemleri</h1>
-                <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs">Şablon yönetimi, veri aktarımı ve sistem yedekleme.</p>
+                <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs">Excel veri aktarımı ve dışa aktarma işlemleri.</p>
             </div>
             <a href="/api/export-excel" class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -219,7 +171,7 @@ const deleteAllData = async () => {
         </div>
 
         <!-- ANA ŞABLON YÜKLEME ALANI -->
-        <div v-if="!previewData" class="bg-blue-50/50 dark:bg-blue-900/10 p-6 rounded-xl border border-blue-200 dark:border-blue-900/50">
+        <div v-if="!previewData && isAdmin" class="bg-blue-50/50 dark:bg-blue-900/10 p-6 rounded-xl border border-blue-200 dark:border-blue-900/50">
             <h2 class="text-lg font-bold text-blue-800 dark:text-blue-400 mb-2 flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Ana Şablon Yönetimi
@@ -327,20 +279,5 @@ const deleteAllData = async () => {
             </div>
         </div>
 
-        <!-- TEHLİKELİ BÖLGE (Değişmedi) -->
-        <div v-if="!previewData" class="mt-12 border-2 border-rose-200 dark:border-rose-900/50 rounded-xl p-6 bg-rose-50/30 dark:bg-rose-900/10">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h3 class="text-lg font-bold text-rose-700 dark:text-rose-400">Tehlikeli Bölge</h3>
-                    <p class="text-sm text-rose-600/80 dark:text-rose-400/80 mt-1">
-                        Sistemdeki tüm tesisleri siler. Silme işleminden önce otomatik olarak (eğer yüklendiyse) orijinal şablonunuza verileriniz işlenerek yedek alınır.
-                    </p>
-                </div>
-                <button type="button" @click="deleteAllData" :disabled="isDeleting" class="shrink-0 bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-sm transition disabled:opacity-50 flex items-center space-x-2">
-                    <svg v-if="isDeleting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <span>{{ isDeleting ? 'Yedekleniyor ve Siliniyor...' : 'Sistemdeki Tüm Verileri Sil' }}</span>
-                </button>
-            </div>
-        </div>
     </div>
 </template>

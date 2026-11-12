@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use App\Models\ActivityLog;
 
 class AuthController extends Controller
 {
@@ -25,8 +27,10 @@ class AuthController extends Controller
         if (Auth::attempt(['username' => $request->username, 'password' => $request->password, 'active' => 1])) {
             RateLimiter::clear($key);
             $request->session()->regenerate();
+            $request->session()->forget('active_module');
 
             $user = Auth::user();
+            $request->session()->put('auth_session_version', (int) $user->sess_ver);
 
             return response()->json([
                 'me' => [
@@ -34,6 +38,7 @@ class AuthController extends Controller
                     'email' => $user->email, 'role' => strtolower($user->role), 'active' => (bool) $user->active,
                     'mustChange' => (bool) $user->must_change,
                 ],
+                'redirect' => $user->must_change ? '/sifre-degistir' : '/moduller',
             ]);
         }
 
@@ -49,5 +54,30 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/login');
+    }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = $request->user();
+        $user->password = Hash::make($request->password);
+        $user->must_change = false;
+        $user->sess_ver += 1;
+        $user->save();
+
+        $request->session()->put('auth_session_version', (int) $user->sess_ver);
+        $request->session()->forget('active_module');
+
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'password_changed',
+            'description' => 'Kullanıcı zorunlu ilk şifre değişikliğini tamamladı.',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json(['ok' => true, 'redirect' => '/moduller']);
     }
 }

@@ -32,7 +32,7 @@ const itemsPerPage = 20;
 const showAddModal = ref(false);
 const isSaving = ref(false);
 const errorMsg = ref('');
-const newFirm = ref({ name: '', sector: '', consultant: '' });
+const newFirm = ref({ name: '', sector: '', consultant_user_id: '' });
 
 // GEÇMİŞ (LOG) MODALI
 const showEndModal = ref(false);
@@ -49,7 +49,7 @@ const selectedFirmName = ref('');
 const filteredFirms = computed(() => {
     let result = props.firms;
     if (selectedConsultant.value !== 'all') {
-        result = result.filter(f => f.consultant === selectedConsultant.value);
+        result = result.filter(f => String(f.consultant_user_id || '') === selectedConsultant.value);
     }
     if (workFilter.value === 'aktif') result = result.filter((firm) => !isClosed(firm));
     if (workFilter.value === 'sonlandi') result = result.filter((firm) => isClosed(firm));
@@ -239,7 +239,7 @@ const formatDate = (dateString) => {
                     <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-2 whitespace-nowrap">Danışman:</span>
                     <select v-model="selectedConsultant" @change="resetPage" class="w-full bg-transparent border-none text-sm font-medium text-indigo-600 dark:text-indigo-400 outline-none cursor-pointer">
                         <option value="all" class="dark:bg-gray-800">Tümü (Hepsi)</option>
-                        <option v-for="c in consultants" :key="c" :value="c" class="dark:bg-gray-800">{{ c }}</option>
+                        <option v-for="c in consultants" :key="c.id" :value="String(c.id)" class="dark:bg-gray-800">{{ c.name }}</option>
                     </select>
                 </div>
 
@@ -350,9 +350,9 @@ const formatDate = (dateString) => {
                     </div>
                     <div v-if="isAdmin">
                         <label class="block text-xs font-medium mb-1 dark:text-slate-300">Atanacak Danışman</label>
-                        <select v-model="newFirm.consultant" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
+                        <select v-model="newFirm.consultant_user_id" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
                             <option value="">Atanmadı</option>
-                            <option v-for="c in consultants" :key="c" :value="c">{{ c }}</option>
+                            <option v-for="c in consultants" :key="c.id" :value="c.id">{{ c.name }} — {{ c.username }}</option>
                         </select>
                     </div>
                 </div>

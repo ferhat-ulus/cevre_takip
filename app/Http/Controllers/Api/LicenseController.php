@@ -23,20 +23,18 @@ class LicenseController extends Controller
 
         $consultants = [];
         if ($user->role === 'admin') {
-            $consultants = User::where('role', 'employee')->select('name')->distinct()->pluck('name');
+            $consultants = User::where('role', 'employee')->where('active', true)->orderBy('name')->get(['id', 'name', 'username']);
         }
 
         // PERFORMANS: Veritabanı seviyesinde filtreleme
-        $query = Firm::query();
-        if ($user->role !== 'admin') {
-            $query->where('data->consultant', $user->name);
-        }
+        $query = Firm::query()->with('consultant:id,name')->visibleTo($user);
         $firmsRaw = $query->get();
 
         $data = [];
 
         foreach ($firmsRaw as $firm) {
             $firmData = $firm->data;
+            $firmData['consultant'] = $firm->consultantName();
             if (ComplianceEngine::isEngagementClosed($firmData)) {
                 continue;
             }
@@ -60,7 +58,8 @@ class LicenseController extends Controller
             $data[] = [
                 'id' => $firm->id,
                 'name' => $firmData['name'] ?? 'İsimsiz Tesis',
-                'consultant' => $firmData['consultant'] ?? 'Atanmamış',
+                'consultant' => $firm->consultantName(),
+                'consultant_user_id' => $firm->consultant_user_id,
                 'sector' => $firmData['sector'] ?? '-',
                 'note' => $firmData['note'] ?? '',
                 'izin' => $izin,
@@ -78,19 +77,4 @@ class LicenseController extends Controller
         ]);
     }
 
-    public function updateNote(Request $request, $id)
-    {
-        $request->validate([
-            'note' => 'nullable|string|max:1000'
-        ]);
-
-        $firm = Firm::findOrFail($id);
-        $data = $firm->data;
-        
-        $data['note'] = $request->note;
-        $firm->data = $data;
-        $firm->save();
-
-        return response()->json(['ok' => true]);
-    }
 }

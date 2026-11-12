@@ -22,19 +22,17 @@ class ReportController extends Controller
         $cfgRow = Config::find('main');
         $cfg = array_merge(ComplianceEngine::DEFAULT_CFG, $cfgRow ? $cfgRow->v : []);
 
-        $consultants = User::where('role', 'employee')->pluck('name');
+        $consultants = User::where('role', 'employee')->where('active', true)->orderBy('name')->get(['id', 'name', 'username']);
 
         // PERFORMANS: Veritabanı seviyesinde filtreleme
-        $query = Firm::query();
-        
-        if ($user->role !== 'admin') {
-            $query->where('data->consultant', $user->name);
-        } elseif ($consultantFilter !== 'all') {
-            $query->where('data->consultant', $consultantFilter);
+        $query = Firm::query()->with('consultant:id,name')->visibleTo($user);
+        if ($user->role === 'admin' && $consultantFilter !== 'all') {
+            $query->where('consultant_user_id', (int) $consultantFilter);
         }
         
         $stats = ['overdue' => 0, 'crit' => 0, 'soon' => 0, 'ok' => 0, 'missing' => 0];
         $consultantStats = [];
+        $consultantLabels = [];
         $detailedTasks = [];
         $detailedTaskCount = 0;
         $detailedTasksSorted = false;
@@ -43,14 +41,17 @@ class ReportController extends Controller
 
         foreach ($query->lazyById(100, 'id') as $firm) {
             $firmData = $firm->data;
+            $firmData['consultant'] = $firm->consultantName();
             if (ComplianceEngine::isEngagementClosed($firmData)) {
                 continue;
             }
             $firmData['id'] = $firm->id;
-            $consultant = $firmData['consultant'] ?? 'Atanmamış';
+            $consultant = $firm->consultantName();
+            $consultantId = $firm->consultant_user_id ? (string) $firm->consultant_user_id : 'unassigned';
+            $consultantLabels[$consultantId] = $consultant;
             
-            if (!isset($consultantStats[$consultant])) {
-                $consultantStats[$consultant] = ['overdue' => 0, 'crit' => 0, 'soon' => 0, 'ok' => 0, 'missing' => 0];
+            if (!isset($consultantStats[$consultantId])) {
+                $consultantStats[$consultantId] = ['overdue' => 0, 'crit' => 0, 'soon' => 0, 'ok' => 0, 'missing' => 0];
             }
 
             $ev = ComplianceEngine::evaluateFirm($firmData, $today, $cfg);
@@ -58,7 +59,7 @@ class ReportController extends Controller
             foreach ($ev as $key => $e) {
                 if (isset($stats[$e['state']])) {
                     $stats[$e['state']]++;
-                    $consultantStats[$consultant][$e['state']]++;
+                    $consultantStats[$consultantId][$e['state']]++;
                 }
 
                 if ($includeDetailedTasks && !in_array($e['state'], ['ok', 'muaf'], true)) {
@@ -66,6 +67,7 @@ class ReportController extends Controller
                     $task = [
                         'firm_name' => $firmData['name'] ?? 'İsimsiz',
                         'consultant' => $consultant,
+                        'consultant_user_id' => $firm->consultant_user_id,
                         'topic' => ComplianceEngine::obl($key)['n'],
                         'state' => $e['state'],
                         'state_label' => ComplianceEngine::STATE_L[$e['state']] ?? $e['state'],
@@ -106,6 +108,7 @@ class ReportController extends Controller
                         'firm_id' => $firm->id,
                         'firm_name' => $firmData['name'] ?? 'İsimsiz',
                         'consultant' => $consultant,
+                        'consultant_user_id' => $firm->consultant_user_id,
                         'topic' => ComplianceEngine::obl($key)['n'],
                         'state' => $e['state'],
                         'state_label' => ComplianceEngine::STATE_L[$e['state']] ?? $e['state'],
@@ -141,6 +144,7 @@ class ReportController extends Controller
         return [
             'stats' => $stats,
             'consultantStats' => $consultantStats,
+            'consultantLabels' => $consultantLabels,
             'riskyFirms' => array_slice($riskyFirms, 0, 10),
             'workItems' => $workItems,
             'detailedTasks' => $detailedTasks,

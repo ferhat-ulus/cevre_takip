@@ -9,6 +9,7 @@ ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale,
 const props = defineProps({
     stats: Object,
     consultantStats: Object,
+    consultantLabels: Object,
     workItems: Array,
     consultants: Array
 });
@@ -53,7 +54,7 @@ const doughnutOptions = {
 const barData = computed(() => {
     const labels = Object.keys(props.consultantStats);
     return {
-        labels: labels,
+        labels: labels.map(id => props.consultantLabels[id] || 'Atanmamış'),
         datasets: [
             { label: 'Gecikmiş', data: labels.map(l => props.consultantStats[l].overdue), backgroundColor: '#e11d48' },
             { label: 'Kritik', data: labels.map(l => props.consultantStats[l].crit), backgroundColor: '#ea580c' },
@@ -79,7 +80,7 @@ const downloadPdf = () => {
 const filteredWork = computed(() => {
     const query = search.value.toLocaleLowerCase('tr');
     return (props.workItems || []).filter((item) => {
-        if (selectedConsultant.value !== 'all' && item.consultant !== selectedConsultant.value) return false;
+        if (selectedConsultant.value !== 'all' && String(item.consultant_user_id || '') !== selectedConsultant.value) return false;
         if (selectedState.value === 'dated' && !['overdue', 'crit', 'soon'].includes(item.state)) return false;
         if (!['dated', 'all'].includes(selectedState.value) && item.state !== selectedState.value) return false;
         if (!query) return true;
@@ -128,7 +129,7 @@ const kalanSure = (item) => {
                     <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-2 whitespace-nowrap">Danışman:</span>
                     <select v-model="selectedConsultant" class="w-full bg-transparent border-none text-sm font-medium text-indigo-600 dark:text-indigo-400 outline-none cursor-pointer">
                         <option value="all" class="dark:bg-gray-800">Tümü (Hepsi)</option>
-                        <option v-for="c in consultants" :key="c" :value="c" class="dark:bg-gray-800">{{ c }}</option>
+                        <option v-for="c in consultants" :key="c.id" :value="String(c.id)" class="dark:bg-gray-800">{{ c.name }}</option>
                     </select>
                 </div>
 
@@ -143,7 +144,7 @@ const kalanSure = (item) => {
             <div class="bg-white dark:bg-[#1e293b] p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 lg:col-span-1">
                 <h2 class="text-lg font-bold text-slate-800 dark:text-white mb-4">
                     Genel Durum 
-                    <span v-if="selectedConsultant !== 'all'" class="text-sm text-indigo-500 font-medium">({{ selectedConsultant }})</span>
+                    <span v-if="selectedConsultant !== 'all'" class="text-sm text-indigo-500 font-medium">({{ consultants.find(c => String(c.id) === selectedConsultant)?.name }})</span>
                 </h2>
                 <div class="h-64 relative">
                     <Doughnut :data="doughnutData" :options="doughnutOptions" />

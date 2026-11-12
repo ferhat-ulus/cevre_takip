@@ -21,10 +21,7 @@ class DashboardController extends Controller
         $cfg = array_merge(ComplianceEngine::DEFAULT_CFG, $cfgRow ? $cfgRow->v : []);
 
         // Veritabanı seviyesinde yetki filtresi (Performans artışı)
-        $query = Firm::query();
-        if ($user->role !== 'admin') {
-            $query->where('data->consultant', $user->name);
-        }
+        $query = Firm::query()->with('consultant:id,name')->visibleTo($user);
         
         $firmsRaw = $query->get();
 
@@ -39,6 +36,7 @@ class DashboardController extends Controller
 
         foreach ($firmsRaw as $firm) {
             $firmData = $firm->data;
+            $firmData['consultant'] = $firm->consultantName();
             if (ComplianceEngine::isEngagementClosed($firmData)) {
                 continue;
             }
@@ -56,10 +54,7 @@ class DashboardController extends Controller
                 $firmSummary['ek2']++;
             }
 
-            $consultantName = trim((string) ($firmData['consultant'] ?? ''));
-            if ($consultantName === '') {
-                $consultantName = 'Atanmamış';
-            }
+            $consultantName = $firm->consultantName();
             if (!isset($consultants[$consultantName])) {
                 $consultants[$consultantName] = [
                     'name' => $consultantName,

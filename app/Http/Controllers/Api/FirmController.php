@@ -19,10 +19,7 @@ class FirmController extends Controller
     {
         $user = $request->user();
         
-        $query = Firm::query();
-        if ($user->role !== 'admin') {
-            $query->where('data->consultant', $user->name);
-        }
+        $query = Firm::query()->with('consultant:id,name,username')->visibleTo($user);
         
         $firmsRaw = $query->get(); 
         $firms = [];
@@ -31,7 +28,8 @@ class FirmController extends Controller
             $firms[] = [
                 'id' => $firm->id,
                 'name' => $firm->data['name'] ?? 'İsimsiz Tesis',
-                'consultant' => $firm->data['consultant'] ?? 'Atanmamış',
+                'consultant' => $firm->consultantName(),
+                'consultant_user_id' => $firm->consultant_user_id,
                 'sector' => $firm->data['sector'] ?? '',
                 'status' => $firm->data['status'] ?? 'aktif',
                 'contractDate' => $firm->data['contractDate'] ?? null,
@@ -42,7 +40,8 @@ class FirmController extends Controller
 
         usort($firms, fn($a, $b) => strcasecmp($a['name'], $b['name']));
 
-        $consultants = User::where('role', 'employee')->where('active', true)->pluck('name');
+        $consultants = User::where('role', 'employee')->where('active', true)
+            ->orderBy('name')->get(['id', 'name', 'username']);
 
         return Inertia::render('Tesisler', [
             'firms' => $firms,
@@ -57,7 +56,7 @@ class FirmController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'sector' => 'nullable|string|max:255',
-            'consultant' => 'nullable|string|max:255',
+            'consultant_user_id' => 'nullable|integer|exists:users,id',
         ]);
 
         $id = uniqid(); 
@@ -69,7 +68,6 @@ class FirmController extends Controller
 
         $firmData = [
             'name' => mb_strtoupper(trim($request->name), 'UTF-8'),
-            'consultant' => $user->role === 'admin' ? mb_strtoupper(trim($request->consultant ?? ''), 'UTF-8') : $user->name,
             'sector' => mb_strtoupper(trim($request->sector ?? ''), 'UTF-8'),
             'status' => 'aktif',
             'note' => '',
@@ -80,23 +78,30 @@ class FirmController extends Controller
             'updatedBy' => $user->name
         ];
 
-        Firm::create(['id' => $id, 'data' => $firmData]);
+        $consultantId = $user->role === 'admin' ? $request->integer('consultant_user_id') : $user->id;
+        if ($consultantId && !User::where('id', $consultantId)->where('role', 'employee')->where('active', true)->exists()) {
+            return response()->json(['error' => 'Atanacak danışman aktif bir kullanıcı olmalıdır.'], 422);
+        }
+
+        Firm::create(['id' => $id, 'consultant_user_id' => $consultantId ?: null, 'data' => $firmData]);
 
         return response()->json(['ok' => true, 'id' => $id]);
     }
 
     public function show(Request $request, $id)
     {
-        $firm = Firm::findOrFail($id);
+        $firm = Firm::with('consultant:id,name,username')->findOrFail($id);
         $user = $request->user();
 
         // YETKİSİZ ERİŞİM KONTROLÜ (Sayfa yönlendirmeli)
-        if ($user->role !== 'admin' && ($firm->data['consultant'] ?? '') !== $user->name) {
+        if ($user->role !== 'admin' && !$firm->isAssignedTo($user)) {
             return redirect()->route('firms.index')->with('error', 'Bu tesise erişim yetkiniz yok.');
         }
 
         $firmData = $firm->data;
         $firmData['id'] = $firm->id;
+        $firmData['consultant'] = $firm->consultantName();
+        $firmData['consultant_user_id'] = $firm->consultant_user_id;
 
         if (!isset($firmData['items'])) $firmData['items'] = [];
         foreach (ComplianceEngine::keys() as $k) {
@@ -141,7 +146,7 @@ class FirmController extends Controller
                 'obligations' => ComplianceEngine::getAll(),
                 'stateL' => ComplianceEngine::STATE_L,
             ],
-            'canEdit' => $user->role === 'admin' || ($firmData['consultant'] ?? '') === $user->name,
+            'canEdit' => $user->role === 'admin' || $firm->isAssignedTo($user),
             'canManageEngagement' => $user->role === 'admin',
         ]);
     }
@@ -149,32 +154,62 @@ class FirmController extends Controller
     public function update(Request $request, $id)
     {
         $user = $request->user();
-        $firm = Firm::findOrFail($id);
+        $firm = Firm::with('consultant:id,name,username')->findOrFail($id);
         $data = $firm->data;
 
-        if ($user->role !== 'admin' && ($data['consultant'] ?? '') !== $user->name) {
+        if ($user->role !== 'admin' && !$firm->isAssignedTo($user)) {
             return response()->json(['error' => 'Yetkisiz işlem'], 403);
         }
 
         $patch = $request->all();
-        $oldConsultant = $data['consultant'] ?? 'Atanmamış';
+        $hasConsultantPatch = array_key_exists('consultant_user_id', $patch);
+        $hasLegacyConsultantPatch = array_key_exists('consultant', $patch);
+        if (($hasConsultantPatch || $hasLegacyConsultantPatch) && $user->role !== 'admin') {
+            return response()->json(['error' => 'Danışman atamasını yalnızca yöneticiler değiştirebilir.'], 403);
+        }
+        if ($hasLegacyConsultantPatch) {
+            return response()->json(['error' => 'Danışman ataması kullanıcı kimliğiyle yapılmalıdır.'], 422);
+        }
+
+        $request->validate([
+            'sector' => ['nullable', 'string', 'max:255'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            'profile' => ['nullable', 'array'],
+            'items' => ['nullable', 'array'],
+            'consultant_user_id' => ['nullable', 'integer', 'exists:users,id'],
+        ]);
+
+        $oldConsultant = $firm->consultantName();
 
         if (isset($patch['sector'])) $data['sector'] = mb_strtoupper(trim($patch['sector']), 'UTF-8');
+        if (array_key_exists('note', $patch)) $data['note'] = trim((string) $patch['note']);
         if (isset($patch['profile'])) $data['profile'] = array_merge($data['profile'] ?? [], $patch['profile']);
         
-        if (isset($patch['consultant']) && $patch['consultant'] !== $oldConsultant) {
-            $newConsultant = $patch['consultant'] ?: 'Atanmamış';
+        if ($hasConsultantPatch) {
+            $newConsultantId = $patch['consultant_user_id'] ?: null;
+            $newConsultant = $newConsultantId ? User::query()
+                ->where('role', 'employee')
+                ->where('active', true)
+                ->find($newConsultantId) : null;
+            if ($newConsultantId && !$newConsultant) {
+                return response()->json(['error' => 'Atanacak danışman aktif bir kullanıcı olmalıdır.'], 422);
+            }
+
+            $newConsultantLabel = $newConsultant?->name ?? 'Atanmamış';
+
+            if ((int) $firm->consultant_user_id !== (int) $newConsultantId) {
             
-            FirmLog::create([
-                'firm_id' => $firm->id,
-                'user_id' => $user->id,
-                'action' => 'consultant_changed',
-                'description' => "Danışman değiştirildi: '{$oldConsultant}' yerine '{$newConsultant}' atandı.",
-                'from_consultant' => $oldConsultant,
-                'to_consultant' => $newConsultant,
-            ]);
+                FirmLog::create([
+                    'firm_id' => $firm->id,
+                    'user_id' => $user->id,
+                    'action' => 'consultant_changed',
+                    'description' => "Danışman değiştirildi: '{$oldConsultant}' yerine '{$newConsultantLabel}' atandı.",
+                    'from_consultant' => $oldConsultant,
+                    'to_consultant' => $newConsultantLabel,
+                ]);
             
-            $data['consultant'] = mb_strtoupper(trim($patch['consultant']), 'UTF-8');
+                $firm->consultant_user_id = $newConsultantId;
+            }
         }
 
         if (isset($patch['items'])) {
@@ -196,6 +231,7 @@ class FirmController extends Controller
 
         $data['updatedAt'] = now()->toDateTimeString();
         $data['updatedBy'] = $user->name;
+        unset($data['consultant']);
         $firm->data = $data;
         $firm->save();
 
@@ -283,9 +319,9 @@ class FirmController extends Controller
     public function getLogs(Request $request, $id)
     {
         $user = $request->user();
-        $firm = Firm::findOrFail($id);
+        $firm = Firm::with('consultant:id,name,username')->findOrFail($id);
 
-        if ($user->role !== 'admin' && ($firm->data['consultant'] ?? '') !== $user->name) {
+        if ($user->role !== 'admin' && !$firm->isAssignedTo($user)) {
             return response()->json(['error' => 'Yetkisiz işlem'], 403);
         }
 

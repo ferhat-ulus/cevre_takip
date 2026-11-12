@@ -51,7 +51,7 @@ const handleLogin = async () => {
         const data = await response.json();
 
         if (response.ok) {
-            router.visit('/');
+            router.visit(data.redirect);
         } else {
             error.value = data.error || data.message || 'Giriş başarısız. Bilgilerinizi kontrol edin.';
         }

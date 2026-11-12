@@ -202,7 +202,7 @@ watch(search, (value) => {
                     Danışmanların mevcut tesis portföyünü, önceki atamaları ve görev devirlerini tek yerden izleyin.
                 </p>
             </div>
-            <Link href="/kullanicilar" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700">
+            <Link href="/yonetim/kullanicilar" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700">
                 Kullanıcı ve devir yönetimi
             </Link>
         </header>
@@ -309,7 +309,7 @@ watch(search, (value) => {
                                 </p>
                                 <p v-if="selectedConsultant.aliases?.length" class="mt-1 text-[10px] text-slate-500">Diğer yazımlar: {{ selectedConsultant.aliases.join(', ') }}</p>
                             </div>
-                            <Link v-if="!selectedConsultant.historical" href="/kullanicilar" class="text-[11px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+                            <Link v-if="!selectedConsultant.historical" href="/yonetim/kullanicilar" class="text-[11px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
                                 Görev devri / hesap işlemleri
                             </Link>
                         </div>

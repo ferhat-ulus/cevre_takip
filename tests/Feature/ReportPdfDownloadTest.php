@@ -32,7 +32,7 @@ class ReportPdfDownloadTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('stats.overdue', fn ($count) => $count > 0)
                 ->where('stats.missing', fn ($count) => $count > 0)
-                ->where('consultantStats.Danışman.overdue', fn ($count) => $count > 0)
+                ->where('consultantStats.unassigned.overdue', fn ($count) => $count > 0)
                 ->where('workItems', fn ($items) => collect($items)->contains(fn ($item) => $item['state'] === 'overdue')
                     && collect($items)->contains(fn ($item) => $item['state'] === 'missing'))
                 ->where('riskyFirms.0.issues.0.color', 'missing')

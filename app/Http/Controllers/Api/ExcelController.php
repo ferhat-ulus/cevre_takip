@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Firm;
-use App\Models\Visit;
 use App\Models\ActivityLog;
-use App\Models\FirmLog;
+use App\Models\User;
 use App\Services\ComplianceEngine;
 use App\Services\FirmExcelTemplateMapper;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -15,10 +14,8 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Auth\Access\AuthorizationException;
 use Throwable;
 
 class ExcelController extends Controller
@@ -26,7 +23,8 @@ class ExcelController extends Controller
     public function index()
     {
         return Inertia::render('ExcelAktar', [
-            'hasTemplate' => file_exists(storage_path('app/templates/master_template.xlsx'))
+            'hasTemplate' => file_exists(storage_path('app/templates/master_template.xlsx')),
+            'isAdmin' => request()->user()?->role === 'admin',
         ]);
     }
 
@@ -63,6 +61,9 @@ class ExcelController extends Controller
         try {
             $request->validate(['file' => 'required|file', 'selected_data' => 'required|json']);
             $selectedData = json_decode($request->selected_data, true);
+            if (!is_array($selectedData)) {
+                return response()->json(['error' => 'Aktarılacak veri okunamadı.'], 422);
+            }
             $result = $this->commitExcel($request->file('file'), $request->user(), $selectedData);
             
             ActivityLog::create([
@@ -73,90 +74,11 @@ class ExcelController extends Controller
             ]);
 
             return response()->json($result);
+        } catch (AuthorizationException $e) {
+            return response()->json(['error' => $e->getMessage()], 403);
         } catch (Throwable $e) {
             return response()->json(['error' => 'Aktarım Hatası: ' . $e->getMessage()], 400);
         }
-    }
-
-    public function destroyAll(Request $request)
-    {
-        if ($request->user()->role !== 'admin') {
-            return response()->json(['error' => 'Bu işlem için yönetici yetkisi gerekiyor.'], 403);
-        }
-
-        try {
-            set_time_limit(300);
-
-            // 1. Önce sistem yedeğini al
-            $exitCode = Artisan::call('backup:run');
-
-            if ($exitCode !== 0) {
-                throw new \Exception('Yedekleme komutu başarısız oldu. Terminal çıktısı: ' . Artisan::output());
-            }
-
-            // 2. storage/app içindeki TÜM dosyaları tara ve en son oluşturulan .zip dosyasını bul
-            $files = File::allFiles(storage_path('app'));
-            $latestBackupPath = null;
-            $latestTime = 0;
-
-            foreach ($files as $file) {
-                if ($file->getExtension() === 'zip') {
-                    if ($file->getMTime() > $latestTime) {
-                        $latestTime = $file->getMTime();
-                        $latestBackupPath = $file->getRealPath();
-                    }
-                }
-            }
-
-            if (!$latestBackupPath) {
-                throw new \Exception('Yedekleme komutu çalıştı ancak oluşturulan .zip dosyası sistemde bulunamadı.');
-            }
-
-            $latestBackup = basename($latestBackupPath);
-
-            // 3. Verileri Sil
-            DB::statement('PRAGMA foreign_keys = OFF;');
-            Visit::truncate();
-            FirmLog::truncate();
-            Firm::truncate();
-            DB::statement('PRAGMA foreign_keys = ON;');
-
-            // 4. İşlemi logla
-            ActivityLog::create([
-                'user_id' => $request->user()->id,
-                'action' => 'database_wipe',
-                'description' => "DİKKAT: Tüm tesis ve ziyaret verileri silindi! (Sistem yedeği alındı)",
-                'ip_address' => $request->ip()
-            ]);
-
-            return response()->json([
-                'ok' => true,
-                'message' => 'Tüm veriler silindi. Sistem yedeği indiriliyor.',
-                'download_url' => url('/api/download-backup/' . $latestBackup)
-            ]);
-        } catch (Throwable $e) {
-            return response()->json(['error' => 'İşlem başarısız: ' . $e->getMessage()], 500);
-        }
-    }
-
-    public function downloadBackup($filename)
-    {
-        // Dosyayı tüm storage/app içinde ara
-        $files = File::allFiles(storage_path('app'));
-        $targetPath = null;
-
-        foreach ($files as $file) {
-            if ($file->getFilename() === $filename) {
-                $targetPath = $file->getRealPath();
-                break;
-            }
-        }
-
-        if (!$targetPath) {
-            abort(404, 'Yedek dosyası bulunamadı.');
-        }
-
-        return response()->download($targetPath);
     }
 
     private function parseExcel($file, $user, $commit)
@@ -181,8 +103,21 @@ class ExcelController extends Controller
             $name = trim($worksheet->getCell(($colMap['firma'] ?? 'A') . "{$row}")->getCalculatedValue() ?? '');
             if (empty($name)) continue;
             
-            $isNew = !$existingFirms->has(mb_strtoupper($name, 'UTF-8'));
-            $existingData = $isNew ? [] : $existingFirms->get(mb_strtoupper($name, 'UTF-8'))->data;
+            $existingFirm = $existingFirms->get(mb_strtoupper($name, 'UTF-8'));
+            $isNew = $existingFirm === null;
+            $existingData = $isNew ? [] : $existingFirm->data;
+
+            if (!$isNew && $user->role !== 'admin'
+                && !$existingFirm->isAssignedTo($user)) {
+                $unread[] = [
+                    'row' => $row,
+                    'col' => $colMap['firma'] ?? 'A',
+                    'value' => $name,
+                    'topic' => 'Tesis yetkisi',
+                    'message' => 'Bu tesis başka bir danışmana ait olduğu için aktarıma dahil edilmedi.',
+                ];
+                continue;
+            }
             $items = []; $changes = [];
             
             foreach ($colMap['items'] as $k => $col) {
@@ -217,11 +152,13 @@ class ExcelController extends Controller
                 $ced = mb_strtoupper(str_replace('ÇED KAPSAM DIŞI', 'ÇED KAPSAMDIŞI', $cedRaw), 'UTF-8') ?: null;
             }
             $cd = $worksheet->getCell(($colMap['cedTarihi'] ?? 'L') . "{$row}")->getCalculatedValue();
-            $consultant = mb_strtoupper(trim($worksheet->getCell(($colMap['danisman'] ?? 'B') . "{$row}")->getCalculatedValue() ?? ''), 'UTF-8');
-            if ($user->role !== 'admin') $consultant = $user->name;
+            $consultantName = trim($worksheet->getCell(($colMap['danisman'] ?? 'B') . "{$row}")->getCalculatedValue() ?? '');
+            $consultantId = $user->role === 'admin'
+                ? $this->resolveConsultantId($consultantName, $unread, $row, $colMap['danisman'] ?? 'B')
+                : $user->id;
             
             $rows[] = [
-                'row' => $row, 'name' => $name, 'is_new' => $isNew, 'consultant' => $consultant,
+                'row' => $row, 'name' => $name, 'is_new' => $isNew, 'consultant' => $consultantName, 'consultant_user_id' => $consultantId,
                 'sector' => mb_strtoupper(trim($worksheet->getCell(($colMap['sektor'] ?? 'C') . "{$row}")->getCalculatedValue() ?? ''), 'UTF-8'),
                 'note' => trim($worksheet->getCell(($colMap['note'] ?? 'D') . "{$row}")->getCalculatedValue() ?? ''),
                 'items' => $items, 'changes' => $changes, 
@@ -238,13 +175,18 @@ class ExcelController extends Controller
 
     private function commitExcel($file, $user, $selectedRows)
     {
-        $spreadsheet = IOFactory::load($file->getPathname());
         $existingFirms = Firm::all()->keyBy(fn($f) => mb_strtoupper(trim($f->data['name'] ?? ''), 'UTF-8'));
         $imported = 0;
         
         foreach ($selectedRows as $rowData) {
             if (!isset($rowData['selected']) || !$rowData['selected']) continue;
-            $name = $rowData['name']; $isNew = $rowData['is_new'];
+            $name = trim((string) ($rowData['name'] ?? ''));
+            if ($name === '') continue;
+            $firm = $existingFirms->get(mb_strtoupper($name, 'UTF-8'));
+            $isNew = $firm === null;
+            if (!$isNew && $user->role !== 'admin' && !$firm->isAssignedTo($user)) {
+                throw new AuthorizationException('Yalnızca size atanmış tesislerin Excel verisini güncelleyebilirsiniz.');
+            }
             $selectedItems = [];
             if (isset($rowData['items']) && is_array($rowData['items'])) {
                 foreach ($rowData['items'] as $k => $it) {
@@ -254,10 +196,9 @@ class ExcelController extends Controller
                 }
             }
             if ($isNew) {
-                Firm::create(['id' => substr(uniqid(), -8), 'data' => ['name' => $name, 'consultant' => $rowData['consultant'], 'sector' => $rowData['sector'], 'status' => 'aktif', 'note' => $rowData['note'], 'contact' => '', 'profile' => $rowData['profile'], 'items' => $selectedItems, 'updatedAt' => now()->toDateTimeString(), 'updatedBy' => $user->name]]);
+                $consultantId = $user->role === 'admin' ? ($rowData['consultant_user_id'] ?? null) : $user->id;
+                Firm::create(['id' => substr(uniqid(), -8), 'consultant_user_id' => $consultantId ?: null, 'data' => ['name' => $name, 'sector' => $rowData['sector'] ?? '', 'status' => 'aktif', 'note' => $rowData['note'] ?? '', 'contact' => '', 'profile' => $rowData['profile'] ?? [], 'items' => $selectedItems, 'updatedAt' => now()->toDateTimeString(), 'updatedBy' => $user->name]]);
             } else {
-                $firm = $existingFirms->get(mb_strtoupper($name, 'UTF-8'));
-                if (!$firm) continue;
                 $data = $firm->data;
                 foreach ($selectedItems as $k => $it) {
                     $data['items'][$k] = !empty($rowData['items'][$k]['_clear'])
@@ -267,14 +208,32 @@ class ExcelController extends Controller
                 }
                 $data['profile'] = array_merge($data['profile'] ?? [], $rowData['profile']);
                 $data['note'] = $rowData['note'] ?: ($data['note'] ?? '');
-                if ($user->role === 'admin' && $rowData['consultant']) $data['consultant'] = $rowData['consultant'];
+                if ($user->role === 'admin' && array_key_exists('consultant_user_id', $rowData)) $firm->consultant_user_id = $rowData['consultant_user_id'] ?: null;
                 if ($rowData['sector']) $data['sector'] = $rowData['sector'];
                 $data['updatedAt'] = now()->toDateTimeString(); $data['updatedBy'] = $user->name;
+                unset($data['consultant']);
                 $firm->data = $data; $firm->save();
             }
             $imported++;
         }
         return ['imported' => $imported];
+    }
+
+    private function resolveConsultantId(string $name, array &$unread, int $row, string $column): ?int
+    {
+        $name = trim($name);
+        if ($name === '') return null;
+
+        $matches = User::query()->where('role', 'employee')->where('active', true)->where('name', $name)->get(['id']);
+        if ($matches->count() === 1) return $matches->first()->id;
+
+        $unread[] = [
+            'row' => $row, 'col' => $column, 'value' => $name, 'topic' => 'Danışman',
+            'message' => $matches->isEmpty()
+                ? 'Bu adla aktif danışman bulunamadı; tesis danışmansız aktarılacak.'
+                : 'Bu adla birden fazla danışman var; tesis danışmansız aktarılacak. Kullanıcı yönetiminden atama yapın.',
+        ];
+        return null;
     }
 
     private function getTopicName($key) { 

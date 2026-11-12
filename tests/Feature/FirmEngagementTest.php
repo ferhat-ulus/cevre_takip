@@ -102,6 +102,27 @@ class FirmEngagementTest extends TestCase
         $this->assertSame(0, FirmLog::where('action', 'engagement_ended')->count());
     }
 
+    public function test_consultant_cannot_reassign_their_own_firm(): void
+    {
+        $consultant = User::factory()->create(['role' => 'employee', 'name' => 'MEVCUT DANIŞMAN']);
+        $replacement = User::factory()->create(['role' => 'employee', 'name' => 'DİĞER DANIŞMAN']);
+        Firm::create([
+            'id' => 'reassignment-protected-firm',
+            'data' => [
+                'name' => 'Devir Koruması Tesisi',
+                'consultant' => $consultant->name,
+                'items' => [],
+            ],
+        ]);
+
+        $this->actingAs($consultant)
+            ->putJson('/api/firms/reassignment-protected-firm', ['consultant' => $replacement->name])
+            ->assertForbidden()
+            ->assertJsonFragment(['error' => 'Danışman atamasını yalnızca yöneticiler değiştirebilir.']);
+
+        $this->assertSame($consultant->name, Firm::find('reassignment-protected-firm')->data['consultant']);
+    }
+
     public function test_end_date_cannot_be_before_the_start_date(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

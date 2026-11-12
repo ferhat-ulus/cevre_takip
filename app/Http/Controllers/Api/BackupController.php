@@ -10,6 +10,15 @@ use Inertia\Inertia;
 
 class BackupController extends Controller
 {
+    private function backupPath($adapter, string $filename): string
+    {
+        abort_unless(basename($filename) === $filename && str_ends_with($filename, '.zip'), 404);
+
+        $directory = $adapter->exists('private/Laravel') ? 'private/Laravel' : 'Laravel';
+
+        return $directory.'/'.$filename;
+    }
+
     public function index(Request $request)
     {
         // Laravel 11 ve 10 arasındaki klasör farkını otomatik çözer
@@ -51,7 +60,7 @@ class BackupController extends Controller
     {
         $disk = config('backup.backup.destination.disks')[0] ?? 'local';
         $adapter = Storage::disk($disk);
-        $path = $adapter->exists('private/Laravel') ? 'private/Laravel/' . $filename : 'Laravel/' . $filename;
+        $path = $this->backupPath($adapter, $filename);
 
         if (!$adapter->exists($path)) {
             abort(404, 'Yedek dosyası bulunamadı.');
@@ -64,7 +73,7 @@ class BackupController extends Controller
     {
         $disk = config('backup.backup.destination.disks')[0] ?? 'local';
         $adapter = Storage::disk($disk);
-        $path = $adapter->exists('private/Laravel') ? 'private/Laravel/' . $filename : 'Laravel/' . $filename;
+        $path = $this->backupPath($adapter, $filename);
 
         if ($adapter->exists($path)) {
             $adapter->delete($path);

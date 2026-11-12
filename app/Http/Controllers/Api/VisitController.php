@@ -29,13 +29,10 @@ class VisitController extends Controller
         // Danışmanları ID ve İsim olarak çekiyoruz
         $consultants = [];
         if ($user->role === 'admin') {
-            $consultants = User::where('role', '!=', 'admin')->select('id', 'name')->get()->toArray();
+            $consultants = User::where('role', 'employee')->where('active', true)->select('id', 'name', 'username')->orderBy('name')->get()->toArray();
         }
 
-        $query = Firm::query();
-        if ($user->role !== 'admin') {
-            $query->where('data->consultant', $user->name);
-        }
+        $query = Firm::query()->with('consultant:id,name')->visibleTo($user);
         $firmsRaw = $query->get();
         
         $firms = [];
@@ -45,7 +42,8 @@ class VisitController extends Controller
                 $firms[] = [
                     'id' => $f->id, 
                     'name' => $data['name'] ?? 'İsimsiz Tesis',
-                    'consultant' => $data['consultant'] ?? 'Atanmamış'
+                    'consultant' => $f->consultantName(),
+                    'consultant_user_id' => $f->consultant_user_id,
                 ];
             }
         }
@@ -69,9 +67,7 @@ class VisitController extends Controller
         if ($user->role !== 'admin') {
             $query->where('user_id', $user->id);
         } elseif ($consultantFilter !== 'all') {
-            $query->whereHas('user', function($q) use ($consultantFilter) {
-                $q->where('name', $consultantFilter);
-            });
+            $query->where('user_id', (int) $consultantFilter);
         }
 
         $visits = $query->get();
@@ -120,10 +116,11 @@ class VisitController extends Controller
         
         $userId = ($user->role === 'admin' && $request->user_id) ? $request->user_id : $user->id;
         $targetUser = User::find($userId);
-        $firmConsultant = $firmData['consultant'] ?? '';
+        $firmConsultant = $firm->consultantName();
         
-        if ($targetUser && $targetUser->name !== $firmConsultant) {
-            return response()->json(['error' => "UYARI: Seçtiğiniz tesis '{$firmConsultant}' danışmanına aittir. Ziyaret '{$targetUser->name}' adına planlanamaz."], 422);
+        if (!$targetUser || (int) $firm->consultant_user_id !== (int) $targetUser->id) {
+            $targetName = $targetUser?->name ?? 'seçilen kullanıcı';
+            return response()->json(['error' => "UYARI: Seçtiğiniz tesis '{$firmConsultant}' danışmanına aittir. Ziyaret '{$targetName}' adına planlanamaz."], 422);
         }
 
         $dateString = $request->visit_date; 

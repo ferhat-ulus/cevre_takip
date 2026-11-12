@@ -13,7 +13,7 @@ createInertiaApp({
         const page = await resolvePageComponent(`./pages/${name}.vue`, import.meta.glob('./pages/**/*.vue'));
         
         // Login sayfası HARİÇ tüm sayfalara menüyü otomatik ekle
-        if (name !== 'auth/Login') {
+        if (!name.startsWith('auth/')) {
             page.default.layout = page.default.layout || AppLayout;
         }
         

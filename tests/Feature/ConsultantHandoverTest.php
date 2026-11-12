@@ -37,7 +37,7 @@ class ConsultantHandoverTest extends TestCase
             ->assertJson(['ok' => true, 'transferred' => 2]);
 
         $this->assertFalse($departingConsultant->fresh()->active);
-        $this->assertSame(2, Firm::query()->where('data->consultant', $replacement->name)->count());
+        $this->assertSame(2, Firm::query()->where('consultant_user_id', $replacement->id)->count());
         $this->assertSame(2, FirmLog::where('action', 'consultant_changed')->count());
         $this->assertDatabaseHas('activity_logs', [
             'action' => 'consultant_handover',
@@ -66,8 +66,8 @@ class ConsultantHandoverTest extends TestCase
             ->assertOk()
             ->assertJson(['ok' => true, 'transferred' => 1]);
 
-        $this->assertSame($replacement->name, Firm::find('partial-a')->data['consultant']);
-        $this->assertSame($consultant->name, Firm::find('partial-b')->data['consultant']);
+        $this->assertSame($replacement->id, Firm::find('partial-a')->consultant_user_id);
+        $this->assertSame($consultant->id, Firm::find('partial-b')->consultant_user_id);
         $this->assertTrue($consultant->fresh()->active);
         $this->assertDatabaseHas('firm_logs', [
             'firm_id' => 'partial-a',
@@ -158,10 +158,10 @@ class ConsultantHandoverTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->get('/kullanicilar')
+            ->get('/yonetim/kullanicilar')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where("firmCounts.{$consultant->name}", 1)
+                ->where("firmCounts.{$consultant->id}", 1)
                 ->has('consultantHistory', 1)
                 ->where('consultantHistory.0.description', "Geçmiş Tesisi: Danışman değiştirildi: 'Eski' yerine 'DANIŞMAN' atandı.")
             );

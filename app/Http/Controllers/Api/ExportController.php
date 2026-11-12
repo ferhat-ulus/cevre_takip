@@ -27,21 +27,20 @@ class ExportController extends Controller
             $templatePath = storage_path('app/templates/master_template.xlsx');
             $useTemplate = filter_var($request->input('use_template', file_exists($templatePath)), FILTER_VALIDATE_BOOLEAN);
 
-            $firmsRaw = Firm::all();
+            $firmsRaw = Firm::with('consultant:id,name')->visibleTo($user)->get();
             $firms = [];
             $today = Carbon::today();
             $cfgRow = Config::find('main');
             $cfg = array_merge(ComplianceEngine::DEFAULT_CFG, $cfgRow ? $cfgRow->v : []);
 
             foreach ($firmsRaw as $firm) {
-                if ($user->role !== 'admin') {
-                    if (($firm->data['consultant'] ?? '') !== $user->name) continue;
-                } elseif ($consultantFilter !== 'all') {
-                    if (($firm->data['consultant'] ?? '') !== $consultantFilter) continue;
+                if ($user->role === 'admin' && $consultantFilter !== 'all') {
+                    if ((int) $firm->consultant_user_id !== (int) $consultantFilter) continue;
                 }
 
                 $data = $firm->data;
                 $data['id'] = $firm->id;
+                $data['consultant'] = $firm->consultantName();
 
                 if ($statusFilter !== 'all') {
                     $ev = ComplianceEngine::evaluateFirm($data, $today, $cfg);

@@ -1,5 +1,7 @@
 <?php
 
+$databaseConnection = env('DB_CONNECTION', 'sqlite');
+
 return [
 
     'backup' => [
@@ -7,22 +9,27 @@ return [
 
         'source' => [
             'files' => [
-                'include' => [
+                'include' => array_values(array_filter([
                     base_path(),
-                    database_path('database.sqlite'),
-                ],
-                'exclude' => [
+                    $databaseConnection === 'sqlite' ? database_path('database.sqlite') : null,
+                ])),
+                'exclude' => array_values(array_filter([
                     base_path('vendor'),
                     base_path('node_modules'),
-                    storage_path('app/backup'),
-                    storage_path('logs'),
-                    storage_path('framework'),
-                ],
+                    base_path('.env'),
+                    base_path('.env.backup'),
+                    base_path('.env.production'),
+                    base_path('.git'),
+                    storage_path(),
+                    $databaseConnection !== 'sqlite' ? database_path('database.sqlite') : null,
+                ])),
                 'follow_links' => false,
                 'ignore_unreadable_directories' => false,
                 'relative_path' => null,
             ],
-            'databases' => [],
+            'databases' => in_array($databaseConnection, ['mysql', 'mariadb'], true)
+                ? [$databaseConnection]
+                : [],
         ],
 
         'database_dump_compressor' => null,
@@ -52,7 +59,7 @@ return [
         ],
         'notifiable' => \Spatie\Backup\Notifications\Notifiable::class,
         'mail' => [
-            'to' => 'your@example.com',
+            'to' => env('BACKUP_NOTIFICATION_EMAIL') ?: (env('MAIL_FROM_ADDRESS') ?: 'hello@example.com'),
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
                 'name' => env('MAIL_FROM_NAME', 'Example'),

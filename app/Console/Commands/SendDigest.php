@@ -23,11 +23,13 @@ class SendDigest extends Command
         $cfgRow = Config::find('main');
         $cfg = array_merge(ComplianceEngine::DEFAULT_CFG, $cfgRow ? $cfgRow->v : []);
         
-        $firmsRaw = Firm::all();
+        $firmsRaw = Firm::with('consultant:id,name')->get();
         $firms = [];
         foreach ($firmsRaw as $f) {
             $data = $f->data;
             $data['id'] = $f->id;
+            $data['consultant'] = $f->consultantName();
+            $data['consultant_user_id'] = $f->consultant_user_id;
             $firms[] = $data;
         }
 
@@ -50,7 +52,7 @@ class SendDigest extends Command
             if ($user->role === 'admin') {
                 $userFirms = $firms;
             } else {
-                $userFirms = array_filter($firms, fn($f) => ($f['consultant'] ?? '') === $user->name);
+                $userFirms = array_filter($firms, fn($f) => (int) ($f['consultant_user_id'] ?? 0) === (int) $user->id);
             }
 
             if (count($userFirms) === 0) continue;

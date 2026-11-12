@@ -1,13 +1,17 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { Head, usePage } from '@inertiajs/vue3';
+import PlatformLayout from '@/layouts/PlatformLayout.vue';
+
+defineOptions({ layout: PlatformLayout });
 
 const props = defineProps({
     users: Array,
     firmCounts: Object,
     consultantFirms: { type: Array, default: () => [] },
     consultantHistory: Array,
-    isAdmin: Boolean
+    isAdmin: Boolean,
+    modules: { type: Array, default: () => [] }
 });
 
 const page = usePage();
@@ -36,7 +40,8 @@ const form = ref({
     role: 'employee',
     password: '',
     active: true,
-    new_password: ''
+    new_password: '',
+    module_accesses: {}
 });
 
 const isSaving = ref(false);
@@ -57,8 +62,8 @@ const filteredUsers = computed(() => {
 const activeConsultants = computed(() => props.users.filter(user =>
     user.role === 'employee' && user.active && user.id !== selectedConsultant.value?.id
 ));
-const consultantFirmCount = (user) => Number(props.firmCounts?.[user.name] || 0);
-const consultantFirmList = computed(() => props.consultantFirms.filter((firm) => firm.consultant === selectedConsultant.value?.name));
+const consultantFirmCount = (user) => Number(props.firmCounts?.[user.id] || 0);
+const consultantFirmList = computed(() => props.consultantFirms.filter((firm) => Number(firm.consultant_user_id) === Number(selectedConsultant.value?.id)));
 const visibleConsultantFirms = computed(() => {
     const query = firmSearch.value.trim().toLocaleLowerCase('tr-TR');
     if (!query) return consultantFirmList.value;
@@ -68,10 +73,11 @@ const visibleConsultantFirms = computed(() => {
 const allFirmsSelected = computed(() =>
     consultantFirmList.value.length > 0 && selectedFirmIds.value.length === consultantFirmList.value.length
 );
+const emptyModuleAccesses = () => Object.fromEntries(props.modules.map((module) => [module.id, '']));
 
 const openHandoverModal = (user, deactivate = false) => {
     selectedConsultant.value = user;
-    const firmIds = props.consultantFirms.filter((firm) => firm.consultant === user.name).map((firm) => firm.id);
+    const firmIds = props.consultantFirms.filter((firm) => Number(firm.consultant_user_id) === Number(user.id)).map((firm) => firm.id);
     selectedFirmIds.value = firmIds;
     firmSearch.value = '';
     handoverForm.value = { replacement_user_id: '', reason: '', deactivate: deactivate && firmIds.length > 0 };
@@ -95,7 +101,7 @@ watch(allFirmsSelected, (selected) => {
 });
 
 const openAddModal = () => {
-    form.value = { name: '', username: '', email: '', role: 'employee', password: '', active: true };
+    form.value = { name: '', username: '', email: '', role: 'employee', password: '', active: true, module_accesses: emptyModuleAccesses() };
     errorMsg.value = '';
     successMsg.value = '';
     showAddModal.value = true;
@@ -108,7 +114,8 @@ const openEditModal = (user) => {
         username: user.username, 
         email: user.email || '', 
         role: user.role, 
-        active: Boolean(user.active) 
+        active: Boolean(user.active),
+        module_accesses: { ...emptyModuleAccesses(), ...(user.module_accesses || {}) }
     };
     errorMsg.value = '';
     successMsg.value = '';
@@ -138,8 +145,8 @@ const openStatusModal = (user) => {
 
 // Yeni Kullanıcı Kaydet
 const saveUser = async () => {
-    if (!form.value.name || !form.value.username) {
-        errorMsg.value = 'Ad Soyad ve Kullanıcı Adı zorunludur.';
+    if (!form.value.name) {
+        errorMsg.value = 'Ad soyad zorunludur.';
         return;
     }
 
@@ -183,7 +190,8 @@ const updateUser = async () => {
             body: JSON.stringify({
                 email: form.value.email,
                 role: form.value.role,
-                active: form.value.active
+                active: form.value.active,
+                module_accesses: form.value.module_accesses
             })
         });
 
@@ -306,7 +314,7 @@ const submitHandover = async () => {
 </script>
 
 <template>
-    <Head title="Kullanıcı Yönetimi" />
+    <Head title="Kullanıcılar ve Erişimler" />
 
     <div class="w-full space-y-4 pb-20">
         
@@ -318,7 +326,7 @@ const submitHandover = async () => {
 
         <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
             <div>
-                <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Kullanıcı Yönetimi</h1>
+                <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Kullanıcılar ve Erişimler</h1>
                 <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs">Sistemdeki danışmanları ve yöneticileri yönetin.</p>
             </div>
             
@@ -400,8 +408,8 @@ const submitHandover = async () => {
         </section>
 
         <!-- YENİ KULLANICI MODALI -->
-        <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div class="bg-white dark:bg-[#1e293b] rounded-xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-700 text-sm">
+        <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div class="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-6 text-sm shadow-xl dark:border-slate-700 dark:bg-[#1e293b]">
                 <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
                     <h3 class="text-lg font-bold text-slate-800 dark:text-white">Yeni Kullanıcı Ekle</h3>
                     <button @click="showAddModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
@@ -417,8 +425,8 @@ const submitHandover = async () => {
                         <input type="text" v-model="form.name" placeholder="Örn: Ahmet Yılmaz" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm uppercase">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Kullanıcı Adı <span class="text-rose-500">*</span></label>
-                        <input type="text" v-model="form.username" placeholder="Örn: ahmet.yilmaz" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm lowercase">
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Kullanıcı Adı</label>
+                        <input type="text" v-model="form.username" placeholder="Boş bırakırsanız ad soyaddan oluşturulur" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm lowercase">
                     </div>
                     <div>
                         <label class="block text-xs font-medium mb-1 dark:text-slate-300">E-Posta (Opsiyonel)</label>
@@ -431,6 +439,26 @@ const submitHandover = async () => {
                             <option value="admin">Sistem Yöneticisi</option>
                         </select>
                     </div>
+                    <div v-if="form.role === 'employee'" class="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                        <label class="block text-xs font-semibold dark:text-slate-300">Modül erişimleri</label>
+                        <p class="text-[10px] text-slate-500">Erişimi olmayan kullanıcı ilgili modülü hiç görmez.</p>
+                        <div v-for="module in modules" :key="module.id" class="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-slate-100 pt-2 first:border-t-0 first:pt-0 dark:border-slate-700">
+                            <div>
+                                <p class="text-xs font-medium dark:text-slate-200">{{ module.name }}</p>
+                                <p v-if="!module.is_active" class="text-[10px] text-amber-600">Henüz kullanıma açılmadı</p>
+                            </div>
+                            <select v-if="module.key === 'environment'" v-model="form.module_accesses[module.id]" class="rounded-md border border-slate-300 bg-white p-1.5 text-xs dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                                <option value="">Erişim yok</option>
+                                <option value="advisor">Danışman</option>
+                                <option value="viewer">Görüntüleyici</option>
+                            </select>
+                            <select v-else :value="form.module_accesses[module.id] ? 'granted' : ''" class="rounded-md border border-slate-300 bg-white p-1.5 text-xs dark:border-slate-600 dark:bg-slate-700 dark:text-white" @change="form.module_accesses[module.id] = $event.target.value === 'granted' ? 'advisor' : ''">
+                                <option value="">Erişim yok</option>
+                                <option value="granted">Erişim var</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p v-else class="rounded-lg bg-indigo-50 p-2 text-[10px] text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">Sistem yöneticileri tüm modüllere tam erişime sahiptir.</p>
                     <div>
                         <label class="block text-xs font-medium mb-1 dark:text-slate-300">Şifre (Boş bırakılırsa otomatik atanır)</label>
                         <input type="text" v-model="form.password" placeholder="En az 6 karakter" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
@@ -447,8 +475,8 @@ const submitHandover = async () => {
         </div>
 
         <!-- KULLANICI DÜZENLEME MODALI -->
-        <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div class="bg-white dark:bg-[#1e293b] rounded-xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-700 text-sm">
+        <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div class="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-6 text-sm shadow-xl dark:border-slate-700 dark:bg-[#1e293b]">
                 <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
                     <h3 class="text-lg font-bold text-slate-800 dark:text-white">Kullanıcıyı Düzenle</h3>
                     <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
@@ -483,6 +511,26 @@ const submitHandover = async () => {
                             <option :value="false">Pasif (Giriş Yapamaz)</option>
                         </select>
                     </div>
+                    <div v-if="form.role === 'employee'" class="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                        <label class="block text-xs font-semibold dark:text-slate-300">Modül erişimleri</label>
+                        <p class="text-[10px] text-slate-500">Erişimi olmayan kullanıcı ilgili modülü hiç görmez.</p>
+                        <div v-for="module in modules" :key="module.id" class="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-slate-100 pt-2 first:border-t-0 first:pt-0 dark:border-slate-700">
+                            <div>
+                                <p class="text-xs font-medium dark:text-slate-200">{{ module.name }}</p>
+                                <p v-if="!module.is_active" class="text-[10px] text-amber-600">Henüz kullanıma açılmadı</p>
+                            </div>
+                            <select v-if="module.key === 'environment'" v-model="form.module_accesses[module.id]" class="rounded-md border border-slate-300 bg-white p-1.5 text-xs dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                                <option value="">Erişim yok</option>
+                                <option value="advisor">Danışman</option>
+                                <option value="viewer">Görüntüleyici</option>
+                            </select>
+                            <select v-else :value="form.module_accesses[module.id] ? 'granted' : ''" class="rounded-md border border-slate-300 bg-white p-1.5 text-xs dark:border-slate-600 dark:bg-slate-700 dark:text-white" @change="form.module_accesses[module.id] = $event.target.value === 'granted' ? 'advisor' : ''">
+                                <option value="">Erişim yok</option>
+                                <option value="granted">Erişim var</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p v-else class="rounded-lg bg-indigo-50 p-2 text-[10px] text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">Sistem yöneticileri tüm modüllere tam erişime sahiptir.</p>
                 </div>
 
                 <div class="flex justify-end space-x-2 mt-6">
@@ -495,8 +543,8 @@ const submitHandover = async () => {
         </div>
 
         <!-- ŞİFRE SIFIRLAMA MODALI -->
-        <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div class="bg-white dark:bg-[#1e293b] rounded-xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-700 text-sm">
+        <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div class="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-6 text-sm shadow-xl dark:border-slate-700 dark:bg-[#1e293b]">
                 <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
                     <h3 class="text-lg font-bold text-slate-800 dark:text-white">Şifre Sıfırla</h3>
                     <button @click="showPasswordModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">

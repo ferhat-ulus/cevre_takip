@@ -2,15 +2,25 @@
 
 Bu proje, çevre danışmanlığı yürütülen tesislerin mevzuat bağlamında takip edilmesi, uyarıların yönetilmesi ve raporlanması için geliştirilmiş bir web uygulamasıdır.
 
+Canlı sunucu kurulumu için [DEPLOYMENT.md](DEPLOYMENT.md) dosyasındaki adımlar izlenmelidir.
+
 ## 🛠️ Kullanılan Teknolojiler
 - **Backend:** Laravel (PHP 8+)
 - **Frontend:** Vue 3 (Composition API), Inertia.js
 - **Tasarım:** Tailwind CSS (v4 kullanılıyor, `@tailwindcss/vite` eklentisi mevcut)
-- **Veritabanı:** SQLite
+- **Veritabanı:** SQLite (yerel varsayılan) veya MySQL/MariaDB
 - **Derleyici:** Vite (TypeScript kullanılıyor: `vite.config.ts` ve `app.ts`)
 - **Yedekleme:** `spatie/laravel-backup` paketi
 
 ## 📂 Önemli Mimari Detaylar ve Özel Yapılar
+
+### Veritabanı kurulumu
+
+Uygulama yerel geliştirmede SQLite kullanır; Laravel üzerinden MySQL/MariaDB ile de çalışacak şekilde yapılandırılmıştır. MySQL/MariaDB ortamında `.env` dosyasında `DB_CONNECTION=mysql` seçilmeli ve `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` ve `DB_PASSWORD` doldurulmalıdır. Sunucuda PHP `pdo_mysql` eklentisi etkin olmalı; veritabanı ve kullanıcısı cPanel'den oluşturulup bu veritabanına yetkilendirilmelidir.
+
+Yeni bir MySQL veritabanında şemayı oluşturmak için dağıtım ortamında `php artisan migrate --force` çalıştırılır. Bu işlem mevcut SQLite verilerini MySQL'e taşımaz. Mevcut veriler gerekiyorsa ayrıca aktarılmalı ve kayıt sayıları ile uygulama ekranları doğrulanmalıdır. Geliştirme/testlerde SQLite varsayılanı değişmeden kalır.
+
+Uygulama yedeklemesi MySQL/MariaDB bağlantısını yedeğe dahil eder. Veritabanı dökümü almak için sunucuda `mysqldump` erişimi de gerekir; barındırma sağlayıcısının bu aracı sunup sunmadığı doğrulanmalıdır. Yedekleme komutu başarılı görünse bile yedeğin sunucu dışında saklanması ve geri yüklemenin denenmesi gerekir.
 
 ### 1. Veri Saklama (JSON Yapısı)
 Standart ilişkisel veritabanı yerine, esneklik sağlamak adına `Firm` (Tesis) modelindeki temel bilgiler `data` adı verilen bir **JSON sütununda** tutulur.

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\AppModule;
+use App\Models\ModuleUserAccess;
 use App\Models\ActivityLog; // YENİ EKLENDİ
 use App\Models\Firm;
 use App\Models\FirmLog;
@@ -22,10 +24,23 @@ class UserController extends Controller
             abort(403, 'Bu sayfaya erişim yetkiniz yok.');
         }
 
-        $users = User::orderBy('role', 'desc')->orderBy('name')->get();
-        $firmCounts = Firm::query()->get(['data'])
+        $modules = AppModule::query()->orderBy('sort_order')->get(['id', 'key', 'name', 'description', 'is_active']);
+        $users = User::query()
+            ->with('moduleAccesses:module_user_accesses.id,user_id,module_id,role')
+            ->orderBy('role', 'desc')
+            ->orderBy('name')
+            ->get()
+            ->map(function (User $user) {
+                $user->setAttribute('module_accesses', $user->moduleAccesses
+                    ->mapWithKeys(fn (ModuleUserAccess $access) => [$access->module_id => $access->role])
+                    ->all());
+                $user->unsetRelation('moduleAccesses');
+
+                return $user;
+            });
+        $firmCounts = Firm::query()->get(['data', 'consultant_user_id'])
             ->reject(fn (Firm $firm) => ComplianceEngine::isEngagementClosed($firm->data))
-            ->countBy(fn (Firm $firm) => $firm->data['consultant'] ?? '');
+            ->countBy(fn (Firm $firm) => (string) ($firm->consultant_user_id ?? ''));
         $handoverHistory = ActivityLog::with('user:id,name')
             ->whereIn('action', ['consultant_handover', 'user_status_changed'])
             ->latest()
@@ -65,15 +80,16 @@ class UserController extends Controller
         return Inertia::render('Kullanicilar', [
             'users' => $users,
             'firmCounts' => $firmCounts,
-            'consultantFirms' => Firm::query()->orderBy('id')->get(['id', 'data'])
+            'consultantFirms' => Firm::query()->orderBy('id')->get(['id', 'data', 'consultant_user_id'])
                 ->reject(fn (Firm $firm) => ComplianceEngine::isEngagementClosed($firm->data))
                 ->map(fn (Firm $firm) => [
                 'id' => $firm->id,
                 'name' => $firm->data['name'] ?? 'İsimsiz tesis',
-                'consultant' => $firm->data['consultant'] ?? '',
+                'consultant_user_id' => $firm->consultant_user_id,
             ])->values(),
             'consultantHistory' => $consultantHistory,
-            'isAdmin' => true
+            'isAdmin' => true,
+            'modules' => $modules,
         ]);
     }
 
@@ -363,17 +379,19 @@ class UserController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:50|unique:users,username|alpha_dash',
+            'username' => 'nullable|string|max:50|unique:users,username|alpha_dash',
             'email' => 'nullable|email|max:255',
             'role' => 'required|in:admin,employee',
-            'password' => 'nullable|string|min:6'
+            'password' => 'nullable|string|min:6',
+            'module_accesses' => ['nullable', 'array'],
+            'module_accesses.*' => ['nullable', 'in:advisor,viewer'],
         ]);
 
         $tempPassword = $request->password ?: Str::random(10);
 
         $user = User::forceCreate([
             'name' => mb_strtoupper($request->name, 'UTF-8'),
-            'username' => strtolower($request->username),
+            'username' => $this->makeUniqueUsername($request->input('username') ?: $request->name),
             'email' => $request->email,
             'role' => $request->role,
             'password' => Hash::make($tempPassword),
@@ -382,6 +400,8 @@ class UserController extends Controller
             'sess_ver' => 1,
             'cal_token' => Str::random(32)
         ]);
+
+        $this->syncModuleAccesses($user, $request->input('module_accesses', []));
 
         ActivityLog::create([
             'user_id' => $request->user()->id,
@@ -404,7 +424,7 @@ class UserController extends Controller
         $response = ['ok' => true];
         $logDetails = [];
         $hasAssignedFirms = $user->role === 'employee'
-            && Firm::query()->where('data->consultant', $user->name)->get()
+            && Firm::query()->where('consultant_user_id', $user->id)->get()
                 ->contains(fn (Firm $firm) => !ComplianceEngine::isEngagementClosed($firm->data));
 
         if ($hasAssignedFirms
@@ -471,6 +491,16 @@ class UserController extends Controller
             ]);
         }
 
+        if (array_key_exists('module_accesses', $patch)) {
+            $request->validate([
+                'module_accesses' => ['array'],
+                'module_accesses.*' => ['nullable', 'in:advisor,viewer'],
+            ]);
+            $this->syncModuleAccesses($user, $patch['module_accesses']);
+            $user->sess_ver += 1;
+            $logDetails[] = 'Modül erişimleri güncellendi';
+        }
+
         $user->save();
 
         if (count($logDetails) > 0 && !isset($patch['resetPassword'])) {
@@ -483,6 +513,44 @@ class UserController extends Controller
         }
 
         return response()->json($response);
+    }
+
+    private function syncModuleAccesses(User $user, array $accesses): void
+    {
+        $modules = AppModule::query()->get(['id']);
+        $allowedRoles = [AppModule::ROLE_ADVISOR, AppModule::ROLE_VIEWER];
+
+        DB::transaction(function () use ($user, $accesses, $modules, $allowedRoles) {
+            ModuleUserAccess::query()->where('user_id', $user->id)->delete();
+
+            foreach ($modules as $module) {
+                $role = $accesses[$module->id] ?? null;
+                if (!in_array($role, $allowedRoles, true)) {
+                    continue;
+                }
+
+                ModuleUserAccess::create([
+                    'user_id' => $user->id,
+                    'module_id' => $module->id,
+                    'role' => $role,
+                ]);
+            }
+        });
+    }
+
+    private function makeUniqueUsername(string $value): string
+    {
+        $base = Str::of($value)->ascii()->lower()->replaceMatches('/[^a-z0-9]+/', '.')->trim('.')->substr(0, 45)->toString();
+        $base = $base !== '' ? $base : 'kullanici';
+        $candidate = $base;
+        $suffix = 2;
+
+        while (User::where('username', $candidate)->exists()) {
+            $candidate = Str::substr($base, 0, 45 - strlen((string) $suffix)) . $suffix;
+            $suffix++;
+        }
+
+        return $candidate;
     }
 
     public function handoverConsultant(Request $request, $id)
@@ -514,7 +582,7 @@ class UserController extends Controller
         $newName = $replacement?->name ?? 'Atanmamış';
         $reason = trim($request->string('reason')->toString());
         $deactivate = $request->boolean('deactivate');
-        $firmQuery = Firm::query()->where('data->consultant', $oldName)->get()
+        $firmQuery = Firm::query()->where('consultant_user_id', $consultant->id)->get()
             ->reject(fn (Firm $firm) => ComplianceEngine::isEngagementClosed($firm->data));
         if ($request->exists('firm_ids')) {
             $firmIds = array_values(array_unique($request->input('firm_ids', [])));
@@ -529,7 +597,7 @@ class UserController extends Controller
             return response()->json(['error' => 'Devredilecek tesis seçin.'], 422);
         }
         $remainingFirms = Firm::query()
-            ->where('data->consultant', $oldName)
+            ->where('consultant_user_id', $consultant->id)
             ->get()
             ->contains(fn (Firm $firm) => !ComplianceEngine::isEngagementClosed($firm->data) && !$firms->pluck('id')->contains($firm->id));
         if ($deactivate && $remainingFirms) {
@@ -537,12 +605,13 @@ class UserController extends Controller
         }
         $transferredCount = 0;
 
-        DB::transaction(function () use ($request, $consultant, $firms, $oldName, $newName, $reason, $deactivate, &$transferredCount) {
+        DB::transaction(function () use ($request, $consultant, $replacement, $firms, $oldName, $newName, $reason, $deactivate, &$transferredCount) {
             foreach ($firms as $firm) {
                 $data = $firm->data;
-                $data['consultant'] = $newName;
                 $data['updatedAt'] = now()->toDateTimeString();
                 $data['updatedBy'] = $request->user()->name;
+                unset($data['consultant']);
+                $firm->consultant_user_id = $replacement?->id;
                 $firm->data = $data;
                 $firm->save();
 
