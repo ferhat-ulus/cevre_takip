@@ -132,7 +132,7 @@ const removeHoliday = async (entry) => {
             <section class="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-[#1e293b]">
                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-700">
                     <h2 class="font-bold text-slate-800 dark:text-white">Dini bayram tatilleri</h2>
-                    <p class="mt-0.5 text-xs text-slate-500">Diyanet takvimi açıklandığında yalnızca tam günleri ekleyin. Arife günleri eklenmez.</p>
+                    <p class="mt-0.5 text-xs text-slate-500">Diyanet takvimi açıklandığında yalnızca tam günleri ekleyin. Arife günleri eklenmez; sabit resmî tatille çakışan günler ayrıca eklenebilir.</p>
                 </div>
                 <form class="grid gap-2 border-b border-slate-100 p-4 dark:border-slate-700 sm:grid-cols-[1fr_1.4fr_auto]" @submit.prevent="addHoliday">
                     <input v-model="form.holiday_date" type="date" :min="`${year}-01-01`" :max="`${year}-12-31`" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white" aria-label="Tatil tarihi">

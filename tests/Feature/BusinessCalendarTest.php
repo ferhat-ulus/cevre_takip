@@ -30,6 +30,23 @@ class BusinessCalendarTest extends TestCase
         $this->assertTrue($calendar->isBlockedDate('2026-05-27'));
     }
 
+    public function test_religious_holiday_can_share_a_date_with_a_fixed_holiday(): void
+    {
+        CalendarHoliday::create([
+            'holiday_date' => '2027-05-19',
+            'title' => 'Kurban Bayramı 1. Gün',
+            'type' => 'religious',
+        ]);
+
+        $calendar = app(BusinessCalendar::class);
+
+        $this->assertTrue($calendar->isBlockedDate('2027-05-19'));
+        $this->assertSame(1, CalendarHoliday::query()->whereDate('holiday_date', '2027-05-19')->count());
+        $this->assertTrue(collect($calendar->entriesForYear(2027))
+            ->where('date', '2027-05-19')
+            ->contains('title', 'Kurban Bayramı 1. Gün'));
+    }
+
     public function test_next_year_reminder_clears_after_seven_religious_days_are_entered(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-11-13 10:00:00', BusinessCalendar::TIMEZONE));

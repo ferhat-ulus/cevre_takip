@@ -41,22 +41,23 @@ class CalendarHolidayController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'holiday_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:2020-01-01', 'before_or_equal:2100-12-31', 'unique:calendar_holidays,holiday_date'],
+            'holiday_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:2020-01-01', 'before_or_equal:2100-12-31'],
             'title' => ['required', 'string', 'max:120'],
         ]);
 
         $date = CarbonImmutable::parse($validated['holiday_date'], BusinessCalendar::TIMEZONE);
-        $fixedDates = collect($this->calendar->entriesForYear($date->year))
-            ->where('managed', false)
-            ->pluck('date');
+        $title = trim($validated['title']);
 
-        if ($fixedDates->contains($validated['holiday_date'])) {
-            return response()->json(['error' => 'Bu tarih zaten sistem tarafından sabit resmî tatil olarak tanımlı.'], 422);
+        if (CalendarHoliday::query()
+            ->whereDate('holiday_date', $validated['holiday_date'])
+            ->where('title', $title)
+            ->exists()) {
+            return response()->json(['error' => 'Bu tarihte aynı ada sahip bir tatil kaydı zaten var.'], 422);
         }
 
         $holiday = CalendarHoliday::create([
             'holiday_date' => $validated['holiday_date'],
-            'title' => trim($validated['title']),
+            'title' => $title,
             'type' => 'religious',
             'created_by' => $request->user()->id,
             'verified_at' => now(),
