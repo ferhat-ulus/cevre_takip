@@ -8,19 +8,15 @@ use App\Models\Visit;
 use App\Models\Firm;
 use App\Models\User;
 use App\Models\ActivityLog;
+use App\Services\BusinessCalendar;
 use Carbon\Carbon;
 use Inertia\Inertia;
 
 class VisitController extends Controller
 {
-    private const BUSINESS_TIMEZONE = 'Europe/Istanbul';
-
-    public const HOLIDAYS = [
-        '2024-01-01', '2024-04-09', '2024-04-10', '2024-04-11', '2024-05-01', '2024-05-19', '2024-06-15', '2024-06-16', '2024-06-17', '2024-06-18', '2024-06-19', '2024-07-15', '2024-08-30', '2024-10-29',
-        '2025-01-01', '2025-03-30', '2025-03-31', '2025-04-01', '2025-05-01', '2025-05-19', '2025-06-06', '2025-06-07', '2025-06-08', '2025-06-09', '2025-07-15', '2025-08-30', '2025-10-29',
-        '2026-01-01', '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-22', '2026-05-01', '2026-05-19', '2026-05-26', '2026-05-27', '2026-05-28', '2026-05-29', '2026-07-15', '2026-08-30', '2026-10-29',
-        '2027-01-01', '2027-03-09', '2027-03-10', '2027-03-11', '2027-05-01', '2027-05-19', '2027-05-16', '2027-05-17', '2027-05-18', '2027-05-19', '2027-07-15', '2027-08-30', '2027-10-29',
-    ];
+    public function __construct(private readonly BusinessCalendar $calendar)
+    {
+    }
 
     public function index(Request $request)
     {
@@ -51,9 +47,9 @@ class VisitController extends Controller
         return Inertia::render('ZiyaretTakvimi', [
             'firms' => $firms,
             'consultants' => $consultants,
-            'holidays' => self::HOLIDAYS,
+            'holidays' => $this->calendar->blockedDates(now(BusinessCalendar::TIMEZONE)->year - 1, now(BusinessCalendar::TIMEZONE)->year + 3),
             'isAdmin' => $user->role === 'admin',
-            'timezone' => self::BUSINESS_TIMEZONE,
+            'timezone' => BusinessCalendar::TIMEZONE,
         ]);
     }
 
@@ -106,7 +102,7 @@ class VisitController extends Controller
         ]);
 
         $user = $request->user();
-        $today = Carbon::now(self::BUSINESS_TIMEZONE)->toDateString();
+        $today = Carbon::now(BusinessCalendar::TIMEZONE)->toDateString();
         if ($request->visit_date <= $today) {
             return response()->json(['error' => 'Ziyaret yalnızca yarın ve sonraki tarihler için planlanabilir.'], 422);
         }
@@ -130,7 +126,7 @@ class VisitController extends Controller
             return response()->json(['error' => 'Hafta sonları (Cumartesi/Pazar) ziyaret planlanamaz.'], 422);
         }
 
-        if (in_array($dateString, self::HOLIDAYS)) {
+        if ($this->calendar->isBlockedDate($dateString)) {
             return response()->json(['error' => 'Seçtiğiniz gün resmi tatildir, ziyaret planlanamaz.'], 422);
         }
 
@@ -168,13 +164,13 @@ class VisitController extends Controller
         }
 
         $visitDate = Carbon::parse($visit->visit_date)->toDateString();
-        $today = Carbon::now(self::BUSINESS_TIMEZONE)->toDateString();
+        $today = Carbon::now(BusinessCalendar::TIMEZONE)->toDateString();
 
         if ($visitDate < $today) {
             return response()->json(['error' => 'Geçmiş tarihli ziyaretler silinemez.'], 422);
         }
 
-        if ($visitDate === $today && Carbon::now(self::BUSINESS_TIMEZONE)->hour >= 16) {
+        if ($visitDate === $today && Carbon::now(BusinessCalendar::TIMEZONE)->hour >= 16) {
             return response()->json(['error' => 'Bugün tarihli ziyaretler saat 16.00’dan sonra silinemez.'], 422);
         }
 

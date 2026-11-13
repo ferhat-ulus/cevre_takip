@@ -5,7 +5,8 @@ import { Link, usePage, Head } from '@inertiajs/vue3';
 const props = defineProps({
     stats: Object,
     firmSummary: Object,
-    consultants: Array
+    consultants: Array,
+    calendarReminder: Object,
 });
 
 const page = usePage();
@@ -43,6 +44,14 @@ const kalanSure = (days) => (days === null || days === undefined ? 'Belirsiz' : 
         <div>
             <h1 class="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Genel Bakış</h1>
             <p class="text-slate-500 dark:text-slate-400 mt-0.5 text-xs">Çalışılan tesislerin kapsamı ve danışmanların tarihi belli iş yükü.</p>
+        </div>
+
+        <div v-if="isAdmin && calendarReminder?.visible" class="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="font-bold">{{ calendarReminder.year }} resmî tatil takvimi tamamlanmalı</p>
+                <p class="mt-0.5 text-xs sm:text-sm">{{ calendarReminder.message }}</p>
+            </div>
+            <Link href="/takvim-ayarlari" class="shrink-0 rounded-lg bg-amber-700 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-800">Takvimi Düzenle</Link>
         </div>
 
         <section aria-label="Tesis dağılımı" class="grid grid-cols-2 xl:grid-cols-4 gap-2">

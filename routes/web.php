@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\LogController;
 use App\Http\Controllers\Api\VisitController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\BackupController;
+use App\Http\Controllers\Api\CalendarHolidayController;
 
 // GİRİŞ VE ÇIKIŞ ROTALARI
 Route::get('/login', function () {
@@ -91,12 +92,16 @@ Route::middleware(['auth', 'session.current'])->group(function () {
         Route::get('/ayarlar', [SettingsController::class, 'index'])->name('settings.index');
         Route::get('/danisman-takibi', [UserController::class, 'consultantOverview'])->name('consultants.overview');
         Route::get('/yedekler', [BackupController::class, 'index'])->name('backups.index');
+        Route::get('/takvim-ayarlari', [CalendarHolidayController::class, 'index'])->name('calendar.settings.index');
         
         Route::post('/api/settings', [SettingsController::class, 'update']);
         Route::delete('/api/settings/obligation/{key}', [SettingsController::class, 'destroyObligation']);
         Route::post('/api/backups/run', [BackupController::class, 'run']);
         Route::get('/api/backups/download/{filename}', [BackupController::class, 'download']);
         Route::delete('/api/backups/{filename}', [BackupController::class, 'destroy']);
+        Route::get('/api/calendar-holidays', [CalendarHolidayController::class, 'list']);
+        Route::post('/api/calendar-holidays', [CalendarHolidayController::class, 'store']);
+        Route::delete('/api/calendar-holidays/{calendarHoliday}', [CalendarHolidayController::class, 'destroy']);
         Route::post('/api/excel/upload-template', [ExcelController::class, 'uploadTemplate']);
     });
 

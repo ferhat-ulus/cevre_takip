@@ -7,12 +7,13 @@ use Illuminate\Http\Request;
 use App\Models\Firm;
 use App\Models\Config;
 use App\Services\ComplianceEngine;
+use App\Services\BusinessCalendar;
 use Carbon\Carbon;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, BusinessCalendar $calendar)
     {
         $user = $request->user();
         $today = Carbon::today();
@@ -120,6 +121,7 @@ class DashboardController extends Controller
             'stats' => $stats,
             'firmSummary' => $firmSummary,
             'consultants' => $consultants,
+            'calendarReminder' => $user->role === 'admin' ? $calendar->reminder() : null,
         ]);
     }
 }

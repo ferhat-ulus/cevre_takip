@@ -51,14 +51,18 @@ const getAppDateParts = (date = new Date()) => {
     }).formatToParts(date);
     return Object.fromEntries(parts.map(part => [part.type, part.value]));
 };
+const weekdayOfDateString = (dateString) => new Date(`${dateString}T12:00:00Z`).getUTCDay();
+const addDaysToDateString = (dateString, days) => {
+    const date = new Date(`${dateString}T12:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + days);
+    return date.toISOString().slice(0, 10);
+};
 const todayInAppTimezone = computed(() => {
     const parts = getAppDateParts(new Date(currentTime.value));
     return `${parts.year}-${parts.month}-${parts.day}`;
 });
 const tomorrowInAppTimezone = computed(() => {
-    const tomorrow = new Date(`${todayInAppTimezone.value}T12:00:00`);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+    return addDaysToDateString(todayInAppTimezone.value, 1);
 });
 const canDeleteSelectedVisit = computed(() => {
     if (!selectedEvent.value.date || selectedEvent.value.date < todayInAppTimezone.value) return false;
@@ -94,7 +98,7 @@ const calendarOptions = computed(() => ({
     dayCellClassNames: (arg) => {
         const dateStr = arg.dateStr;
         const isHoliday = props.holidays.includes(dateStr);
-        const isWeekend = arg.date.getDay() === 0 || arg.date.getDay() === 6;
+        const isWeekend = weekdayOfDateString(dateStr) === 0 || weekdayOfDateString(dateStr) === 6;
         
         if (isHoliday) return ['bg-rose-100', 'text-rose-700', 'font-bold'];
         if (isWeekend) return ['bg-slate-100', 'text-slate-400'];
@@ -129,8 +133,8 @@ const handleDateClick = (arg) => {
         return;
     }
 
-    const dateObj = new Date(arg.dateStr);
-    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+    const weekday = weekdayOfDateString(arg.dateStr);
+    const isWeekend = weekday === 0 || weekday === 6;
     
     if (isWeekend) {
         triggerToast('Hafta sonları ziyaret planlanamaz.', 'error');
