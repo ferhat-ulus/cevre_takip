@@ -18,8 +18,10 @@ const engagement = ref({
     ended_at: props.firm.serviceEndedAt || '',
 });
 const isSaving = ref(false);
+const isSavingConsultant = ref(false);
 const isSavingEngagement = ref(false);
 const engagementError = ref('');
+const consultantError = ref('');
 
 const goBack = () => {
     const historyIndex = window.navigation?.currentEntry?.index;
@@ -121,9 +123,6 @@ const save = async () => {
                 note: form.value.note,
                 profile: form.value.profile,
                 items: form.value.items,
-                consultant_user_id: props.canManageEngagement
-                    ? (form.value.consultant_user_id || null)
-                    : undefined,
             })
         });
 
@@ -138,6 +137,37 @@ const save = async () => {
     } catch (err) {
         alert('Sunucuya bağlanılamadı. Lütfen tekrar deneyin.');
         isSaving.value = false;
+    }
+};
+
+const saveConsultantAssignment = async () => {
+    if (!props.canManageEngagement) return;
+
+    isSavingConsultant.value = true;
+    consultantError.value = '';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    try {
+        const response = await fetch(`/api/firms/${props.firm.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            body: JSON.stringify({ consultant_user_id: form.value.consultant_user_id || null }),
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            consultantError.value = data.error || data.message || 'Danışman ataması kaydedilemedi.';
+            isSavingConsultant.value = false;
+        }
+    } catch (err) {
+        consultantError.value = 'Sunucuya bağlanılamadı.';
+        isSavingConsultant.value = false;
     }
 };
 
@@ -229,7 +259,11 @@ const changeItemState = (key, state) => {
                                     {{ consultant.name }} — {{ consultant.username }}
                                 </option>
                             </select>
+                            <p v-if="consultantError" class="mt-2 rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700">{{ consultantError }}</p>
                             <p class="mt-1 text-[10px] text-slate-500">Atama değişikliği kayıt altına alınır; danışman yalnızca kendisine atanmış tesisleri görür.</p>
+                            <button type="button" @click="saveConsultantAssignment" :disabled="isSavingConsultant" class="mt-3 w-full rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
+                                {{ isSavingConsultant ? 'Kaydediliyor...' : 'Danışmanı kaydet' }}
+                            </button>
                         </div>
 
                         <div>
