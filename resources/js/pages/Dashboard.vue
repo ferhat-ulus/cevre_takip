@@ -7,6 +7,7 @@ const props = defineProps({
     firmSummary: Object,
     consultants: Array,
     calendarReminder: Object,
+    visitPlanningReminder: Object,
 });
 
 const page = usePage();
@@ -52,6 +53,19 @@ const kalanSure = (days) => (days === null || days === undefined ? 'Belirsiz' : 
                 <p class="mt-0.5 text-xs sm:text-sm">{{ calendarReminder.message }}</p>
             </div>
             <Link href="/takvim-ayarlari" class="shrink-0 rounded-lg bg-amber-700 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-800">Takvimi Düzenle</Link>
+        </div>
+
+        <div v-if="visitPlanningReminder?.visible" class="flex flex-col gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-100 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="font-bold">{{ visitPlanningReminder.monthLabel }} takvim planı tamamlanmalı</p>
+                <p class="mt-0.5 text-xs sm:text-sm">
+                    {{ visitPlanningReminder.missingCount }} tesis için takvim girişi bekleniyor.
+                    <template v-if="isAdmin && visitPlanningReminder.consultants?.length">
+                        {{ visitPlanningReminder.consultants.map((consultant) => `${consultant.name}: ${consultant.missingCount}`).join(' · ') }}
+                    </template>
+                </p>
+            </div>
+            <Link href="/ziyaret-takvimi" class="shrink-0 rounded-lg bg-indigo-700 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-800">Takvime Git</Link>
         </div>
 
         <section aria-label="Tesis dağılımı" class="grid grid-cols-2 xl:grid-cols-4 gap-2">

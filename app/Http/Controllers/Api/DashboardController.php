@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Firm;
 use App\Models\Config;
+use App\Models\Visit;
 use App\Services\ComplianceEngine;
 use App\Services\BusinessCalendar;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -16,7 +19,7 @@ class DashboardController extends Controller
     public function index(Request $request, BusinessCalendar $calendar)
     {
         $user = $request->user();
-        $today = Carbon::today();
+        $today = Carbon::today(BusinessCalendar::TIMEZONE);
         
         $cfgRow = Config::find('main');
         $cfg = array_merge(ComplianceEngine::DEFAULT_CFG, $cfgRow ? $cfgRow->v : []);
@@ -122,6 +125,67 @@ class DashboardController extends Controller
             'firmSummary' => $firmSummary,
             'consultants' => $consultants,
             'calendarReminder' => $user->role === 'admin' ? $calendar->reminder() : null,
+            'visitPlanningReminder' => $this->visitPlanningReminder($user, $firmsRaw),
         ]);
+    }
+
+    /**
+     * Takip eden aya ait ziyaret planı, her danışmanın kendi aktif tesisleri
+     * üzerinden değerlendirilir. Bir tesis için ay içinde en az bir ziyaret
+     * bulunması o tesisin planlandığı anlamına gelir.
+     */
+    private function visitPlanningReminder($user, Collection $firms): array
+    {
+        $now = CarbonImmutable::now(BusinessCalendar::TIMEZONE);
+        $targetMonth = $now->addMonthNoOverflow()->startOfMonth();
+
+        if ($now->day < 20) {
+            return ['visible' => false];
+        }
+
+        $assignedFirms = $firms
+            ->filter(fn (Firm $firm) => $firm->consultant_user_id && !ComplianceEngine::isEngagementClosed($firm->data))
+            ->filter(fn (Firm $firm) => $user->role === 'admin' || (int) $firm->consultant_user_id === (int) $user->id)
+            ->values();
+
+        if ($assignedFirms->isEmpty()) {
+            return ['visible' => false];
+        }
+
+        $plannedFirmKeys = Visit::query()
+            ->whereBetween('visit_date', [$targetMonth->toDateString(), $targetMonth->endOfMonth()->toDateString()])
+            ->get(['firm_id', 'user_id'])
+            ->map(fn (Visit $visit) => $visit->user_id . ':' . $visit->firm_id)
+            ->flip();
+
+        $missingFirms = $assignedFirms
+            ->filter(fn (Firm $firm) => !$plannedFirmKeys->has($firm->consultant_user_id . ':' . $firm->id))
+            ->values();
+
+        if ($missingFirms->isEmpty()) {
+            return ['visible' => false];
+        }
+
+        $monthLabel = $targetMonth->locale('tr')->translatedFormat('F Y');
+        $consultants = $missingFirms
+            ->groupBy('consultant_user_id')
+            ->map(function (Collection $consultantFirms) {
+                $first = $consultantFirms->first();
+
+                return [
+                    'name' => $first->consultantName(),
+                    'missingCount' => $consultantFirms->count(),
+                ];
+            })
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->all();
+
+        return [
+            'visible' => true,
+            'monthLabel' => ucfirst($monthLabel),
+            'missingCount' => $missingFirms->count(),
+            'consultants' => $consultants,
+        ];
     }
 }

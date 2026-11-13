@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\Firm;
+use App\Models\Visit;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -104,5 +106,63 @@ class DashboardTest extends TestCase
                     && collect($rows)->contains(fn ($row) => $row['name'] === 'Danışman B'
                         && collect($row['tasks'])->contains(fn ($task) => $task['state'] === 'overdue')))
             );
+    }
+
+    public function test_consultant_sees_next_month_calendar_reminder_with_the_missing_firm_count_after_the_twentieth(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-11-20 10:00:00', 'Europe/Istanbul'));
+
+        $consultant = User::factory()->create(['role' => 'employee', 'name' => 'Takvim Danışmanı']);
+        $plannedFirm = Firm::create([
+            'id' => 'calendar-planned-firm',
+            'consultant_user_id' => $consultant->id,
+            'data' => ['name' => 'Planlı Tesis', 'profile' => []],
+        ]);
+        Firm::create([
+            'id' => 'calendar-missing-firm',
+            'consultant_user_id' => $consultant->id,
+            'data' => ['name' => 'Eksik Tesis', 'profile' => []],
+        ]);
+        Visit::create([
+            'firm_id' => $plannedFirm->id,
+            'user_id' => $consultant->id,
+            'visit_date' => '2026-12-03',
+            'title' => 'Tesis Ziyareti',
+        ]);
+
+        $this->actingAs($consultant)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('visitPlanningReminder.visible', true)
+                ->where('visitPlanningReminder.monthLabel', 'Aralık 2026')
+                ->where('visitPlanningReminder.missingCount', 1));
+    }
+
+    public function test_calendar_reminder_is_hidden_before_the_twentieth_and_when_all_firms_are_planned(): void
+    {
+        $consultant = User::factory()->create(['role' => 'employee', 'name' => 'Planlı Danışman']);
+        $firm = Firm::create([
+            'id' => 'calendar-complete-firm',
+            'consultant_user_id' => $consultant->id,
+            'data' => ['name' => 'Tamam Tesis', 'profile' => []],
+        ]);
+
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-11-19 10:00:00', 'Europe/Istanbul'));
+        $this->actingAs($consultant)
+            ->get(route('dashboard'))
+            ->assertInertia(fn (Assert $page) => $page->where('visitPlanningReminder.visible', false));
+
+        Visit::create([
+            'firm_id' => $firm->id,
+            'user_id' => $consultant->id,
+            'visit_date' => '2026-12-03',
+            'title' => 'Tesis Ziyareti',
+        ]);
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-11-20 10:00:00', 'Europe/Istanbul'));
+
+        $this->actingAs($consultant)
+            ->get(route('dashboard'))
+            ->assertInertia(fn (Assert $page) => $page->where('visitPlanningReminder.visible', false));
     }
 }
