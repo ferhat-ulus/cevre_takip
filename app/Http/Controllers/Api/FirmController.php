@@ -141,6 +141,9 @@ class FirmController extends Controller
 
         return Inertia::render('FirmaDetay', [
             'firm' => $firmData,
+            'consultants' => $user->role === 'admin'
+                ? User::query()->where('role', 'employee')->where('active', true)->orderBy('name')->get(['id', 'name', 'username'])
+                : [],
             'evaluations' => $ev,
             'meta' => [
                 'obligations' => ComplianceEngine::getAll(),

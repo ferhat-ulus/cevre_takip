@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     firm: Object,
+    consultants: { type: Array, default: () => [] },
     evaluations: Object,
     meta: Object,
     canEdit: Boolean,
@@ -119,7 +120,10 @@ const save = async () => {
                 sector: form.value.sector,
                 note: form.value.note,
                 profile: form.value.profile,
-                items: form.value.items
+                items: form.value.items,
+                consultant_user_id: props.canManageEngagement
+                    ? (form.value.consultant_user_id || null)
+                    : undefined,
             })
         });
 
@@ -217,6 +221,17 @@ const changeItemState = (key, state) => {
                     <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 border-b pb-2 dark:border-slate-700">Tesis Profili</h3>
                     
                     <div class="space-y-4 text-sm">
+                        <div v-if="canManageEngagement">
+                            <label class="block text-xs font-medium mb-1 dark:text-slate-400">Sorumlu Danışman</label>
+                            <select v-model="form.consultant_user_id" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-2 dark:text-white text-sm">
+                                <option value="">Atanmamış bırak</option>
+                                <option v-for="consultant in consultants" :key="consultant.id" :value="consultant.id">
+                                    {{ consultant.name }} — {{ consultant.username }}
+                                </option>
+                            </select>
+                            <p class="mt-1 text-[10px] text-slate-500">Atama değişikliği kayıt altına alınır; danışman yalnızca kendisine atanmış tesisleri görür.</p>
+                        </div>
+
                         <div>
                             <label class="block text-xs font-medium mb-1 dark:text-slate-400">Sektör</label>
                             <input type="text" v-model="form.sector" :disabled="!canEdit" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-2 dark:text-white text-sm disabled:opacity-60 uppercase">
