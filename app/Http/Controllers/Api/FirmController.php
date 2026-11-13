@@ -176,7 +176,7 @@ class FirmController extends Controller
 
         $request->validate([
             'sector' => ['nullable', 'string', 'max:255'],
-            'note' => ['nullable', 'string', 'max:1000'],
+            'note' => ['nullable', 'string', 'max:5000'],
             'profile' => ['nullable', 'array'],
             'items' => ['nullable', 'array'],
             'consultant_user_id' => ['nullable', 'integer', 'exists:users,id'],

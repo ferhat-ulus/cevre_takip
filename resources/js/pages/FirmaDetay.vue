@@ -273,7 +273,7 @@ const changeItemState = (key, state) => {
 
                         <div>
                             <label class="block text-xs font-medium mb-1 dark:text-slate-400">Genel tesis notu</label>
-                            <textarea v-model="form.note" :disabled="!canEdit" rows="4" maxlength="1000" placeholder="Tesise ilişkin genel not ekleyin..." class="w-full resize-y rounded-md border border-slate-300 bg-slate-50 p-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white disabled:opacity-60"></textarea>
+                            <textarea v-model="form.note" :disabled="!canEdit" rows="4" maxlength="5000" placeholder="Tesise ilişkin genel not ekleyin..." class="w-full resize-y rounded-md border border-slate-300 bg-slate-50 p-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white disabled:opacity-60"></textarea>
                             <p class="mt-1 text-[10px] text-slate-500">Bu not yalnızca tesis detayından düzenlenir.</p>
                         </div>
 
