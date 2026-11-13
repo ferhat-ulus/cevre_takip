@@ -224,7 +224,7 @@ class ExcelController extends Controller
         $name = trim($name);
         if ($name === '') return null;
 
-        $matches = User::query()->where('role', 'employee')->where('active', true)->where('name', $name)->get(['id']);
+        $matches = User::activeConsultants()->where('name', $name)->get(['id']);
         if ($matches->count() === 1) return $matches->first()->id;
 
         $unread[] = [

@@ -22,7 +22,7 @@ class ReportController extends Controller
         $cfgRow = Config::find('main');
         $cfg = array_merge(ComplianceEngine::DEFAULT_CFG, $cfgRow ? $cfgRow->v : []);
 
-        $consultants = User::where('role', 'employee')->where('active', true)->orderBy('name')->get(['id', 'name', 'username']);
+        $consultants = User::activeConsultants()->orderBy('name')->get(['id', 'name', 'username']);
 
         // PERFORMANS: Veritabanı seviyesinde filtreleme
         $query = Firm::query()->with('consultant:id,name')->visibleTo($user);

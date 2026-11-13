@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
@@ -27,7 +28,8 @@ class User extends Authenticatable
         'active',
         'must_change',
         'sess_ver',
-        'cal_token'
+        'cal_token',
+        'can_be_consultant',
     ];
 
     /**
@@ -52,7 +54,26 @@ class User extends Authenticatable
             'password' => 'hashed',
             'active' => 'boolean',
             'must_change' => 'boolean',
+            'can_be_consultant' => 'boolean',
         ];
+    }
+
+    public function scopeConsultantCapable(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->where('role', 'employee')
+                ->orWhere('can_be_consultant', true);
+        });
+    }
+
+    public function scopeActiveConsultants(Builder $query): Builder
+    {
+        return $query->consultantCapable()->where('active', true);
+    }
+
+    public function isConsultantCapable(): bool
+    {
+        return $this->role === 'employee' || $this->can_be_consultant;
     }
 
     public function moduleAccesses(): HasMany

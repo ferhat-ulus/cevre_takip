@@ -25,7 +25,7 @@ class VisitController extends Controller
         // Danışmanları ID ve İsim olarak çekiyoruz
         $consultants = [];
         if ($user->role === 'admin') {
-            $consultants = User::where('role', 'employee')->where('active', true)->select('id', 'name', 'username')->orderBy('name')->get()->toArray();
+            $consultants = User::activeConsultants()->select('id', 'name', 'username')->orderBy('name')->get()->toArray();
         }
 
         $query = Firm::query()->with('consultant:id,name')->visibleTo($user);

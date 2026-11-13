@@ -40,7 +40,7 @@ class FirmController extends Controller
 
         usort($firms, fn($a, $b) => strcasecmp($a['name'], $b['name']));
 
-        $consultants = User::where('role', 'employee')->where('active', true)
+        $consultants = User::activeConsultants()
             ->orderBy('name')->get(['id', 'name', 'username']);
 
         return Inertia::render('Tesisler', [
@@ -79,7 +79,7 @@ class FirmController extends Controller
         ];
 
         $consultantId = $user->role === 'admin' ? $request->integer('consultant_user_id') : $user->id;
-        if ($consultantId && !User::where('id', $consultantId)->where('role', 'employee')->where('active', true)->exists()) {
+        if ($consultantId && !User::activeConsultants()->whereKey($consultantId)->exists()) {
             return response()->json(['error' => 'Atanacak danışman aktif bir kullanıcı olmalıdır.'], 422);
         }
 
@@ -142,7 +142,7 @@ class FirmController extends Controller
         return Inertia::render('FirmaDetay', [
             'firm' => $firmData,
             'consultants' => $user->role === 'admin'
-                ? User::query()->where('role', 'employee')->where('active', true)->orderBy('name')->get(['id', 'name', 'username'])
+                ? User::activeConsultants()->orderBy('name')->get(['id', 'name', 'username'])
                 : [],
             'evaluations' => $ev,
             'meta' => [
@@ -190,10 +190,9 @@ class FirmController extends Controller
         
         if ($hasConsultantPatch) {
             $newConsultantId = $patch['consultant_user_id'] ?: null;
-            $newConsultant = $newConsultantId ? User::query()
-                ->where('role', 'employee')
-                ->where('active', true)
-                ->find($newConsultantId) : null;
+            $newConsultant = $newConsultantId
+                ? User::activeConsultants()->find($newConsultantId)
+                : null;
             if ($newConsultantId && !$newConsultant) {
                 return response()->json(['error' => 'Atanacak danışman aktif bir kullanıcı olmalıdır.'], 422);
             }

@@ -23,7 +23,7 @@ class EmissionController extends Controller
 
         $consultants = [];
         if ($user->role === 'admin') {
-            $consultants = User::where('role', 'employee')->where('active', true)->orderBy('name')->get(['id', 'name', 'username']);
+            $consultants = User::activeConsultants()->orderBy('name')->get(['id', 'name', 'username']);
         }
 
         // PERFORMANS: Veritabanı seviyesinde filtreleme

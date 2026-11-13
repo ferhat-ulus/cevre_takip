@@ -98,7 +98,7 @@ class UserController extends Controller
         abort_unless($request->user()->role === 'admin', 403);
 
         $consultants = User::query()
-            ->where('role', 'employee')
+            ->consultantCapable()
             ->orderBy('name')
             ->get(['id', 'name', 'active']);
 
@@ -382,6 +382,7 @@ class UserController extends Controller
             'username' => 'nullable|string|max:50|unique:users,username|alpha_dash',
             'email' => 'nullable|email|max:255',
             'role' => 'required|in:admin,employee',
+            'can_be_consultant' => 'sometimes|boolean',
             'password' => 'nullable|string|min:6',
             'module_accesses' => ['nullable', 'array'],
             'module_accesses.*' => ['nullable', 'in:advisor,viewer'],
@@ -394,6 +395,7 @@ class UserController extends Controller
             'username' => $this->makeUniqueUsername($request->input('username') ?: $request->name),
             'email' => $request->email,
             'role' => $request->role,
+            'can_be_consultant' => $request->role === 'employee' || $request->boolean('can_be_consultant'),
             'password' => Hash::make($tempPassword),
             'active' => 1,
             'must_change' => $request->password ? 0 : 1,
@@ -421,15 +423,26 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
         $patch = $request->all();
+        $request->validate([
+            'can_be_consultant' => ['sometimes', 'boolean'],
+        ]);
         $response = ['ok' => true];
         $logDetails = [];
-        $hasAssignedFirms = $user->role === 'employee'
+        $hasAssignedFirms = $user->isConsultantCapable()
             && Firm::query()->where('consultant_user_id', $user->id)->get()
                 ->contains(fn (Firm $firm) => !ComplianceEngine::isEngagementClosed($firm->data));
 
+        $nextRole = isset($patch['role']) && in_array($patch['role'], ['admin', 'employee'], true)
+            ? $patch['role']
+            : $user->role;
+        $nextConsultantCapability = $nextRole === 'employee'
+            || (array_key_exists('can_be_consultant', $patch)
+                ? (bool) $patch['can_be_consultant']
+                : $user->can_be_consultant);
+
         if ($hasAssignedFirms
             && (($user->active && array_key_exists('active', $patch) && !(bool) $patch['active'])
-                || (isset($patch['role']) && $patch['role'] === 'admin'))) {
+                || !$nextConsultantCapability)) {
             return response()->json([
                 'error' => 'Bu danışmana atanmış tesisler var. Önce tesisleri devir işlemiyle başka bir danışmana aktarın.',
             ], 422);
@@ -450,6 +463,13 @@ class UserController extends Controller
             $logDetails[] = "Rol değiştirildi: {$user->role} -> {$patch['role']}";
             $user->role = $patch['role'];
             $user->sess_ver += 1; 
+        }
+
+        if ($user->can_be_consultant !== $nextConsultantCapability) {
+            $user->can_be_consultant = $nextConsultantCapability;
+            $logDetails[] = $nextConsultantCapability
+                ? 'Danışman atama yetkisi açıldı'
+                : 'Danışman atama yetkisi kapatıldı';
         }
 
         // DURUM DEĞİŞİKLİĞİ VE LOGLAMA
@@ -564,7 +584,7 @@ class UserController extends Controller
         ]);
 
         $consultant = User::findOrFail($id);
-        if ($consultant->role !== 'employee') {
+        if (!$consultant->isConsultantCapable()) {
             return response()->json(['error' => 'Tesis devri yalnızca danışman hesaplarında yapılabilir.'], 422);
         }
         if ($consultant->id === $request->user()->id && ($request->boolean('deactivate') || $request->filled('replacement_user_id'))) {
@@ -574,7 +594,7 @@ class UserController extends Controller
         $replacement = null;
         if ($request->filled('replacement_user_id')) {
             $replacement = User::findOrFail($request->integer('replacement_user_id'));
-            if ($replacement->role !== 'employee' || !$replacement->active || $replacement->id === $consultant->id) {
+            if (!$replacement->isConsultantCapable() || !$replacement->active || $replacement->id === $consultant->id) {
                 return response()->json(['error' => 'Devir yapılacak kişi aktif bir danışman olmalıdır.'], 422);
             }
         }

@@ -20,7 +20,7 @@ class Firm extends Model {
                 return;
             }
 
-            $matches = User::query()->where('role', 'employee')
+            $matches = User::query()->consultantCapable()
                 ->where('name', $firm->data['consultant'])->pluck('id');
             if ($matches->count() === 1) {
                 $firm->consultant_user_id = $matches->first();

@@ -40,6 +40,7 @@ const form = ref({
     role: 'employee',
     password: '',
     active: true,
+    can_be_consultant: false,
     new_password: '',
     module_accesses: {}
 });
@@ -59,8 +60,9 @@ const filteredUsers = computed(() => {
         (u.email && u.email.toLowerCase().includes(q))
     );
 });
+const isAssignableConsultant = (user) => user.active && (user.role === 'employee' || user.can_be_consultant);
 const activeConsultants = computed(() => props.users.filter(user =>
-    user.role === 'employee' && user.active && user.id !== selectedConsultant.value?.id
+    isAssignableConsultant(user) && user.id !== selectedConsultant.value?.id
 ));
 const consultantFirmCount = (user) => Number(props.firmCounts?.[user.id] || 0);
 const consultantFirmList = computed(() => props.consultantFirms.filter((firm) => Number(firm.consultant_user_id) === Number(selectedConsultant.value?.id)));
@@ -101,7 +103,7 @@ watch(allFirmsSelected, (selected) => {
 });
 
 const openAddModal = () => {
-    form.value = { name: '', username: '', email: '', role: 'employee', password: '', active: true, module_accesses: emptyModuleAccesses() };
+    form.value = { name: '', username: '', email: '', role: 'employee', password: '', active: true, can_be_consultant: false, module_accesses: emptyModuleAccesses() };
     errorMsg.value = '';
     successMsg.value = '';
     showAddModal.value = true;
@@ -115,6 +117,7 @@ const openEditModal = (user) => {
         email: user.email || '', 
         role: user.role, 
         active: Boolean(user.active),
+        can_be_consultant: Boolean(user.can_be_consultant),
         module_accesses: { ...emptyModuleAccesses(), ...(user.module_accesses || {}) }
     };
     errorMsg.value = '';
@@ -135,7 +138,7 @@ const openStatusModal = (user) => {
         alert('Kendi hesabınızı pasife alamazsınız.');
         return;
     }
-    if (user.active && user.role === 'employee' && consultantFirmCount(user) > 0) {
+    if (isAssignableConsultant(user) && consultantFirmCount(user) > 0) {
         openHandoverModal(user, true);
         return;
     }
@@ -191,6 +194,7 @@ const updateUser = async () => {
                 email: form.value.email,
                 role: form.value.role,
                 active: form.value.active,
+                can_be_consultant: form.value.can_be_consultant,
                 module_accesses: form.value.module_accesses
             })
         });
@@ -370,7 +374,7 @@ const submitHandover = async () => {
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-end gap-2">
-                                    <button v-if="user.role === 'employee' && consultantFirmCount(user) > 0" @click="openHandoverModal(user)" class="text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 px-2 py-1 rounded-md transition-colors text-[10px] font-semibold whitespace-nowrap" :title="`${consultantFirmCount(user)} tesisi devret`">
+                                    <button v-if="isAssignableConsultant(user) && consultantFirmCount(user) > 0" @click="openHandoverModal(user)" class="text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 px-2 py-1 rounded-md transition-colors text-[10px] font-semibold whitespace-nowrap" :title="`${consultantFirmCount(user)} tesisi devret`">
                                         Devir ({{ consultantFirmCount(user) }})
                                     </button>
                                     <button @click="openPasswordModal(user)" class="text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 p-1.5 rounded-md transition-colors" title="Şifre Sıfırla">
@@ -439,6 +443,10 @@ const submitHandover = async () => {
                             <option value="admin">Sistem Yöneticisi</option>
                         </select>
                     </div>
+                    <label v-if="form.role === 'admin'" class="flex items-start gap-2 rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-800 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-200">
+                        <input v-model="form.can_be_consultant" type="checkbox" class="mt-0.5 rounded border-indigo-300 text-indigo-600">
+                        <span><strong>Danışman olarak atanabilir</strong><br>Bu yönetici tesis sorumlusu olarak seçilebilir ve danışman listelerinde görünür.</span>
+                    </label>
                     <div v-if="form.role === 'employee'" class="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
                         <label class="block text-xs font-semibold dark:text-slate-300">Modül erişimleri</label>
                         <p class="text-[10px] text-slate-500">Erişimi olmayan kullanıcı ilgili modülü hiç görmez.</p>
@@ -504,6 +512,10 @@ const submitHandover = async () => {
                         </select>
                         <p v-if="form.id === currentUser.id" class="text-[10px] text-amber-600 mt-1">Kendi rolünüzü değiştiremezsiniz.</p>
                     </div>
+                    <label v-if="form.role === 'admin'" class="flex items-start gap-2 rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-800 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-200">
+                        <input v-model="form.can_be_consultant" type="checkbox" class="mt-0.5 rounded border-indigo-300 text-indigo-600">
+                        <span><strong>Danışman olarak atanabilir</strong><br>Bu yönetici tesis sorumlusu olarak seçilebilir ve danışman listelerinde görünür.</span>
+                    </label>
                     <div>
                         <label class="block text-xs font-medium mb-1 dark:text-slate-300">Durum</label>
                         <select v-model="form.active" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm" :disabled="form.id === currentUser.id">
