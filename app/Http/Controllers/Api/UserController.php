@@ -102,11 +102,35 @@ class UserController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'active']);
 
-        $firms = Firm::query()->orderBy('id')->get(['id', 'data'])->map(function (Firm $firm) {
+        $consultantKey = function (?string $name): string {
+            $name = mb_strtoupper(trim((string) $name), 'UTF-8');
+            $name = str_replace('İ', 'I', $name);
+            $name = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $name) ?? '';
+            $name = preg_replace('/\s+/u', ' ', $name) ?? '';
+
+            return trim($name);
+        };
+        $consultantIdsByKey = $consultants
+            ->groupBy(fn (User $consultant) => $consultantKey($consultant->name))
+            ->filter(fn ($matches) => $matches->count() === 1)
+            ->map(fn ($matches) => $matches->first()->id)
+            ->all();
+
+        $firms = Firm::query()->with('consultant:id,name')->orderBy('id')->get(['id', 'consultant_user_id', 'data'])->map(function (Firm $firm) use ($consultantKey, $consultantIdsByKey) {
+            $legacyConsultant = $firm->data['consultant'] ?? null;
+            $resolvedConsultantId = $firm->consultant_user_id
+                ?: ($consultantIdsByKey[$consultantKey($legacyConsultant)] ?? null);
+
             return [
                 'id' => $firm->id,
                 'name' => $firm->data['name'] ?? 'İsimsiz tesis',
-                'consultant' => $firm->data['consultant'] ?? 'Atanmamış',
+                // Güncel atama, JSON içindeki eski metin alanından değil
+                // kullanıcı hesabıyla ilişkili consultant_user_id alanından okunur.
+                // Yalnız eski kayıtlarda, tek bir kullanıcıyla güvenle eşleşen
+                // eski danışman adı uyumluluk amacıyla dikkate alınır.
+                'consultant' => $firm->consultantName(),
+                'consultant_user_id' => $firm->consultant_user_id,
+                'resolved_consultant_user_id' => $resolvedConsultantId,
                 'status' => $firm->data['status'] ?? 'aktif',
             ];
         });
@@ -123,14 +147,6 @@ class UserController extends Controller
         $openTenures = [];
         $consultantNamesByKey = [];
         $firmNames = $firms->keyBy('id')->map(fn (array $firm) => $firm['name']);
-        $consultantKey = function (?string $name): string {
-            $name = mb_strtoupper(trim((string) $name), 'UTF-8');
-            $name = str_replace('İ', 'I', $name);
-            $name = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $name) ?? '';
-            $name = preg_replace('/\s+/u', ' ', $name) ?? '';
-
-            return trim($name);
-        };
         $isKnownConsultant = fn (?string $name) => !in_array($consultantKey($name), ['', 'BILINMIYOR', 'ATANMAMIS'], true);
         $aliasesByKey = [];
         $rememberAlias = function (?string $name) use (&$aliasesByKey, $consultantKey, $isKnownConsultant): void {
@@ -269,7 +285,7 @@ class UserController extends Controller
         $consultantRows = $consultants->map(function (User $consultant) use ($firms, $historyByFirm, $tenuresByConsultant, $consultantKey, $portfolioFields, $aliasesFor) {
             $key = $consultantKey($consultant->name);
             $assignedFirms = $firms
-                ->filter(fn (array $firm) => $consultantKey($firm['consultant']) === $key)
+                ->filter(fn (array $firm) => (int) $firm['resolved_consultant_user_id'] === (int) $consultant->id)
                 ->map(function (array $firm) use ($historyByFirm) {
                     $firm['history'] = $historyByFirm[$firm['id']] ?? [];
                     $firm['previousConsultant'] = $firm['history'][0]['from'] ?? null;
@@ -317,7 +333,7 @@ class UserController extends Controller
         $consultantRows = $consultantRows->concat($historicalRows);
 
         $unassignedFirms = $firms
-            ->filter(fn (array $firm) => in_array(mb_strtoupper(trim((string) $firm['consultant']), 'UTF-8'), ['', 'ATANMAMIŞ'], true))
+            ->filter(fn (array $firm) => empty($firm['resolved_consultant_user_id']))
             ->values();
         $history = collect($history)
             ->map(function (array $entry) use ($firmNames) {
