@@ -184,7 +184,14 @@ const kalanSure = (item) => {
                 </div>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="min-w-[960px] w-full table-fixed text-left border-collapse">
+                    <colgroup>
+                        <col :class="isAdmin ? 'w-[33%]' : 'w-[40%]'">
+                        <col v-if="isAdmin" class="w-[14%]">
+                        <col :class="isAdmin ? 'w-[26%]' : 'w-[30%]'">
+                        <col :class="isAdmin ? 'w-[16%]' : 'w-[17%]'">
+                        <col :class="isAdmin ? 'w-[11%]' : 'w-[13%]'">
+                    </colgroup>
                     <thead>
                         <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-semibold">
                             <th class="px-5 py-3">Tesis</th>
@@ -196,14 +203,14 @@ const kalanSure = (item) => {
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
                         <tr v-for="item in paginatedWork" :key="`${item.firm_id}-${item.topic}-${item.state}`" class="text-xs hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
-                            <td class="px-5 py-3 font-semibold text-slate-800 dark:text-slate-200">
+                            <td class="px-5 py-3 font-semibold text-slate-800 dark:text-slate-200 break-words">
                                 <Link :href="`/firma/${item.firm_id}`" class="hover:text-indigo-600 dark:hover:text-indigo-400">{{ item.firm_name }}</Link>
                             </td>
-                            <td v-if="isAdmin" class="px-5 py-3 text-slate-600 dark:text-slate-400">{{ item.consultant }}</td>
-                            <td class="px-5 py-3 text-slate-600 dark:text-slate-300">{{ item.topic }}</td>
-                            <td class="px-5 py-3 font-semibold text-slate-700 dark:text-slate-200">{{ kalanSure(item) }}</td>
-                            <td class="px-5 py-3">
-                                <span :class="['rounded-full border px-2 py-0.5 text-[10px] font-bold', statusClass(item.state)]">{{ item.state_label }}</span>
+                            <td v-if="isAdmin" class="px-5 py-3 text-slate-600 dark:text-slate-400 break-words">{{ item.consultant }}</td>
+                            <td class="px-5 py-3 text-slate-600 dark:text-slate-300 break-words">{{ item.topic }}</td>
+                            <td class="px-5 py-3 font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">{{ kalanSure(item) }}</td>
+                            <td class="px-5 py-3 whitespace-nowrap">
+                                <span :class="['inline-block rounded-full border px-2 py-0.5 text-[10px] font-bold whitespace-nowrap', statusClass(item.state)]">{{ item.state_label }}</span>
                             </td>
                         </tr>
                         <tr v-if="filteredWork.length === 0">
