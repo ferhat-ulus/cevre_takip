@@ -1,4 +1,5 @@
 <script setup>
+import { facilityDisplayName } from '../lib/facilityDisplayName';
 import { computed, ref, watch } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 
@@ -347,7 +348,7 @@ watch(search, (value) => {
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60">
                                     <tr v-for="(assignment, index) in selectedAssignments" :key="`${assignment.firm_id}-${assignment.received_at ?? 'unknown'}-${index}`" class="text-xs">
                                         <td class="break-words px-3 py-2.5 font-semibold text-slate-800 dark:text-slate-200">
-                                            <Link :href="`/firma/${assignment.firm_id}`" class="hover:text-indigo-600 hover:underline dark:hover:text-indigo-400">{{ assignment.firm_name }}</Link>
+                                            <Link :href="`/firma/${assignment.firm_id}`" class="hover:text-indigo-600 hover:underline dark:hover:text-indigo-400">{{ facilityDisplayName(assignment.firm_name) }}</Link>
                                         </td>
                                         <td class="break-words px-3 py-2.5 text-slate-600 dark:text-slate-300">{{ formatTenureDate(assignment.received_at) }}</td>
                                         <td class="break-words px-3 py-2.5 text-slate-600 dark:text-slate-300">{{ assignment.is_current ? '—' : formatTenureDate(assignment.left_at) }}</td>
@@ -376,7 +377,7 @@ watch(search, (value) => {
                 <h2 class="text-sm font-bold text-slate-800 dark:text-white">Atanmamış tesisler <span class="ml-1 text-xs font-medium text-amber-600">({{ unassignedFirms.length }})</span></h2>
             </div>
             <div class="flex flex-wrap gap-2 p-3">
-                <span v-for="firm in unassignedFirms" :key="firm.id" class="rounded-md bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">{{ firm.name }}</span>
+                <span v-for="firm in unassignedFirms" :key="firm.id" class="rounded-md bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">{{ facilityDisplayName(firm.name) }}</span>
             </div>
         </section>
 
@@ -433,7 +434,7 @@ watch(search, (value) => {
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60">
                         <tr v-for="entry in filteredHistory" :key="entry.id" class="text-xs">
                             <td class="break-words px-3 py-2.5 text-slate-500">{{ formatHistoryDate(entry) }}</td>
-                            <td class="break-words px-3 py-2.5 font-semibold text-slate-800 dark:text-slate-200">{{ entry.firm_name }}</td>
+                            <td class="break-words px-3 py-2.5 font-semibold text-slate-800 dark:text-slate-200">{{ facilityDisplayName(entry.firm_name) }}</td>
                             <td class="break-words px-3 py-2.5 text-slate-600 dark:text-slate-300">{{ entry.from }} <span class="px-1 text-slate-400">→</span> {{ entry.to }}</td>
                             <td class="break-words px-3 py-2.5 text-slate-600 dark:text-slate-300">{{ formatReason(entry) }}</td>
                             <td class="break-words px-3 py-2.5 text-slate-500">{{ entry.actor }}</td>

@@ -1,4 +1,5 @@
 <script setup>
+import { facilityDisplayName } from '../lib/facilityDisplayName';
 import { ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
 
@@ -230,7 +231,7 @@ const confirmImport = async () => {
                         <input type="checkbox" :checked="selectedRows[row.row]" @click.stop="toggleRow(row.row)" class="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 mr-4">
                         <div class="flex-1">
                             <div class="font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-2">
-                                <span>{{ row.name }}</span>
+                                <span>{{ facilityDisplayName(row.name) }}</span>
                                 <span v-if="row.is_new" class="px-2 py-0.5 text-[10px] bg-emerald-100 text-emerald-700 rounded-full font-bold">YENİ KAYIT</span>
                                 <span v-else class="px-2 py-0.5 text-[10px] bg-amber-100 text-amber-700 rounded-full font-bold">{{ (row.changes && row.changes.length) ? row.changes.length : 0 }} GÜNCELLEME</span>
                             </div>

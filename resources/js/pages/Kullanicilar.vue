@@ -1,4 +1,5 @@
 <script setup>
+import { facilityDisplayName } from '../lib/facilityDisplayName';
 import { computed, ref, watch } from 'vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import PlatformLayout from '@/layouts/PlatformLayout.vue';
@@ -638,7 +639,7 @@ const submitHandover = async () => {
                         <div class="max-h-48 space-y-1 overflow-y-auto rounded-md border border-slate-200 p-2 dark:border-slate-600">
                             <label v-for="firm in visibleConsultantFirms" :key="firm.id" class="flex cursor-pointer items-start gap-2 rounded px-1 py-1.5 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">
                                 <input type="checkbox" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" :checked="selectedFirmIds.includes(firm.id)" @change="toggleFirm(firm.id)">
-                                <span>{{ firm.name }}</span>
+                                <span>{{ facilityDisplayName(firm.name) }}</span>
                             </label>
                             <p v-if="!visibleConsultantFirms.length" class="px-1 py-3 text-center text-xs text-slate-500">Bu danışmana ait tesis bulunamadı.</p>
                         </div>

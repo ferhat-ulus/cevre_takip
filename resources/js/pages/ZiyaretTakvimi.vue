@@ -1,4 +1,5 @@
 <script setup>
+import { facilityDisplayName } from '../lib/facilityDisplayName';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import FullCalendar from '@fullcalendar/vue3';
@@ -348,7 +349,7 @@ onUnmounted(() => {
                         <label class="block text-xs font-medium mb-1 dark:text-slate-300">Tesis Seçin <span class="text-rose-500">*</span></label>
                         <select v-model="form.firm_id" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
                             <option value="">Bir tesis seçin...</option>
-                            <option v-for="f in firms" :key="f.id" :value="f.id">{{ f.name }} ({{ f.consultant }})</option>
+                            <option v-for="f in firms" :key="f.id" :value="f.id">{{ facilityDisplayName(f.name) }} ({{ f.consultant }})</option>
                         </select>
                     </div>
                     

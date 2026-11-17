@@ -1,4 +1,5 @@
 <script setup>
+import { facilityDisplayName } from '../lib/facilityDisplayName';
 import { ref, computed, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Bar, Doughnut } from 'vue-chartjs';
@@ -204,7 +205,7 @@ const kalanSure = (item) => {
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
                         <tr v-for="item in paginatedWork" :key="`${item.firm_id}-${item.topic}-${item.state}`" class="text-xs hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
                             <td class="px-5 py-3 font-semibold text-slate-800 dark:text-slate-200 break-words">
-                                <Link :href="`/firma/${item.firm_id}`" class="hover:text-indigo-600 dark:hover:text-indigo-400">{{ item.firm_name }}</Link>
+                                <Link :href="`/firma/${item.firm_id}`" class="hover:text-indigo-600 dark:hover:text-indigo-400">{{ facilityDisplayName(item.firm_name) }}</Link>
                             </td>
                             <td v-if="isAdmin" class="px-5 py-3 text-slate-600 dark:text-slate-400 break-words">{{ item.consultant }}</td>
                             <td class="px-5 py-3 text-slate-600 dark:text-slate-300 break-words">{{ item.topic }}</td>

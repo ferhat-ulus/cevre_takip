@@ -1,4 +1,5 @@
 <script setup>
+import { facilityDisplayName } from '../lib/facilityDisplayName';
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 
@@ -182,7 +183,7 @@ const changeItemState = (key, state) => {
 </script>
 
 <template>
-    <Head :title="firm.name + ' - Detay'" />
+    <Head :title="facilityDisplayName(firm.name) + ' - Detay'" />
 
     <div class="w-full space-y-6 pb-20">
         
@@ -196,7 +197,7 @@ const changeItemState = (key, state) => {
                 
                 <div class="min-w-0 flex-1">
                     <h1 class="text-lg md:text-xl font-bold text-slate-900 dark:text-white tracking-tight line-clamp-2 leading-tight break-words">
-                        {{ firm.name }}
+                        {{ facilityDisplayName(firm.name) }}
                     </h1>
                     <div class="flex flex-wrap items-center gap-2 mt-2">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20">

@@ -1,4 +1,5 @@
 <script setup>
+import { facilityDisplayName } from '../lib/facilityDisplayName';
 import { ref, computed } from 'vue';
 import { Link, Head } from '@inertiajs/vue3'; // Head import edildi
 
@@ -110,7 +111,7 @@ const formatDate = (dateString) => {
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
                         <tr v-for="firm in paginatedFirms" :key="firm.id" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-xs">
                             <td class="px-4 py-3">
-                                <Link :href="`/firma/${firm.id}`" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">{{ firm.name }}</Link>
+                                <Link :href="`/firma/${firm.id}`" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">{{ facilityDisplayName(firm.name) }}</Link>
                                 <div class="text-[10px] text-slate-500">{{ firm.sector }}</div>
                             </td>
                             <td class="px-4 py-3 text-slate-600 dark:text-slate-400 font-medium">{{ firm.consultant }}</td>
