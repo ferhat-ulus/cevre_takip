@@ -16,6 +16,8 @@ class Firm extends Model {
         // Eski kayıtlar yalnızca geçiş dönemi için okunabilir kalır. Yeni
         // kayıt akışları danışman adını JSON'a hiç yazmaz.
         static::creating(function (self $firm): void {
+            \App\Services\FacilityDateReference::fillOnCreate($firm);
+
             if ($firm->consultant_user_id || empty($firm->data['consultant'])) {
                 return;
             }
