@@ -141,6 +141,8 @@ class FirmController extends Controller
 
         return Inertia::render('FirmaDetay', [
             'firm' => $firmData,
+            'canVerifyWastewater' => ComplianceEngine::canVerifyWastewaterAnnually($firmData),
+            'wastewaterVerification' => ComplianceEngine::wastewaterVerification($firmData, Carbon::today(\App\Services\BusinessCalendar::TIMEZONE)),
             'consultants' => $user->role === 'admin'
                 ? User::activeConsultants()->orderBy('name')->get(['id', 'name', 'username'])
                 : [],
@@ -152,6 +154,38 @@ class FirmController extends Controller
             'canEdit' => $user->role === 'admin' || $firm->isAssignedTo($user),
             'canManageEngagement' => $user->role === 'admin',
         ]);
+    }
+
+    public function updateWastewaterVerification(Request $request, string $id)
+    {
+        $action = $request->validate(['action' => 'required|in:enable,disable,confirm'])['action'];
+        $user = $request->user();
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($id, $action, $user) {
+            $firm = Firm::query()->lockForUpdate()->findOrFail($id);
+            abort_unless($user->role === 'admin' || $firm->isAssignedTo($user), 403);
+            $data = $firm->data;
+            if ($action === 'disable') {
+                unset($data['wastewaterVerification']);
+            } else {
+                abort_unless(ComplianceEngine::canVerifyWastewaterAnnually($data), 422, 'Yıllık doğrulama için OSB dışı kurum ve belge tarihi gerekir.');
+                if ($action === 'enable') {
+                    $data['wastewaterVerification'] ??= ['enabled' => true];
+                } else {
+                    abort_unless(!empty($data['wastewaterVerification']['enabled']), 422, 'Önce yıllık doğrulamayı açın.');
+                    $data['wastewaterVerification'] = [
+                        'enabled' => true,
+                        'confirmedAt' => now(\App\Services\BusinessCalendar::TIMEZONE)->toDateString(),
+                        'confirmedBy' => $user->name,
+                        'documentDate' => $data['items']['atiksuGorus']['d'],
+                    ];
+                }
+            }
+            $firm->data = $data;
+            $firm->save();
+        });
+
+        return response()->json(['ok' => true]);
     }
 
     public function update(Request $request, $id)

@@ -107,6 +107,40 @@ class ComplianceEngine
             || ($status === 'secim' && self::isLegacyMissingValue(is_string($value) ? $value : null));
     }
 
+    public static function canVerifyWastewaterAnnually(array $firm): bool
+    {
+        $institution = mb_strtoupper(trim($firm['profile']['atiksuKurum'] ?? ''), 'UTF-8');
+
+        return in_array($institution, ['KANALİZASYON İDARESİ', 'ALICI ORTAM', 'VİDANJÖR'], true)
+            && !self::isEngagementClosed($firm)
+            && ($firm['items']['atiksuGorus']['s'] ?? null) === 'tarih'
+            && self::pdate($firm['items']['atiksuGorus']['d'] ?? null) !== null;
+    }
+
+    public static function wastewaterVerification(array $firm, Carbon $today): ?array
+    {
+        $record = $firm['wastewaterVerification'] ?? [];
+        if (!self::canVerifyWastewaterAnnually($firm) || empty($record['enabled'])) {
+            return null;
+        }
+
+        $confirmed = ($record['documentDate'] ?? null) === $firm['items']['atiksuGorus']['d']
+            ? self::pdate($record['confirmedAt'] ?? null)
+            : null;
+        $due = $confirmed?->copy()->addMonthsNoOverflow(12);
+        $reminder = $confirmed?->copy()->addMonthsNoOverflow(11);
+
+        return [
+            'confirmedAt' => $confirmed?->toDateString(),
+            'confirmedBy' => $confirmed ? ($record['confirmedBy'] ?? null) : null,
+            'due' => $due?->toDateString(),
+            'remind' => !$reminder || $today->gte($reminder),
+            'label' => !$due ? 'İlk doğrulama bekleniyor' : ($today->gte($due)
+                ? 'Yıllık doğrulama bekleniyor'
+                : ($today->gte($reminder) ? 'Yıllık doğrulama yaklaşıyor' : 'Yıllık doğrulama güncel')),
+        ];
+    }
+
     public static function pdate(?string $s): ?Carbon
     {
         if (is_string($s)) {
@@ -159,6 +193,9 @@ class ComplianceEngine
         
         if (self::isLegacyItemStatus($it)) { $s = null; }
         if ($s === 'muaf') { $out['state'] = 'muaf'; return $out; }
+        if ($k === 'atiksuGorus' && ($verification = self::wastewaterVerification($firm, $today))) {
+            return array_replace($out, ['state' => 'ok', 'label' => $verification['label']]);
+        }
 
         $kind = $d['kind'];
         if ($kind === 'linked_izin') { return self::evalLinkedIzin($firm, $d, $it, $out, $today, $cfg); }

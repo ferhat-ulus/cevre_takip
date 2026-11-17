@@ -37,6 +37,7 @@ class DashboardController extends Controller
             'scopeOutside' => 0,
         ];
         $consultants = [];
+        $wastewaterReminders = [];
 
         foreach ($firmsRaw as $firm) {
             $firmData = $firm->data;
@@ -45,6 +46,14 @@ class DashboardController extends Controller
                 continue;
             }
             $firmData['id'] = $firm->id;
+            $verification = ComplianceEngine::wastewaterVerification($firmData, $today);
+            if ($verification && $verification['remind']) {
+                $wastewaterReminders[] = [
+                    'id' => $firm->id,
+                    'name' => $firmData['name'] ?? 'İsimsiz tesis',
+                    'label' => $verification['label'],
+                ];
+            }
             $firmSummary['total']++;
 
             $permitValue = $firmData['profile']['izinKonusu'] ?? '';
@@ -121,6 +130,7 @@ class DashboardController extends Controller
         });
 
         return Inertia::render('Dashboard', [
+            'wastewaterReminders' => $wastewaterReminders,
             'stats' => $stats,
             'firmSummary' => $firmSummary,
             'consultants' => $consultants,

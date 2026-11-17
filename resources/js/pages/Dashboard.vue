@@ -8,6 +8,7 @@ const props = defineProps({
     firmSummary: Object,
     consultants: Array,
     calendarReminder: Object,
+    wastewaterReminders: Array,
     visitPlanningReminder: Object,
 });
 
@@ -68,6 +69,16 @@ const kalanSure = (days) => (days === null || days === undefined ? 'Belirsiz' : 
             </div>
             <Link href="/ziyaret-takvimi" class="shrink-0 rounded-lg bg-indigo-700 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-800">Takvime Git</Link>
         </div>
+
+        <section v-if="wastewaterReminders?.length" class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+            <h2 class="font-bold">Atıksu görüşü doğrulaması</h2>
+            <ul class="mt-2 space-y-1">
+                <li v-for="reminder in wastewaterReminders" :key="reminder.id">
+                    <Link :href="`/firma/${reminder.id}`" class="underline">{{ facilityDisplayName(reminder.name) }}</Link>
+                    · {{ reminder.label }}
+                </li>
+            </ul>
+        </section>
 
         <section aria-label="Tesis dağılımı" class="grid grid-cols-2 xl:grid-cols-4 gap-2">
             <div class="flex items-center justify-between gap-2 bg-white dark:bg-[#1e293b] rounded-lg px-3 py-2 border border-slate-200 dark:border-slate-700">

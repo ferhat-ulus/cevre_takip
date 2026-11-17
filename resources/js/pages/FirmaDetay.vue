@@ -7,6 +7,8 @@ const props = defineProps({
     firm: Object,
     consultants: { type: Array, default: () => [] },
     evaluations: Object,
+    canVerifyWastewater: Boolean,
+    wastewaterVerification: Object,
     meta: Object,
     canEdit: Boolean,
     canManageEngagement: Boolean
@@ -23,6 +25,35 @@ const isSavingConsultant = ref(false);
 const isSavingEngagement = ref(false);
 const engagementError = ref('');
 const consultantError = ref('');
+const wastewaterSaving = ref(false);
+const wastewaterError = ref('');
+
+async function saveWastewaterVerification(action) {
+    wastewaterSaving.value = true;
+    wastewaterError.value = '';
+    try {
+        const response = await fetch(`/api/firms/${props.firm.id}/wastewater-verification`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+            },
+            body: JSON.stringify({ action }),
+        });
+        if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.message || 'Doğrulama kaydedilemedi.');
+        }
+        router.reload({
+            only: ['wastewaterVerification', 'canVerifyWastewater', 'evaluations'],
+            onFinish: () => { wastewaterSaving.value = false; },
+        });
+    } catch (error) {
+        wastewaterError.value = error.message;
+        wastewaterSaving.value = false;
+    }
+}
 
 const goBack = () => {
     const historyIndex = window.navigation?.currentEntry?.index;
@@ -327,7 +358,7 @@ const changeItemState = (key, state) => {
                             <div class="lg:col-span-4">
                                 <div class="font-semibold text-sm text-slate-800 dark:text-slate-200">{{ obl.n }}</div>
                                 <div class="flex flex-wrap items-center gap-2 mt-1">
-                                    <span :class="['text-xs font-bold', getStatusColor(evaluations[obl.k]?.state)]">
+                                    <span v-if="obl.k !== 'atiksuGorus' || !wastewaterVerification" :class="['text-xs font-bold', getStatusColor(evaluations[obl.k]?.state)]">
                                         {{ meta.stateL[evaluations[obl.k]?.state] || 'Bilinmiyor' }}
                                     </span>
                                     
@@ -361,6 +392,20 @@ const changeItemState = (key, state) => {
                                        :title="form.items[obl.k]?.s === 'muaf' ? 'Opsiyonel Tarih' : 'Tarih'">
                                 
                                 <input type="text" v-model="form.items[obl.k].note" :disabled="!canEdit" placeholder="Not ekle..." class="flex-1 min-w-[150px] rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60">
+                                <div v-if="obl.k === 'atiksuGorus' && canVerifyWastewater" class="w-full space-y-2 text-xs">
+                                    <p v-if="wastewaterVerification?.confirmedAt">
+                                        Son doğrulama {{ formatDate(wastewaterVerification.confirmedAt) }} · {{ wastewaterVerification.confirmedBy }}
+                                        <span v-if="wastewaterVerification.due"> · Sonraki doğrulama {{ formatDate(wastewaterVerification.due) }}</span>
+                                    </p>
+                                    <div v-if="canEdit" class="flex flex-wrap gap-2">
+                                        <button v-if="!wastewaterVerification" type="button" :disabled="wastewaterSaving" @click="saveWastewaterVerification('enable')" class="rounded border px-2 py-1 font-semibold">Yıllık doğrulamayı aç</button>
+                                        <template v-else>
+                                            <button type="button" :disabled="wastewaterSaving" @click="saveWastewaterVerification('confirm')" class="rounded bg-indigo-600 px-2 py-1 font-semibold text-white">Geçerliliği doğrula</button>
+                                            <button type="button" :disabled="wastewaterSaving" @click="saveWastewaterVerification('disable')" class="rounded border px-2 py-1">Yenileme takibine dön</button>
+                                        </template>
+                                    </div>
+                                    <p v-if="wastewaterError" role="alert" class="text-rose-600">{{ wastewaterError }}</p>
+                                </div>
                             </div>
 
                         </div>

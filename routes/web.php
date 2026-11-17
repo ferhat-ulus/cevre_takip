@@ -119,6 +119,7 @@ Route::middleware(['auth', 'session.current'])->group(function () {
     Route::post('/api/firms', [FirmController::class, 'store'])->middleware('module.write:environment');
         Route::put('/api/firms/{id}', [FirmController::class, 'update'])->middleware('module.write:environment');
         Route::put('/api/firms/{id}/engagement', [FirmController::class, 'updateEngagement'])->middleware('module.write:environment');
+        Route::put('/api/firms/{id}/wastewater-verification', [FirmController::class, 'updateWastewaterVerification'])->middleware('module.write:environment');
     Route::delete('/api/firms/{id}', [FirmController::class, 'destroy'])->middleware('module.write:environment');
     Route::post('/api/firms/{id}/archive', [FirmController::class, 'archive'])->middleware('module.write:environment');
     Route::get('/api/firms/{id}/logs', [FirmController::class, 'getLogs']);
