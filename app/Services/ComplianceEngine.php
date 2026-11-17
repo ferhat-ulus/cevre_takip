@@ -94,7 +94,17 @@ class ComplianceEngine
 
     public static function isLegacyMissingValue(?string $value): bool
     {
-        return is_string($value) && self::normalizeLegacyValue($value) === 'SURECTE';
+        return is_string($value)
+            && preg_match('/(?:^| )SUREC(?:TE|INDE)?$/D', self::normalizeLegacyValue($value)) === 1;
+    }
+
+    public static function isLegacyItemStatus(array $item): bool
+    {
+        $status = $item['s'] ?? null;
+        $value = $item['v'] ?? null;
+
+        return self::isLegacyMissingValue(is_string($status) ? $status : null)
+            || ($status === 'secim' && self::isLegacyMissingValue(is_string($value) ? $value : null));
     }
 
     public static function pdate(?string $s): ?Carbon
@@ -147,7 +157,7 @@ class ComplianceEngine
         $out = self::base($k, $it);
         $s = $it['s'] ?? null;
         
-        if ($s === 'surec') { $s = null; }
+        if (self::isLegacyItemStatus($it)) { $s = null; }
         if ($s === 'muaf') { $out['state'] = 'muaf'; return $out; }
 
         $kind = $d['kind'];
@@ -291,7 +301,7 @@ class ComplianceEngine
 
         foreach (self::keys() as $k) {
             $e = $ev[$k]; $n = self::obl($k)['n']; $it = $items[$k] ?? [];
-            if (($it['s'] ?? null) === 'surec') $it['s'] = null;
+            if (self::isLegacyItemStatus($it)) $it['s'] = null;
 
             if ($e['state'] === 'missing') {
                 if (empty($it['s'])) {
@@ -360,7 +370,7 @@ class ComplianceEngine
     {
         $value = str_replace(['Ü', 'ü', 'Ç', 'ç'], ['U', 'u', 'C', 'c'], trim($value));
 
-        return mb_strtoupper($value, 'UTF-8');
+        return trim(preg_replace('/[^A-Z0-9]+/', ' ', str_replace('İ', 'I', mb_strtoupper($value, 'UTF-8'))));
     }
 
     public static function taskList(array $firms, array $evs, bool $includeInactive = false): array

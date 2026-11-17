@@ -204,7 +204,7 @@ class FirmExcelTemplateMapper
             $values = [];
             for ($row = 2; $row <= $highestRow; $row++) {
                 $value = $listWorksheet->getCell("{$column}{$row}")->getValue();
-                if ($value === null || $value === '' || self::normalize((string) $value) === 'SURECTE') {
+                if ($value === null || $value === '' || ComplianceEngine::isLegacyMissingValue((string) $value)) {
                     continue;
                 }
                 $values[] = $value;

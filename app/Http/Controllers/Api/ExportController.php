@@ -77,6 +77,9 @@ class ExportController extends Controller
 
                 // 1. Şablondaki mevcut sütunları bul
                 $colMap = FirmExcelTemplateMapper::findColumnMappings($worksheet, $headerRow);
+                if ($spreadsheet->getSheetByName('Çoktan Seçmeli Veri Tablosu') !== null) {
+                    FirmExcelTemplateMapper::removeLegacyStatusOptions($spreadsheet);
+                }
                 FirmExcelTemplateMapper::repairExternalDropdowns($spreadsheet, $worksheet);
                 
                 // 2. Sistemdeki tüm mevzuatları çek
@@ -199,7 +202,7 @@ class ExportController extends Controller
             $item = $firm['items'][$k] ?? null;
             $cell = $worksheet->getCell("{$col}{$row}");
 
-            if (!$item || empty($item['s']) || $item['s'] === 'surec') {
+            if (!$item || empty($item['s']) || ComplianceEngine::isLegacyItemStatus($item)) {
                 $cell->setValue(null);
                 continue;
             }

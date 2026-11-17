@@ -14,7 +14,6 @@ const successMsg = ref('');
 const errorMsg = ref('');
 
 const form = ref({
-    surecDays: props.config?.surecDays || 90,
     staleDays: props.config?.staleDays || 30,
     reviewDays: props.config?.reviewDays || 30,
     viewAll: props.config?.viewAll || false,
@@ -146,11 +145,7 @@ const deleteObligation = async (key, name) => {
 
         <!-- SEKME 1: GENEL EŞİKLER -->
         <div v-if="activeTab === 'general'" class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label class="block text-xs font-medium mb-2 dark:text-slate-300">Süreç Açık Kalma Limiti (Gün)</label>
-                    <input type="number" v-model="form.surecDays" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-xs font-medium mb-2 dark:text-slate-300">Durum Güncellenmeme Limiti (Gün)</label>
                     <input type="number" v-model="form.staleDays" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">

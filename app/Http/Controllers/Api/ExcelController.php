@@ -245,7 +245,7 @@ class ExcelController extends Controller
         if (empty($item['s'])) return 'Girilmedi';
         if ($item['s'] === 'muaf') return $item['v'] ?? 'Kapsam Dışı';
         if ($item['s'] === 'secim') return $item['v'] ?? 'Seçim';
-        if ($item['s'] === 'surec') return 'Veri Yok';
+        if (ComplianceEngine::isLegacyItemStatus($item)) return 'Veri Yok';
         if ($item['s'] === 'tarih') return !empty($item['d']) ? Carbon::parse($item['d'])->format('d.m.Y') : 'Tarih Yok';
         return $item['s'];
     }

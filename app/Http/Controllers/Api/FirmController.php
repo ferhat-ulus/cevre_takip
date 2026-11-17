@@ -108,7 +108,7 @@ class FirmController extends Controller
             if (!isset($firmData['items'][$k])) {
                 $firmData['items'][$k] = [];
             }
-            if (($firmData['items'][$k]['s'] ?? null) === 'surec') {
+            if (ComplianceEngine::isLegacyItemStatus($firmData['items'][$k])) {
                 $firmData['items'][$k]['s'] = null;
                 $firmData['items'][$k]['d'] = null;
                 $firmData['items'][$k]['note'] = null;
@@ -217,6 +217,10 @@ class FirmController extends Controller
         if (isset($patch['items'])) {
             foreach ($patch['items'] as $k => $it) {
                 if (!in_array($k, ComplianceEngine::keys())) continue;
+                if (ComplianceEngine::isLegacyItemStatus($it)) {
+                    $it['s'] = null;
+                    $it['d'] = null;
+                }
                 
                 $data['items'][$k]['s'] = $it['s'] ?? null;
                 $data['items'][$k]['d'] = $it['d'] ?? null;
