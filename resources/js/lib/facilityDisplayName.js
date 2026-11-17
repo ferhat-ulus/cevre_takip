@@ -10,6 +10,6 @@ export function facilityDisplayName(name) {
         .replace(/A\s*\.\s*Ş\s*\./gu, 'A.Ş.');
 
     return formatted === 'SİNTEK' || formatted === 'SINTEK'
-        ? 'SİNTEK TOZ METALURJİ SAN.VE TİC.A.Ş.'
+        ? 'SİNTEK TOZ METALURJİ SAN. VE TİC. A.Ş.'
         : formatted;
 }
