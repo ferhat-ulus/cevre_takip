@@ -1,5 +1,5 @@
 export function facilityDisplayName(name) {
-    return String(name ?? '')
+    const formatted = String(name ?? '')
         .normalize('NFC')
         .trim()
         .replace(/\s+/gu, ' ')
@@ -8,4 +8,8 @@ export function facilityDisplayName(name) {
         .replace(/ANONİM\s*ŞİRKETİ/gu, 'ANONİM ŞİRKETİ')
         .replace(/LTD\s*\.\s*ŞTİ\s*\./gu, 'LTD. ŞTİ.')
         .replace(/A\s*\.\s*Ş\s*\./gu, 'A.Ş.');
+
+    return formatted === 'SİNTEK' || formatted === 'SINTEK'
+        ? 'SİNTEK TOZ METALURJİ SAN.VE TİC.A.Ş.'
+        : formatted;
 }
