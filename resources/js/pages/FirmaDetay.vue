@@ -378,7 +378,7 @@ const changeItemState = (key, state) => {
                             
                             <div class="lg:col-span-4">
                                 <div class="font-semibold text-sm text-slate-800 dark:text-slate-200">
-                                    <select v-if="obl.k === 'izin'" v-model="form.profile.izinBelgeTuru" :disabled="!canEdit" aria-label="Çevre izin belge türü" class="max-w-full cursor-pointer rounded-md border-0 bg-transparent p-0 pr-6 font-semibold text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 dark:text-slate-200 disabled:cursor-default disabled:opacity-100">
+                                    <select v-if="obl.k === 'izin'" v-model="form.profile.izinBelgeTuru" :disabled="!canEdit" aria-label="Çevre izin belge türü" class="permit-type-select max-w-full cursor-pointer rounded-md border-0 bg-transparent p-0 pr-6 font-semibold text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 dark:text-slate-200 disabled:cursor-default disabled:opacity-100">
                                         <option value="gfb">Geçici Faaliyet Belgesi (GFB)</option>
                                         <option value="izin">Çevre İzin/Lisans</option>
                                     </select>
@@ -462,3 +462,17 @@ const changeItemState = (key, state) => {
         </div>
     </div>
 </template>
+
+<style>
+.permit-type-select option {
+    background-color: #fff;
+    color: #0f172a;
+}
+.dark .permit-type-select {
+    color-scheme: dark;
+}
+.dark .permit-type-select option {
+    background-color: #1e293b;
+    color: #e2e8f0;
+}
+</style>
