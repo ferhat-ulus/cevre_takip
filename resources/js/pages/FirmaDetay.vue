@@ -335,7 +335,7 @@ const changeItemState = (key, state) => {
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium mb-1 dark:text-slate-400">İzin Konusu</label>
+                            <label class="block text-xs font-medium mb-1 dark:text-slate-400">ÇİLY Ek Kapsamı</label>
                             <select v-model="form.profile.izinKonusu" :disabled="!canEdit" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-2 dark:text-white text-sm disabled:opacity-60">
                                 <option value="">Seçiniz...</option>
                                 <option value="İZİN EK-1">İZİN EK-1</option>
