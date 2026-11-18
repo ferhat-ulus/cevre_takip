@@ -347,6 +347,7 @@ const changeItemState = (key, state) => {
                                 <option value="">Seçiniz...</option>
                                 <option value="ÇED KAPSAMDIŞI">ÇED KAPSAMDIŞI</option>
                                 <option value="ÇED KAPSAMDIŞI-SINIR">ÇED KAPSAMDIŞI-SINIR</option>
+                                <option value="ÇED GEREKLİ DEĞİLDİR">ÇED GEREKLİ DEĞİLDİR</option>
                                 <option value="ÇED OLUMLU">ÇED OLUMLU</option>
                             </select>
                         </div>
