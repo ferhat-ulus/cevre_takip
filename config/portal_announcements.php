@@ -21,4 +21,12 @@ return [
             'GFB süreci olan tesisler için bu seçenek kullanılmalıdır.',
         ],
     ],
+    'environment-permit-license-topics' => [
+        'published' => true,
+        'context' => 'portal',
+        'title' => 'Çevre İzin ve Lisans Konuları',
+        'paragraphs' => [
+            'Çevre İzin ve Lisans Yönetmeliği kapsamında olan tesislerin konuları tesis detay sayfasından seçilebiliyor. Kapsama giren tesislerin konuları bu kısımda seçilerek değişikliğin kaydedilmesi gerekmektedir.',
+        ],
+    ],
 ];
