@@ -190,6 +190,29 @@ class ComplianceEngine
         $r = self::rule($cfg, $k);
         $out = self::base($k, $it);
         $s = $it['s'] ?? null;
+
+        // GFB bilgileri Excel'deki mevcut izin kaydından ayrı tutulur.
+        // Eski ve Excel'den gelen kayıtlar, tür seçilmediğinde mevcut izin hesabını kullanır.
+        if ($k === 'izin' && ($firm['profile']['izinBelgeTuru'] ?? 'izin') === 'gfb') {
+            $gfbDate = self::pdate($firm['profile']['gfbTarihi'] ?? null);
+            if (!$gfbDate) {
+                return array_replace($out, ['label' => 'Geçici Faaliyet Belgesi tarihi girilmemiş']);
+            }
+
+            $due = $gfbDate->copy()->addDays(180);
+            $expiry = $gfbDate->copy()->addYear();
+            $days = (int) $today->diffInDays($due, false);
+            $state = self::st(30, 60, $days);
+            $label = 'GFB sonrası Çevre İzin/Lisans başvuru son günü';
+            return array_merge($out, [
+                'due' => $due->toDateString(),
+                'days' => $days,
+                'state' => $state,
+                'label' => $label,
+                'expiry' => $expiry->toDateString(),
+                'tasks' => [['l' => $label, 'due' => $due->toDateString(), 'days' => $days, 'state' => $state]],
+            ]);
+        }
         
         if (self::isLegacyItemStatus($it)) { $s = null; }
         if ($s === 'muaf') { $out['state'] = 'muaf'; return $out; }

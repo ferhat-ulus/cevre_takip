@@ -129,6 +129,8 @@ class FirmController extends Controller
         }
         $firmData['profile']['atiksuKurum'] = $firmData['profile']['atiksuKurum'] ?? '';
         $firmData['profile']['izinKonusu'] = $firmData['profile']['izinKonusu'] ?? '';
+        $firmData['profile']['izinBelgeTuru'] = $firmData['profile']['izinBelgeTuru'] ?? 'izin';
+        $firmData['profile']['gfbTarihi'] = $firmData['profile']['gfbTarihi'] ?? null;
         $firmData['contractDate'] = $firmData['contractDate'] ?? null;
         $firmData['serviceStartedAt'] = $firmData['serviceStartedAt'] ?? null;
         $firmData['serviceEndedAt'] = $firmData['serviceEndedAt'] ?? null;
@@ -215,6 +217,8 @@ class FirmController extends Controller
             'sector' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:5000'],
             'profile' => ['nullable', 'array'],
+            'profile.izinBelgeTuru' => ['sometimes', 'in:izin,gfb'],
+            'profile.gfbTarihi' => ['nullable', 'date'],
             'items' => ['nullable', 'array'],
             'consultant_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);

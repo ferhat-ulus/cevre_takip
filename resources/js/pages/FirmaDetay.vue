@@ -17,6 +17,8 @@ const props = defineProps({
 });
 
 const form = ref(JSON.parse(JSON.stringify(props.firm)));
+form.value.profile = form.value.profile || {};
+form.value.profile.izinBelgeTuru = form.value.profile.izinBelgeTuru || 'izin';
 const engagement = ref({
     contract_date: props.firm.contractDate || '',
     started_at: props.firm.serviceStartedAt || '',
@@ -101,6 +103,23 @@ const formatDay = (value) => {
     if (!value) return '—';
     const [year, month, day] = String(value).slice(0, 10).split('-');
     return day && month && year ? `${day}.${month}.${year}` : value;
+};
+
+const isGfbPermit = computed(() => form.value.profile?.izinBelgeTuru === 'gfb');
+const gfbCalculatedDate = (days) => {
+    const value = form.value.profile?.gfbTarihi;
+    if (!value) return '';
+    const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day + days));
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+};
+const gfbCalculatedExpiry = () => {
+    const value = form.value.profile?.gfbTarihi;
+    if (!value) return '';
+    const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    date.setUTCFullYear(date.getUTCFullYear() + 1);
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 };
 
 const engagementPeriod = computed(() => {
@@ -376,7 +395,28 @@ const changeItemState = (key, state) => {
                                 </div>
                             </div>
 
-                            <div class="lg:col-span-8 flex flex-wrap gap-2 items-center">
+                            <div v-if="obl.k === 'izin'" class="lg:col-span-8 flex flex-wrap gap-2 items-center">
+                                <select v-model="form.profile.izinBelgeTuru" :disabled="!canEdit" aria-label="Çevre izin belgesi türü" class="w-52 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60">
+                                    <option value="gfb">Geçici Faaliyet Belgesi (GFB)</option>
+                                    <option value="izin">Çevre İzin/Lisans</option>
+                                </select>
+                                <input v-if="isGfbPermit" type="date" v-model="form.profile.gfbTarihi" :disabled="!canEdit" aria-label="Geçici Faaliyet Belgesi tarihi" class="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60 w-36">
+                                <template v-else>
+                                    <select :value="form.items[obl.k]?.s || ''" @change="changeItemState(obl.k, $event.target.value)" :disabled="!canEdit" class="w-32 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60">
+                                        <option value="">Girilmedi</option>
+                                        <option value="tarih">Tarih</option>
+                                        <option value="muaf">Kapsam Dışı</option>
+                                        <option v-if="form.items[obl.k]?.s === 'secim'" value="secim">{{ form.items[obl.k].v }}</option>
+                                    </select>
+                                    <input v-if="form.items[obl.k]?.s === 'tarih' || form.items[obl.k]?.s === 'muaf'" type="date" v-model="form.items[obl.k].d" :disabled="!canEdit" class="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60 w-36" :title="form.items[obl.k]?.s === 'muaf' ? 'Opsiyonel Tarih' : 'Tarih'">
+                                </template>
+                                <input type="text" v-model="form.items[obl.k].note" :disabled="!canEdit" placeholder="Not ekle..." class="flex-1 min-w-[150px] rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60">
+                                <div v-if="isGfbPermit" class="w-full rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+                                    GFB geçerlilik süresi 1 yıldır. Çevre İzin/Lisans başvuru son günü GFB tarihinden 180 gün sonra hesaplanır; uyarılar bu son tarihe 60 ve 30 gün kala başlar.
+                                    <span v-if="form.profile.gfbTarihi" class="block mt-1">Başvuru son günü: <strong>{{ formatDay(gfbCalculatedDate(180)) }}</strong> · GFB bitişi: <strong>{{ formatDay(gfbCalculatedExpiry()) }}</strong></span>
+                                </div>
+                            </div>
+                            <div v-else class="lg:col-span-8 flex flex-wrap gap-2 items-center">
                                 
                                 <select :value="form.items[obl.k]?.s || ''" @change="changeItemState(obl.k, $event.target.value)" :disabled="!canEdit" class="w-32 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60">
                                     <option value="">Girilmedi</option>
