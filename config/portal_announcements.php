@@ -3,6 +3,7 @@
 return [
     'wastewater-annual-verification' => [
         'published' => true,
+        'publishedAt' => '2026-11-18',
         'context' => 'wastewater',
         'title' => 'OSB dışı tesislerde atıksu görüşü için yıllık doğrulama (Kanalizasyon ve Vidanjör)',
         'paragraphs' => [
@@ -13,6 +14,7 @@ return [
     ],
     'gfb-environmental-permit-tracking' => [
         'published' => true,
+        'publishedAt' => '2026-11-18',
         'context' => 'portal',
         'title' => 'Çevre İzin/Lisans sürecinde GFB takibi',
         'paragraphs' => [
@@ -23,6 +25,7 @@ return [
     ],
     'environment-permit-license-topics' => [
         'published' => true,
+        'publishedAt' => '2026-11-18',
         'context' => 'portal',
         'title' => 'Çevre İzin ve Lisans Konuları',
         'paragraphs' => [
