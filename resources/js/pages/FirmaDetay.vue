@@ -19,6 +19,8 @@ const props = defineProps({
 const form = ref(JSON.parse(JSON.stringify(props.firm)));
 form.value.profile = form.value.profile || {};
 form.value.profile.izinBelgeTuru = form.value.profile.izinBelgeTuru || 'izin';
+form.value.profile.permitTopicKeys = form.value.profile.permitTopicKeys || [];
+form.value.profile.licenseTopicKeys = form.value.profile.licenseTopicKeys || [];
 const engagement = ref({
     contract_date: props.firm.contractDate || '',
     started_at: props.firm.serviceStartedAt || '',
@@ -81,6 +83,15 @@ const groupedObligations = computed(() => {
     });
     return groups;
 });
+
+const groupTopics = (topics = []) => topics.reduce((groups, topic) => {
+    (groups[topic.group] ||= []).push(topic);
+    return groups;
+}, {});
+const groupedPermitTopics = computed(() => groupTopics(props.meta?.permitTopics));
+const groupedLicenseTopics = computed(() => groupTopics(props.meta?.licenseTopics));
+const selectedPermitTopics = computed(() => (props.meta?.permitTopics || []).filter(topic => form.value.profile.permitTopicKeys.includes(topic.key)));
+const selectedLicenseTopics = computed(() => (props.meta?.licenseTopics || []).filter(topic => form.value.profile.licenseTopicKeys.includes(topic.key)));
 
 const getStatusColor = (state) => {
     if (state === 'missing') return 'text-red-700 dark:text-red-300 font-bold';
@@ -361,6 +372,52 @@ const changeItemState = (key, state) => {
                                 <option value="İZİN EK-2">İZİN EK-2</option>
                                 <option value="KAPSAMDIŞI">KAPSAMDIŞI</option>
                             </select>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Çevre İzin Konuları</h4>
+                                <span class="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">{{ form.profile.permitTopicKeys.length }} seçili</span>
+                            </div>
+                            <p class="mt-1 text-[10px] text-slate-500 dark:text-slate-400">GFB aşamasında seçilen konular izin aşamasına aktarılmak üzere kayıtta tutulur.</p>
+                            <details class="group mt-2">
+                                <summary class="cursor-pointer select-none rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-indigo-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-slate-700">İzin konularını seç / düzenle</summary>
+                                <div class="mt-2 space-y-3">
+                                    <div v-for="(topics, groupName) in groupedPermitTopics" :key="groupName">
+                                        <p class="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ groupName }}</p>
+                                        <label v-for="topic in topics" :key="topic.key" class="flex items-start gap-2 rounded-md px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                                            <input v-model="form.profile.permitTopicKeys" type="checkbox" :value="topic.key" :disabled="!canEdit" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-60">
+                                            <span>{{ topic.label }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </details>
+                            <div v-if="selectedPermitTopics.length" class="mt-2 flex flex-wrap gap-1">
+                                <span v-for="topic in selectedPermitTopics" :key="topic.key" class="rounded bg-indigo-50 px-2 py-1 text-[10px] text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-200">{{ topic.label }}</span>
+                            </div>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Çevre Lisans Konuları</h4>
+                                <span class="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">{{ form.profile.licenseTopicKeys.length }} seçili</span>
+                            </div>
+                            <p class="mt-1 text-[10px] text-slate-500 dark:text-slate-400">Birden fazla konu seçilebilir; yenileme dönemlerinde seçimleri güncelleyebilirsiniz.</p>
+                            <details class="group mt-2">
+                                <summary class="cursor-pointer select-none rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-indigo-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-slate-700">Lisans konularını seç / düzenle</summary>
+                                <div class="mt-2 space-y-3">
+                                    <div v-for="(topics, groupName) in groupedLicenseTopics" :key="groupName">
+                                        <p class="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ groupName }}</p>
+                                        <label v-for="topic in topics" :key="topic.key" class="flex items-start gap-2 rounded-md px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                                            <input v-model="form.profile.licenseTopicKeys" type="checkbox" :value="topic.key" :disabled="!canEdit" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-60">
+                                            <span>{{ topic.label }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </details>
+                            <div v-if="selectedLicenseTopics.length" class="mt-2 flex flex-wrap gap-1">
+                                <span v-for="topic in selectedLicenseTopics" :key="topic.key" class="rounded bg-indigo-50 px-2 py-1 text-[10px] text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-200">{{ topic.label }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>

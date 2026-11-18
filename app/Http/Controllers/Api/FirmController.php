@@ -131,6 +131,8 @@ class FirmController extends Controller
         $firmData['profile']['izinKonusu'] = $firmData['profile']['izinKonusu'] ?? '';
         $firmData['profile']['izinBelgeTuru'] = $firmData['profile']['izinBelgeTuru'] ?? 'izin';
         $firmData['profile']['gfbTarihi'] = $firmData['profile']['gfbTarihi'] ?? null;
+        $firmData['profile']['permitTopicKeys'] = $firmData['profile']['permitTopicKeys'] ?? [];
+        $firmData['profile']['licenseTopicKeys'] = $firmData['profile']['licenseTopicKeys'] ?? [];
         $firmData['contractDate'] = $firmData['contractDate'] ?? null;
         $firmData['serviceStartedAt'] = $firmData['serviceStartedAt'] ?? null;
         $firmData['serviceEndedAt'] = $firmData['serviceEndedAt'] ?? null;
@@ -140,6 +142,16 @@ class FirmController extends Controller
         $cfg = array_merge(ComplianceEngine::DEFAULT_CFG, $cfgRow ? $cfgRow->v : []);
 
         $ev = ComplianceEngine::evaluateFirm($firmData, $today, $cfg);
+        $environmentPermitCatalog = config('environment_permit_catalog');
+        $topicOptions = static fn (array $topics): array => array_map(
+            static fn (array $topic): array => [
+                'key' => $topic['key'],
+                'group' => $topic['group'],
+                'service' => $topic['service'],
+                'label' => $topic['label'],
+            ],
+            $topics,
+        );
 
         return Inertia::render('FirmaDetay', [
             'announcements' => ComplianceEngine::canVerifyWastewaterAnnually($firmData)
@@ -155,6 +167,8 @@ class FirmController extends Controller
             'meta' => [
                 'obligations' => ComplianceEngine::getAll(),
                 'stateL' => ComplianceEngine::STATE_L,
+                'permitTopics' => $topicOptions($environmentPermitCatalog['permits']),
+                'licenseTopics' => $topicOptions($environmentPermitCatalog['licenses']),
             ],
             'canEdit' => $user->role === 'admin' || $firm->isAssignedTo($user),
             'canManageEngagement' => $user->role === 'admin',
@@ -219,6 +233,10 @@ class FirmController extends Controller
             'profile' => ['nullable', 'array'],
             'profile.izinBelgeTuru' => ['sometimes', 'in:izin,gfb'],
             'profile.gfbTarihi' => ['nullable', 'date'],
+            'profile.permitTopicKeys' => ['sometimes', 'array', 'max:20'],
+            'profile.permitTopicKeys.*' => ['string', 'distinct', \Illuminate\Validation\Rule::in(array_column(config('environment_permit_catalog.permits'), 'key'))],
+            'profile.licenseTopicKeys' => ['sometimes', 'array', 'max:100'],
+            'profile.licenseTopicKeys.*' => ['string', 'distinct', \Illuminate\Validation\Rule::in(array_column(config('environment_permit_catalog.licenses'), 'key'))],
             'items' => ['nullable', 'array'],
             'consultant_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
