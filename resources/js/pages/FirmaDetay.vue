@@ -377,7 +377,13 @@ const changeItemState = (key, state) => {
                         <div v-for="obl in obls" :key="obl.k" class="p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                             
                             <div class="lg:col-span-4">
-                                <div class="font-semibold text-sm text-slate-800 dark:text-slate-200">{{ obl.n }}</div>
+                                <div class="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                                    <select v-if="obl.k === 'izin'" v-model="form.profile.izinBelgeTuru" :disabled="!canEdit" aria-label="Çevre izin belge türü" class="max-w-full cursor-pointer rounded-md border-0 bg-transparent p-0 pr-6 font-semibold text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 dark:text-slate-200 disabled:cursor-default disabled:opacity-100">
+                                        <option value="gfb">Geçici Faaliyet Belgesi (GFB)</option>
+                                        <option value="izin">Çevre İzin/Lisans</option>
+                                    </select>
+                                    <span v-else>{{ obl.n }}</span>
+                                </div>
                                 <div class="flex flex-wrap items-center gap-2 mt-1">
                                     <span v-if="obl.k !== 'atiksuGorus' || !wastewaterVerification" :class="['text-xs font-bold', getStatusColor(evaluations[obl.k]?.state)]">
                                         {{ meta.stateL[evaluations[obl.k]?.state] || 'Bilinmiyor' }}
@@ -396,10 +402,6 @@ const changeItemState = (key, state) => {
                             </div>
 
                             <div v-if="obl.k === 'izin'" class="lg:col-span-8 flex flex-wrap gap-2 items-center">
-                                <select v-model="form.profile.izinBelgeTuru" :disabled="!canEdit" aria-label="Çevre izin belgesi türü" class="w-52 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60">
-                                    <option value="gfb">Geçici Faaliyet Belgesi (GFB)</option>
-                                    <option value="izin">Çevre İzin/Lisans</option>
-                                </select>
                                 <input v-if="isGfbPermit" type="date" v-model="form.profile.gfbTarihi" :disabled="!canEdit" aria-label="Geçici Faaliyet Belgesi tarihi" class="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60 w-36">
                                 <template v-else>
                                     <select :value="form.items[obl.k]?.s || ''" @change="changeItemState(obl.k, $event.target.value)" :disabled="!canEdit" class="w-32 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60">
