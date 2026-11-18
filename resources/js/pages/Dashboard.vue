@@ -1,9 +1,11 @@
 <script setup>
+import PortalAnnouncement from '../components/PortalAnnouncement.vue';
 import { facilityDisplayName } from '../lib/facilityDisplayName';
 import { computed, ref } from 'vue';
 import { Link, usePage, Head } from '@inertiajs/vue3';
 
 const props = defineProps({
+    announcements: { type: Array, default: () => [] },
     stats: Object,
     firmSummary: Object,
     consultants: Array,
@@ -69,6 +71,8 @@ const kalanSure = (days) => (days === null || days === undefined ? 'Belirsiz' : 
             </div>
             <Link href="/ziyaret-takvimi" class="shrink-0 rounded-lg bg-indigo-700 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-800">Takvime Git</Link>
         </div>
+
+        <PortalAnnouncement v-for="announcement in announcements.filter(item => !item.acknowledgedAt)" :key="announcement.key" :announcement="announcement" />
 
         <section v-if="wastewaterReminders?.length" class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
             <h2 class="font-bold">Atıksu görüşü doğrulaması</h2>

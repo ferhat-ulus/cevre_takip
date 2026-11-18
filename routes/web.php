@@ -74,6 +74,9 @@ Route::middleware(['auth', 'session.current'])->group(function () {
     })->middleware('module.access:environment')->name('modules.select.environment');
 
     Route::middleware([EnsureEnvironmentModuleSelected::class, 'module.access:environment'])->group(function () {
+    Route::get('/duyurular', [\App\Http\Controllers\Api\AnnouncementController::class, 'index']);
+    Route::post('/duyurular/{announcement}/okudum', [\App\Http\Controllers\Api\AnnouncementController::class, 'acknowledge'])
+        ->where('announcement', '[a-z0-9-]{1,100}');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/tesisler', [FirmController::class, 'index'])->name('firms.index');
     Route::get('/firma/{id}', [FirmController::class, 'show'])->name('firms.show');

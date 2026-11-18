@@ -140,6 +140,9 @@ class FirmController extends Controller
         $ev = ComplianceEngine::evaluateFirm($firmData, $today, $cfg);
 
         return Inertia::render('FirmaDetay', [
+            'announcements' => ComplianceEngine::canVerifyWastewaterAnnually($firmData)
+                ? array_values(array_filter(AnnouncementController::visible($request), fn ($announcement) => $announcement['context'] === 'wastewater'))
+                : [],
             'firm' => $firmData,
             'canVerifyWastewater' => ComplianceEngine::canVerifyWastewaterAnnually($firmData),
             'wastewaterVerification' => ComplianceEngine::wastewaterVerification($firmData, Carbon::today(\App\Services\BusinessCalendar::TIMEZONE)),

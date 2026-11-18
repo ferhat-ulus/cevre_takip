@@ -1,9 +1,11 @@
 <script setup>
+import PortalAnnouncement from '../components/PortalAnnouncement.vue';
 import { facilityDisplayName } from '../lib/facilityDisplayName';
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 
 const props = defineProps({
+    announcements: { type: Array, default: () => [] },
     firm: Object,
     consultants: { type: Array, default: () => [] },
     evaluations: Object,
@@ -392,6 +394,9 @@ const changeItemState = (key, state) => {
                                        :title="form.items[obl.k]?.s === 'muaf' ? 'Opsiyonel Tarih' : 'Tarih'">
                                 
                                 <input type="text" v-model="form.items[obl.k].note" :disabled="!canEdit" placeholder="Not ekle..." class="flex-1 min-w-[150px] rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-1.5 text-xs dark:text-white disabled:opacity-60">
+                                <template v-if="obl.k === 'atiksuGorus'">
+                                    <PortalAnnouncement v-for="announcement in announcements.filter(item => !item.acknowledgedAt)" :key="announcement.key" :announcement="announcement" class="w-full" />
+                                </template>
                                 <div v-if="obl.k === 'atiksuGorus' && canVerifyWastewater" class="w-full space-y-2 text-xs">
                                     <p v-if="wastewaterVerification?.confirmedAt">
                                         Son doğrulama {{ formatDate(wastewaterVerification.confirmedAt) }} · {{ wastewaterVerification.confirmedBy }}

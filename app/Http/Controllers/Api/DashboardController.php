@@ -130,6 +130,7 @@ class DashboardController extends Controller
         });
 
         return Inertia::render('Dashboard', [
+            'announcements' => AnnouncementController::visible($request),
             'wastewaterReminders' => $wastewaterReminders,
             'stats' => $stats,
             'firmSummary' => $firmSummary,
