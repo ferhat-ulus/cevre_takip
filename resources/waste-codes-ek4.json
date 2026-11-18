@@ -1,0 +1,4215 @@
+{
+  "source": "https://webdosya.csb.gov.tr/db/istanbulakdm/menu/ba0c81c3-344d-4c8f-a554-1cd5a726ecfb_20200623112254.pdf",
+  "codes": {
+    "100101": {
+      "description": "(10 01 04’ün altındaki kazan tozu hariç) dip külü, cüruf ve kazan tozu",
+      "hazardous": false,
+      "classification": null
+    },
+    "100102": {
+      "description": "Uçucu kömür külü",
+      "hazardous": false,
+      "classification": null
+    },
+    "100103": {
+      "description": "Turba ve işlenmenmiş odundan kaynaklanan uçucu kül",
+      "hazardous": false,
+      "classification": null
+    },
+    "100104": {
+      "description": "Uçucu yağ külü ve kazan tozu",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100105": {
+      "description": "Baca gazı kükürt giderme işleminden (desülfürizasyon) çıkan kalsiyum bazlı katı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100107": {
+      "description": "Baca gazı kükürt giderme işleminden (desülfürizasyon) çıkan kalsiyum bazlı çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100109": {
+      "description": "Sülfürik asit",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100113": {
+      "description": "Yakıt olarak kullanılan emülsifiye hidrokarbonların uçucu külleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100114": {
+      "description": "Atıkların beraber yakılmasından kaynaklanan ve tehlikeli maddeler içeren dip külü, cüruf ve kazan tozu",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100115": {
+      "description": "10 01 14 dışındaki beraber yakılmadan kaynaklanan dip külü, cüruf ve kazan tozu",
+      "hazardous": false,
+      "classification": null
+    },
+    "100116": {
+      "description": "Atıkların beraber yakılmasından kaynaklanan ve tehlikeli maddeler içeren uçucu kül",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100117": {
+      "description": "10 01 16 dışındaki beraber yakmadan kaynaklanan uçucu kül",
+      "hazardous": false,
+      "classification": null
+    },
+    "100118": {
+      "description": "Tehlikeli maddeler içeren gaz temizleme atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100119": {
+      "description": "10 01 05, 10 01 07 ve 10 01 18 dışındaki gaz temizleme atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100120": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100121": {
+      "description": "10 01 20 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100122": {
+      "description": "Kazan temizlemesi sonucu çıkan tehlikeli maddeler içeren sulu çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100123": {
+      "description": "10 01 22 dışındaki kazan temizlemesi sonucu çıkan sulu çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100124": {
+      "description": "Akışkan yatak kumları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100125": {
+      "description": "Termik santrallerin yakıt depolama ve hazırlama işlemlerinden çıkan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100126": {
+      "description": "Soğutma suyunun arıtılmasından çıkan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100201": {
+      "description": "Cüruf işleme atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100202": {
+      "description": "İşlenmemiş cüruf",
+      "hazardous": false,
+      "classification": null
+    },
+    "100207": {
+      "description": "Tehlikeli maddeler içeren gazların arıtımı sonucu ortaya çıkan katı atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100208": {
+      "description": "10 02 07 dışında gaz arıtımı sonucu ortaya çıkan katı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100210": {
+      "description": "Haddehane tufalı",
+      "hazardous": false,
+      "classification": null
+    },
+    "100211": {
+      "description": "Soğutma suyunun arıtılmasından kaynaklanan yağ içerikli atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100212": {
+      "description": "10 02 11 dışındaki soğutma suyu arıtma atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100213": {
+      "description": "Gaz arıtımı sonucu oluşan ve tehlikeli maddeler içeren çamurlar ve filtre kekleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100214": {
+      "description": "10 02 13 dışındaki gaz arıtımı sonucu oluşan çamurlar ve filtre kekleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "100215": {
+      "description": "Diğer çamurlar ve filtre kekleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "100299": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100302": {
+      "description": "Anot hurdaları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100304": {
+      "description": "Birincil üretim cürufları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100305": {
+      "description": "Atık alüminyum oksit",
+      "hazardous": false,
+      "classification": null
+    },
+    "100308": {
+      "description": "İkincil üretimden kaynaklanan tuz cürufları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100309": {
+      "description": "İkincil üretimden kaynaklanan kara cüruflar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100315": {
+      "description": "Suyla temas halinde tehlikeli miktarlarda alevlenebilir gazlar çıkaran yanıcı veya yayılabilir köpükler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100316": {
+      "description": "10 03 15 dışındaki köpükler",
+      "hazardous": false,
+      "classification": null
+    },
+    "100317": {
+      "description": "Anot üretiminden kaynaklanan katranlı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100318": {
+      "description": "10 03 17 dışındaki anot üretiminden kaynaklanan karbon içerikli atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100319": {
+      "description": "Tehlikeli maddeler içeren baca gazı tozu",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100320": {
+      "description": "10 03 19 dışındaki baca gazı tozu",
+      "hazardous": false,
+      "classification": null
+    },
+    "100321": {
+      "description": "Tehlikeli maddeler içeren diğer partiküller ve tozlar (öğütücü değirmen tozu dâhil)",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100322": {
+      "description": "10 03 21 dışındaki partiküller ve tozlar (öğütücü değirmen tozu dâhil)",
+      "hazardous": false,
+      "classification": null
+    },
+    "100323": {
+      "description": "Tehlikeli maddeler içeren gaz arıtımı katı atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100324": {
+      "description": "10 03 23 dışındaki gaz arıtımı katı atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100325": {
+      "description": "Tehlikeli maddeler içeren gaz arıtımı çamurları ve filtre kekleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100326": {
+      "description": "10 03 25 dışındaki gaz arıtımı çamurları ve filtre kekleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "100327": {
+      "description": "Soğutma suyunun arıtılmasından kaynaklanan yağ içerikli atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100328": {
+      "description": "10 03 27 dışındaki soğutma suyu arıtma atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100329": {
+      "description": "Tehlikeli maddeler içeren tuz cürufları ve kara cürufların işlenmesinden çıkan atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100330": {
+      "description": "10 03 29 dışındaki tuz cürufları ve kara cürufların işlenmesinden çıkan atıkla",
+      "hazardous": false,
+      "classification": null
+    },
+    "100399": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100401": {
+      "description": "Birincil ve ikincil üretim cürufları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100402": {
+      "description": "Birincil ve ikincil üretimden kaynaklanan cüruf ve köpükler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100403": {
+      "description": "Kalsiyum arsenat",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100404": {
+      "description": "Baca gazı tozu",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100405": {
+      "description": "Diğer partiküller ve toz",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100406": {
+      "description": "Gaz arıtımından kaynaklanan katı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100407": {
+      "description": "Gaz arıtım çamurları ve filtre kekleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100409": {
+      "description": "Soğutma suyunun arıtılmasından kaynaklanan yağ içerikli atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100410": {
+      "description": "10 04 09 dışındaki soğutma suyu arıtma atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100499": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100501": {
+      "description": "Birincil ve ikincil üretim cürufları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100503": {
+      "description": "Baca gazı tozu",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100504": {
+      "description": "Diğer partiküller ve toz",
+      "hazardous": false,
+      "classification": null
+    },
+    "100505": {
+      "description": "Gaz arıtımından kaynaklanan katı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100506": {
+      "description": "Gaz arıtım çamurları ve filtre kekleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100508": {
+      "description": "Soğutma suyunun arıtılmasından kaynaklanan yağ içerikli atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100509": {
+      "description": "10 05 08 dışındaki soğutma suyu arıtma atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100510": {
+      "description": "Suyla temas halinde tehlikeli miktarlarda alevlenebilir gazlar çıkaran yanıcı veya yayılabilir cüruf ve köpükler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100511": {
+      "description": "10 05 10 dışındaki cüruf ve köpükler",
+      "hazardous": false,
+      "classification": null
+    },
+    "100599": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100601": {
+      "description": "Birincil ve ikincil üretim cürufları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100602": {
+      "description": "Birincil ve ikincil üretimden kaynaklanan cüruf ve köpükler",
+      "hazardous": false,
+      "classification": null
+    },
+    "100603": {
+      "description": "Baca gazı tozu",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100604": {
+      "description": "Diğer partiküller ve toz",
+      "hazardous": false,
+      "classification": null
+    },
+    "100606": {
+      "description": "Gaz arıtımından kaynaklanan katı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100607": {
+      "description": "Gaz arıtımından kaynaklanan çamurlar ve filtre kekleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100609": {
+      "description": "Soğutma suyunun arıtılmasından kaynaklanan yağ içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100610": {
+      "description": "10 06 09 dışındaki soğutma suyu arıtma atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100699": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100701": {
+      "description": "Birincil ve ikincil üretim cürufları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100702": {
+      "description": "Birincil ve ikincil üretimden kaynaklanan cüruf ve köpükler",
+      "hazardous": false,
+      "classification": null
+    },
+    "100703": {
+      "description": "Gaz arıtımından kaynaklanan katı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100704": {
+      "description": "Diğer partiküller ve toz",
+      "hazardous": false,
+      "classification": null
+    },
+    "100705": {
+      "description": "Gaz arıtımından kaynaklanan çamurlar ve filtre kekleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "100707": {
+      "description": "Soğutma suyunun arıtılmasından kaynaklanan yağ içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100708": {
+      "description": "10 07 07 dışındaki soğutma suyu arıtma atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100799": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100804": {
+      "description": "Partiküller ve toz",
+      "hazardous": false,
+      "classification": null
+    },
+    "100808": {
+      "description": "Birincil ve ikincil üretimden kaynaklanan tuz cürufu",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100809": {
+      "description": "Diğer cüruflar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100810": {
+      "description": "Suyla temas halinde tehlikeli miktarlarda alevlenebilir gazlar çıkaran yanıcı veya yayılabilir cüruf ve köpükler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100811": {
+      "description": "10 08 10 dışındaki cüruf, toz ve kırpıntılar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100812": {
+      "description": "Anot üretiminden kaynaklanan katran içeren atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "100813": {
+      "description": "10 08 12 dışındaki anot üretiminden kaynaklanan karbon içerikli atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100814": {
+      "description": "Anot hurdası",
+      "hazardous": false,
+      "classification": null
+    },
+    "100815": {
+      "description": "Tehlikeli maddeler içeren baca gazı tozu",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100816": {
+      "description": "10 08 15 dışındaki baca gazı tozu",
+      "hazardous": false,
+      "classification": null
+    },
+    "100817": {
+      "description": "Baca gazı arıtımından kaynaklanan ve tehlikeli maddeler içeren çamurlar ve filtre kekleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100818": {
+      "description": "10 08 17 dışındaki gaz arıtma çamurları ve filtre kekleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "100819": {
+      "description": "Soğutma suyunun arıtılmasından kaynaklanan yağ içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100820": {
+      "description": "10 08 19 dışındaki soğutma suyu arıtma atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100899": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100903": {
+      "description": "Ocak cürufları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100905": {
+      "description": "Henüz döküm yapılamamış, tehlikeli madde içeren maça ve kum döküm kalıpları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100906": {
+      "description": "10 09 05 dışında henüz döküm yapılamamış maça ve kum döküm kalıpları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100907": {
+      "description": "Döküm yapılmış tehlikeli madde içeren maça ve kum döküm kalıpları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100908": {
+      "description": "10 09 07 dışında döküm yapılmış maça ve kum döküm kalıpları",
+      "hazardous": false,
+      "classification": null
+    },
+    "100909": {
+      "description": "Tehlikeli maddeler içeren baca gazı tozu",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100910": {
+      "description": "10 09 09 dışındaki baca gazı tozu",
+      "hazardous": false,
+      "classification": null
+    },
+    "100911": {
+      "description": "Tehlikeli maddeler içeren diğer partiküller",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100912": {
+      "description": "10 09 11 dışındaki diğer partiküller",
+      "hazardous": false,
+      "classification": null
+    },
+    "100913": {
+      "description": "Tehlikeli maddeler içeren atık bağlayıcılar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100914": {
+      "description": "10 09 13 dışındaki atık bağlayıcılar",
+      "hazardous": false,
+      "classification": null
+    },
+    "100915": {
+      "description": "Tehlikeli madde içeren çatlak belirleme kimyasalları atığı",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "100916": {
+      "description": "10 09 15 dışındaki çatlak belirleme kimyasalları atığı",
+      "hazardous": false,
+      "classification": null
+    },
+    "100999": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "101003": {
+      "description": "Ocak cürufları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101005": {
+      "description": "Henüz döküm yapılamamış, tehlikeli madde içeren maça ve kum döküm kalıpları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101006": {
+      "description": "10 10 05 dışındaki henüz döküm yapılamamış maça ve kum döküm kalıpları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101007": {
+      "description": "Döküm yapılmış tehlikeli madde içeren maça ve kum döküm kalıpları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101008": {
+      "description": "10 10 07 dışındaki döküm yapılmış maça ve kum döküm kalıpları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101009": {
+      "description": "Tehlikeli maddeler içeren baca gazı tozu",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101010": {
+      "description": "10 10 09 dışındaki baca gazı tozu",
+      "hazardous": false,
+      "classification": null
+    },
+    "101011": {
+      "description": "Tehlikeli maddeler içeren diğer partiküller",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101012": {
+      "description": "10 10 11 dışındaki diğer partiküller",
+      "hazardous": false,
+      "classification": null
+    },
+    "101013": {
+      "description": "Tehlikeli maddeler içeren bağlayıcı atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101014": {
+      "description": "10 10 13 dışındaki bağlayıcı atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101015": {
+      "description": "Tehlikeli madde içeren çatlak belirleme kimyasalları atığı",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101016": {
+      "description": "10 10 15 dışındaki çatlak belirleme kimyasalları atığı",
+      "hazardous": false,
+      "classification": null
+    },
+    "101099": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "101103": {
+      "description": "Cam elyaf atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101105": {
+      "description": "Partiküller ve toz",
+      "hazardous": false,
+      "classification": null
+    },
+    "101109": {
+      "description": "Isıl işlemden önce hazırlanan tehlikeli maddeler içeren harman atığı",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101110": {
+      "description": "10 11 09 dışında ısıl işlemden önce hazırlanan harman atığı",
+      "hazardous": false,
+      "classification": null
+    },
+    "101111": {
+      "description": "Ağır metaller içeren küçük parçacıklar ve cam tozu halinde atık cam(örneğin katot ışın tüplerinden)",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101112": {
+      "description": "10 11 11 dışındaki atık camlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "101113": {
+      "description": "Tehlikeli maddeler içeren cam parlatma ve öğütme çamuru",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101114": {
+      "description": "10 11 13 dışındaki cam parlatma ve öğütme çamuru",
+      "hazardous": false,
+      "classification": null
+    },
+    "101115": {
+      "description": "Baca gazı arıtımından kaynaklanan tehlikeli maddeler içeren katı atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101116": {
+      "description": "10 11 15 dışında baca gazı arıtımından kaynaklanan katı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "101117": {
+      "description": "Baca gazı arıtımından kaynaklanan ve tehlikeli maddeler içeren çamurlar ve filtre kekleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101118": {
+      "description": "10 11 17 dışındaki baca gazı arıtımından kaynaklanan çamurlar ve filtre kekl",
+      "hazardous": false,
+      "classification": null
+    },
+    "101119": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren katı atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101120": {
+      "description": "10 11 19 dışındaki saha içi atıksu arıtımından kaynaklanan katı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "101199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "101201": {
+      "description": "Isıl işlem öncesi karışım hazırlama atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101203": {
+      "description": "Partiküller ve toz",
+      "hazardous": false,
+      "classification": null
+    },
+    "101205": {
+      "description": "Gaz arıtımından kaynaklanan çamurlar ve filtre kekleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "101206": {
+      "description": "Iskarta kalıplar",
+      "hazardous": false,
+      "classification": null
+    },
+    "101208": {
+      "description": "Atık seramikler, tuğlalar, fayanslar ve inşaat malzemeleri (ısıl işlem sonrası)",
+      "hazardous": false,
+      "classification": null
+    },
+    "101209": {
+      "description": "Gaz arıtımından kaynaklanan tehlikeli maddeler içeren katı atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101210": {
+      "description": "10 12 09 dışındaki gaz arıtma katı atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101211": {
+      "description": "Ağır metaller içeren sırlama atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101212": {
+      "description": "10 12 11 dışındaki sırlama atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101213": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan çamur",
+      "hazardous": false,
+      "classification": null
+    },
+    "101299": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "101301": {
+      "description": "Isıl işlem öncesi karışım hazırlama atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101304": {
+      "description": "Kirecin kalsinasyon ve hidratasyonundan kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "101306": {
+      "description": "Partiküller ve toz (10 13 12 ve 10 13 13 hariç)",
+      "hazardous": false,
+      "classification": null
+    },
+    "101307": {
+      "description": "Gaz arıtma çamuru ve filtre kekleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "101309": {
+      "description": "Asbestli çimento üretiminden kaynaklanan asbest içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101310": {
+      "description": "10 13 09 dışındaki asbestli çimento üretimi atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101311": {
+      "description": "10 13 09 ve 10 13 10 dışındaki çimento bazlı kompozit malzeme üretim atık",
+      "hazardous": false,
+      "classification": null
+    },
+    "101312": {
+      "description": "Gaz arıtımından kaynaklanan tehlikeli maddeler içeren katı atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "101313": {
+      "description": "10 13 12 dışındaki gaz arıtma katı atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101314": {
+      "description": "Atık beton ve beton çamurları",
+      "hazardous": false,
+      "classification": null
+    },
+    "101399": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "101401": {
+      "description": "Gaz temizlemeden kaynaklanan cıva içeren atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110105": {
+      "description": "Sıyırma asitleri (parlatma asitleri)",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110106": {
+      "description": "Başka bir şekilde tanımlanmamış asitler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110107": {
+      "description": "Sıyırma bazları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110108": {
+      "description": "Fosfatlama çamurları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110109": {
+      "description": "Tehlikeli maddeler içeren çamurlar ve filtre kekleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "110110": {
+      "description": "11 01 09 dışındaki çamurlar ve filtre kekleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "110111": {
+      "description": "Tehlikeli maddeler içeren sulu durulama sıvıları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "110112": {
+      "description": "11 01 11 dışındaki sulu durulama sıvıları",
+      "hazardous": false,
+      "classification": null
+    },
+    "110113": {
+      "description": "Tehlikeli maddeler içeren yağ alma atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "110114": {
+      "description": "11 01 13 dışındaki yağ alma atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "110115": {
+      "description": "Membran ya da iyon değişim sistemlerinden kaynaklanan tehlikeli maddeler içeren sıvı ve çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "110116": {
+      "description": "Doymuş ya da bitik iyon değişim reçineleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110198": {
+      "description": "Tehlikeli maddeler içeren diğer atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "110199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "110202": {
+      "description": "Çinko hidrometalurjisi (jarosid ve jeotid dahil) çamurları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110203": {
+      "description": "Sulu elektrolitik işlemleri için üretilen anot üretim atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "110205": {
+      "description": "Bakır hidrometalurjisi işlemlerinden kaynaklanan tehlikeli maddeler içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "110206": {
+      "description": "11 02 05 dışındaki bakır hidrometalurjisi atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "110207": {
+      "description": "Tehlikeli maddeler içeren diğer atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "110299": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "110301": {
+      "description": "Siyanür içeren atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110302": {
+      "description": "Diğer atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110501": {
+      "description": "Katı çinko",
+      "hazardous": false,
+      "classification": null
+    },
+    "110502": {
+      "description": "Çinko külü",
+      "hazardous": false,
+      "classification": null
+    },
+    "110503": {
+      "description": "Gaz arıtımından kaynaklanan katı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110504": {
+      "description": "Iskarta flaks malzemeler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "110599": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "120101": {
+      "description": "Demir metal çapakları ve talaşları",
+      "hazardous": false,
+      "classification": null
+    },
+    "120102": {
+      "description": "Demir metal toz ve parçacıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "120103": {
+      "description": "Demir dışı metal çapakları ve talaşları",
+      "hazardous": false,
+      "classification": null
+    },
+    "120104": {
+      "description": "Demir dışı metal toz ve parçacıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "120105": {
+      "description": "Plastik yongalar ve çapaklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "120106": {
+      "description": "Halojen içeren madeni bazlı işleme yağları (emülsiyon ve solüsyonlar hariç)",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "120107": {
+      "description": "Halojen içermeyen madeni bazlı işleme yağları (emülsiyon ve solüsyonlar hariç)",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "120108": {
+      "description": "Halojen içeren işleme emülsiyon ve solüsyonları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "120109": {
+      "description": "Halojen içermeyen işleme emülsiyon ve solüsyonları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "120110": {
+      "description": "Sentetik işleme yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "120112": {
+      "description": "Kullanılmış (mum) parafin ve yağlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "120113": {
+      "description": "Kaynak atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "120114": {
+      "description": "Tehlikeli maddeler içeren işleme çamurları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "120115": {
+      "description": "12 01 14 dışındaki işleme çamurları",
+      "hazardous": false,
+      "classification": null
+    },
+    "120116": {
+      "description": "Tehlikeli maddeler içeren kumlama maddeleri atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "120117": {
+      "description": "12 01 16 dışındaki kumlama maddeleri atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "120118": {
+      "description": "Yağ içeren metalik çamurlar (öğütme, bileme ve freze tortuları)",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "120119": {
+      "description": "Biyolojik olarak kolay bozunur işleme yağı",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "120120": {
+      "description": "Tehlikeli maddeler içeren öğütme parçaları ve öğütme maddeleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "120121": {
+      "description": "12 01 20 dışındaki öğütme parçaları ve öğütme maddeleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "120199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "120301": {
+      "description": "Sulu yıkama sıvıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "120302": {
+      "description": "Buhar yağ alma atıkları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130101": {
+      "description": "PCB (2) içeren hidrolik yağlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130104": {
+      "description": "Klor içeren emülsiyonlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130105": {
+      "description": "Klor içermeyen emülsiyonlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130109": {
+      "description": "Mineral esaslı klor içeren hidrolik yağlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130110": {
+      "description": "Mineral esaslı klor içermeyen hidrolik yağlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130111": {
+      "description": "Sentetik hidrolik yağlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130112": {
+      "description": "Kolayca biyolojik olarak bozunabilir hidrolik yağlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130113": {
+      "description": "Diğer hidrolik yağlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130204": {
+      "description": "Mineral esaslı klor içeren motor, şanzıman ve yağlama yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130205": {
+      "description": "Mineral esaslı klor içermeyen motor, şanzıman ve yağlama yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130206": {
+      "description": "Sentetik motor, şanzıman ve yağlama yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130207": {
+      "description": "Kolayca biyolojik olarak bozunabilir motor, şanzıman ve yağlama yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130208": {
+      "description": "Diğer motor, şanzıman ve yağlama yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130301": {
+      "description": "PCB’ler içeren yalıtım ya da ısı iletim yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130306": {
+      "description": "13 03 01 dışındaki mineral esaslı klor içeren yalıtım ve ısı iletim yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130307": {
+      "description": "Mineral esaslı klor içermeyen yalıtım ve ısı iletim yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130308": {
+      "description": "Sentetik yalıtım ve ısı iletim yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130309": {
+      "description": "Kolayca biyolojik olarak bozunabilir yalıtım ve ısı iletim yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130310": {
+      "description": "Diğer yalıtım ve ısı iletim yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130401": {
+      "description": "Nehir ve göl seyrüseferinden (iç su yolu denizciliğinden) kaynaklanan sintine yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130402": {
+      "description": "İskele kanalizasyonlarından(mendirekten) kaynaklanan sintine yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130403": {
+      "description": "Diğer denizcilik seyrüseferinden kaynaklanan sintine yağları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130501": {
+      "description": "Kum odacığından ve yağ/su ayırıcısından çıkan katılar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130502": {
+      "description": "Yağ/su ayırıcısından çıkan çamurlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130503": {
+      "description": "Yakalayıcı (interseptör) çamurları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130506": {
+      "description": "Yağ/su ayırıcılarından çıkan yağ",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130507": {
+      "description": "Yağ/su ayırıcılarından çıkan yağlı su",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130508": {
+      "description": "Kum odacığından ve yağ/su ayırıcılarından çıkan karışık atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130701": {
+      "description": "Fuel-oil ve mazot",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130702": {
+      "description": "Benzin",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130703": {
+      "description": "Diğer yakıtlar (karışımlar dahil)",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130801": {
+      "description": "Tuz giderim çamurları ya da emülsiyonları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130802": {
+      "description": "Diğer emülsiyonlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "130899": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "140601": {
+      "description": "Kloroflorokarbonlar, HCFC, HFC",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "140602": {
+      "description": "Diğer halojenli çözücüler ve çözücü karışımları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "140603": {
+      "description": "Diğer çözücüler ve çözücü karışımları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "140604": {
+      "description": "Halojenli çözücüler içeren çamurlar veya katı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "140605": {
+      "description": "Diğer çözücüleri içeren çamurlar veya katı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "150101": {
+      "description": "Kağıt ve karton ambalaj",
+      "hazardous": false,
+      "classification": null
+    },
+    "150102": {
+      "description": "Plastik ambalaj",
+      "hazardous": false,
+      "classification": null
+    },
+    "150103": {
+      "description": "Ahşap ambalaj",
+      "hazardous": false,
+      "classification": null
+    },
+    "150104": {
+      "description": "Metalik ambalaj",
+      "hazardous": false,
+      "classification": null
+    },
+    "150105": {
+      "description": "Kompozit ambalaj",
+      "hazardous": false,
+      "classification": null
+    },
+    "150106": {
+      "description": "Karışık ambalaj",
+      "hazardous": false,
+      "classification": null
+    },
+    "150107": {
+      "description": "Cam ambalaj",
+      "hazardous": false,
+      "classification": null
+    },
+    "150109": {
+      "description": "Tekstil ambalaj",
+      "hazardous": false,
+      "classification": null
+    },
+    "150110": {
+      "description": "Tehlikeli maddelerin kalıntılarını içeren ya da tehlikeli maddelerle kontamine olmuş ambalajlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "150111": {
+      "description": "Boş basınçlı konteynerler dahil olmak üzere tehlikeli gözenekli katı yapı (örneğin asbest) içeren metalik ambalajlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "150202": {
+      "description": "Tehlikeli maddelerle kirlenmiş emiciler, filtre malzemeleri (başka şekilde tanımlanmamış ise yağ filtreleri), temizleme bezleri, koruyucu giysiler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "150203": {
+      "description": "15 02 02 dışındaki emiciler, filtre malzemeleri, temizleme bezleri, koruyucu giysiler",
+      "hazardous": false,
+      "classification": null
+    },
+    "160103": {
+      "description": "Ömrünü tamamlamış lastikler",
+      "hazardous": false,
+      "classification": null
+    },
+    "160104": {
+      "description": "Ömrünü tamamlamış araçlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160106": {
+      "description": "Sıvı ya da tehlikeli maddeler içermeyen ömrünü tamamlamış araçlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "160107": {
+      "description": "Yağ filtreleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160108": {
+      "description": "Cıva içeren parçalar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160109": {
+      "description": "PCB içeren parçalar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160110": {
+      "description": "Patlayıcı parçalar (örneğin hava yastıkları)",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160111": {
+      "description": "Asbest içeren fren balataları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160112": {
+      "description": "16 01 11 dışındaki fren balataları",
+      "hazardous": false,
+      "classification": null
+    },
+    "160113": {
+      "description": "Fren sıvıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160114": {
+      "description": "Tehlikeli maddeler içeren antifriz sıvıları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160115": {
+      "description": "16 01 14 dışındaki antifriz sıvıları",
+      "hazardous": false,
+      "classification": null
+    },
+    "160116": {
+      "description": "Sıvılaştırılmış gaz tankları",
+      "hazardous": false,
+      "classification": null
+    },
+    "160117": {
+      "description": "Demir metaller",
+      "hazardous": false,
+      "classification": null
+    },
+    "160118": {
+      "description": "Demir olmayan metaller",
+      "hazardous": false,
+      "classification": null
+    },
+    "160119": {
+      "description": "Plastik",
+      "hazardous": false,
+      "classification": null
+    },
+    "160120": {
+      "description": "Cam",
+      "hazardous": false,
+      "classification": null
+    },
+    "160121": {
+      "description": "16 01 07’den 16 01 11’e ve 16 01 13 ile 16 01 14 dışındaki tehlikeli parçalar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160122": {
+      "description": "Başka bir şekilde tanımlanmamış parçalar",
+      "hazardous": false,
+      "classification": null
+    },
+    "160199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "160209": {
+      "description": "PCB’ler içeren transformatörler ve kapasitörler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160210": {
+      "description": "16 02 09 dışındaki PCB içeren ya da PCB ile kontamine olmuş ıskarta ekipmanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160211": {
+      "description": "Kloroflorokarbon, HCFC, HFC içeren ıskarta ekipmanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160212": {
+      "description": "Serbest asbest içeren ıskarta ekipman",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160213": {
+      "description": "16 02 09’dan 16 02 12’ye kadar olanların dışındaki tehlikeli parçalar (3) içeren ıskarta ekipmanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160214": {
+      "description": "16 02 09’dan 16 02 13’e kadar olanların dışındaki ıskarta ekipmanlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "160215": {
+      "description": "Iskarta ekipmanlardan çıkartılmış tehlikeli parçalar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160216": {
+      "description": "16 02 15 dışındaki ıskarta ekipmanlardan çıkartılmış parçalar",
+      "hazardous": false,
+      "classification": null
+    },
+    "160303": {
+      "description": "Tehlikeli maddeler içeren inorganik atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160304": {
+      "description": "16 03 03 dışındaki inorganik atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "160305": {
+      "description": "Tehlikeli maddeler içeren organik atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160306": {
+      "description": "16 03 05 dışındaki organik atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "160307": {
+      "description": "Metalik cıva",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160401": {
+      "description": "Mühimmat Atığı",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160402": {
+      "description": "Havai fişek atıkları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160403": {
+      "description": "Diğer patlayıcı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160504": {
+      "description": "Basınçlı tanklar içinde tehlikeli maddeler içeren gazlar (halonlar dahil)",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160505": {
+      "description": "16 05 04 dışında basınçlı tanklar içindeki gazlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "160506": {
+      "description": "Laboratuvar kimyasalları karışımları dahil tehlikeli maddelerden oluşan ya da tehlikeli maddeler içeren laboratuvar kimyasalları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160507": {
+      "description": "Tehlikeli maddeler içeren ya da bunlardan oluşan ıskarta inorganik kimyasall",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160508": {
+      "description": "Tehlikeli maddeler içeren ya da bunlardan oluşan ıskarta organik kimyasallar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160509": {
+      "description": "16 05 06, 16 05 07 ya da 16 05 08 dışındaki ıskarta kimyasallar",
+      "hazardous": false,
+      "classification": null
+    },
+    "160601": {
+      "description": "Kurşunlu piller ve akümülatörler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160602": {
+      "description": "Nikel kadmiyum piller",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160603": {
+      "description": "Cıva içeren piller",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160604": {
+      "description": "Alkali piller (16 06 03 hariç)",
+      "hazardous": false,
+      "classification": null
+    },
+    "160605": {
+      "description": "Diğer piller ve akümülatörler",
+      "hazardous": false,
+      "classification": null
+    },
+    "160606": {
+      "description": "Piller ve akümülatörlerden ayrı toplanmış elektrolitler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160708": {
+      "description": "Yağ içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160709": {
+      "description": "Diğer tehlikeli maddeler içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160799": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "160801": {
+      "description": "Altın, gümüş, renyum, rodyum, paladyum, iridyum ya da platin içeren bitik katalizörler (16 08 07 hariç)",
+      "hazardous": false,
+      "classification": null
+    },
+    "160802": {
+      "description": "Tehlikeli geçiş metalleri (4) ya da tehlikeli geçiş metal bileşenlerini içeren bitik katalizörler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160803": {
+      "description": "Başka bir şekilde tanımlanmamış ara metaller ve ara metal bileşenleri içeren bitik katalizörler",
+      "hazardous": false,
+      "classification": null
+    },
+    "160804": {
+      "description": "Bitik katalitik “cracking” katalizör sıvısı (16 08 07 hariç)",
+      "hazardous": false,
+      "classification": null
+    },
+    "160805": {
+      "description": "Fosforik asit içeren bitik katalizörler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160806": {
+      "description": "Katalizör olarak bitik sıvılar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160807": {
+      "description": "Tehlikeli maddelerle kontamine olmuş bitik katalizörler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "160901": {
+      "description": "Permanganatlar (örneğin potasyum permanganat)",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160902": {
+      "description": "Kromatlar (örneğin potasyum kromat, potasyum veya sodyum dikromat)",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160903": {
+      "description": "Peroksitler(örneğin hidrojen peroksit)",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "160904": {
+      "description": "Başka bir şekilde tanımlanmamış oksitleyici malzemeler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "161001": {
+      "description": "Tehlikeli maddeler içeren sulu sıvı atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "161002": {
+      "description": "16 10 01 dışındaki sulu sıvı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "161003": {
+      "description": "Tehlikeli madde içeren sulu derişik maddeler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "161004": {
+      "description": "16 10 03 dışındaki sulu derişik maddeler",
+      "hazardous": false,
+      "classification": null
+    },
+    "161101": {
+      "description": "Metalürjik proseslerden kaynaklanan, tehlikeli maddeler içeren karbon bazlı astarlar ve refraktörler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "161102": {
+      "description": "16 11 01 dışındaki metalürjik proseslerden kaynaklanan karbon bazlı astar ve refraktörler",
+      "hazardous": false,
+      "classification": null
+    },
+    "161103": {
+      "description": "Metalürjik proseslerden kaynaklanan, tehlikeli maddeler içeren diğer astarlar ve refraktörler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "161104": {
+      "description": "16 11 03 dışındaki metalürjik proseslerden kaynaklanan diğer astar ve refraktörler",
+      "hazardous": false,
+      "classification": null
+    },
+    "161105": {
+      "description": "Metalürjik olmayan proseslerden kaynaklanan, tehlikeli maddeler içeren astarlar ve refraktörler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "161106": {
+      "description": "16 11 05 dışındaki metalürjik olmayan proseslerden kaynaklanan astar ve refraktörler",
+      "hazardous": false,
+      "classification": null
+    },
+    "170101": {
+      "description": "Beton",
+      "hazardous": false,
+      "classification": null
+    },
+    "170102": {
+      "description": "Tuğlalar",
+      "hazardous": false,
+      "classification": null
+    },
+    "170103": {
+      "description": "Kiremitler ve seramikler",
+      "hazardous": false,
+      "classification": null
+    },
+    "170106": {
+      "description": "Tehlikeli maddeler içeren beton, tuğla, kiremit ve seramik karışımları ya da ayrılmış grupları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170107": {
+      "description": "17 01 06 dışındaki beton, tuğla kiremit ve seramik karışımları ya da ayrılmış grupları",
+      "hazardous": false,
+      "classification": null
+    },
+    "170201": {
+      "description": "Ahşap",
+      "hazardous": false,
+      "classification": null
+    },
+    "170202": {
+      "description": "Cam",
+      "hazardous": false,
+      "classification": null
+    },
+    "170203": {
+      "description": "Plastik",
+      "hazardous": false,
+      "classification": null
+    },
+    "170204": {
+      "description": "Tehlikeli maddeler içeren ya da tehlikeli maddelerle kontamine olmuş ahşap, cam ve plastik",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "170301": {
+      "description": "Kömür katranı içeren bitümlü karışımlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170302": {
+      "description": "17 03 01 dışındaki bitümlü karışımlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "170303": {
+      "description": "Kömür katranı ve katranlı ürünler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "170401": {
+      "description": "Bakır, bronz, pirinç",
+      "hazardous": false,
+      "classification": null
+    },
+    "170402": {
+      "description": "Alüminyum",
+      "hazardous": false,
+      "classification": null
+    },
+    "170403": {
+      "description": "Kurşun",
+      "hazardous": false,
+      "classification": null
+    },
+    "170404": {
+      "description": "Çinko",
+      "hazardous": false,
+      "classification": null
+    },
+    "170405": {
+      "description": "Demir ve çelik",
+      "hazardous": false,
+      "classification": null
+    },
+    "170406": {
+      "description": "Kalay",
+      "hazardous": false,
+      "classification": null
+    },
+    "170407": {
+      "description": "Karışık metaller",
+      "hazardous": false,
+      "classification": null
+    },
+    "170409": {
+      "description": "Tehlikeli maddelerle kontamine olmuş metal atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170410": {
+      "description": "Yağ, katran ve diğer tehlikeli maddeler içeren kablolar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170411": {
+      "description": "17 04 10 dışındaki kablolar",
+      "hazardous": false,
+      "classification": null
+    },
+    "170503": {
+      "description": "Tehlikeli maddeler içeren toprak ve taşlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170504": {
+      "description": "17 05 03 dışındaki toprak ve taşlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "170505": {
+      "description": "Tehlikeli maddeler içeren dip tarama çamuru",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170506": {
+      "description": "17 05 05 dışındaki dip tarama çamuru",
+      "hazardous": false,
+      "classification": null
+    },
+    "170507": {
+      "description": "Tehlikeli maddeler içeren demiryolu çakılı",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170508": {
+      "description": "17 05 07 dışındaki demiryolu çakılı",
+      "hazardous": false,
+      "classification": null
+    },
+    "170601": {
+      "description": "Asbest içeren yalıtım malzemeleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170603": {
+      "description": "Tehlikeli maddelerden oluşan ya da tehlikeli maddeler içeren diğer yalıtım malzemeleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170604": {
+      "description": "17 06 01 ve 17 06 03 dışındaki yalıtım malzemeleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "170605": {
+      "description": "Asbest içeren inşaat malzemeleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170801": {
+      "description": "Tehlikeli maddeler ile kontamine olmuş alçı bazlı inşaat malzemeleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170802": {
+      "description": "17 08 01 dışındaki alçı bazlı inşaat malzemeleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "170901": {
+      "description": "Cıva içeren inşaat ve yıkıntı atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170902": {
+      "description": "PCB içeren inşaat ve yıkıntı atıkları (örneğin PCB içeren dolgu macunları, PCB içeren reçine bazlı taban kaplama malzemeleri, PCB içeren kaplanmış sırlama birimleri, PCB içeren kapasitörler)",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170903": {
+      "description": "Tehlikeli maddeler içeren diğer inşaat ve yıkıntı atıkları (karışık atıklar dahil",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "170904": {
+      "description": "17 09 01, 17 09 02 ve 17 09 03 dışındaki karışık inşaat ve yıkıntı atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "180101": {
+      "description": "Kesiciler (18 01 03 hariç)",
+      "hazardous": false,
+      "classification": null
+    },
+    "180102": {
+      "description": "Kan torbaları ve kan yedekleri dahil vücut parçaları ve organları (18 01 03 hariç)",
+      "hazardous": false,
+      "classification": null
+    },
+    "180103": {
+      "description": "Enfeksiyonu önlemek amacı ile toplanmaları ve bertarafı özel işleme tabi olan atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "180104": {
+      "description": "Enfeksiyonu önlemek amacı ile toplanmaları ve bertarafı özel işleme tabi olmayan atıklar (örneğin sargılar, vücut alçıları, tek kullanımlık giysiler, alt bezleri)",
+      "hazardous": false,
+      "classification": null
+    },
+    "180106": {
+      "description": "Tehlikeli maddeler içeren ya da tehlikeli maddelerden oluşan kimyasallar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "180107": {
+      "description": "18 01 06 dışındaki kimyasallar",
+      "hazardous": false,
+      "classification": null
+    },
+    "180108": {
+      "description": "Sitotoksik ve sitostatik ilaçlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "180109": {
+      "description": "18 01 08 dışındaki ilaçlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "180110": {
+      "description": "Diş tedavisinden kaynaklanan amalgam atıkları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "180201": {
+      "description": "Kesiciler (18 02 02 hariç)",
+      "hazardous": false,
+      "classification": null
+    },
+    "180202": {
+      "description": "Enfeksiyonu önlemek amacı ile toplanmaları ve bertarafı özel işleme tabi olan atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "180203": {
+      "description": "Enfeksiyonu önlemek amacı ile toplanmaları ve bertarafı özel işleme tabi olmayan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "180205": {
+      "description": "Tehlikeli maddeler içeren ya da tehlikeli maddelerden oluşan kimyasallar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "180206": {
+      "description": "18 02 05 dışındaki kimyasallar",
+      "hazardous": false,
+      "classification": null
+    },
+    "180207": {
+      "description": "Sitotoksik ve sitostatik ilaçlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "180208": {
+      "description": "18 02 07 dışındaki ilaçlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190102": {
+      "description": "Taban külünden ayrılan demir içerikli maddeler",
+      "hazardous": false,
+      "classification": null
+    },
+    "190105": {
+      "description": "Gaz arıtımından kaynaklanan filtre kekleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190106": {
+      "description": "Gaz arıtımından kaynaklanan sulu sıvı atıklar ile diğer sulu sıvı atıkları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190107": {
+      "description": "Gaz arıtımından kaynaklanan katı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190110": {
+      "description": "Baca gazı arıtımından kaynaklanan kullanılmış aktif karbon",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190111": {
+      "description": "Tehlikeli maddeler içeren taban külü ve cüruf",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190112": {
+      "description": "19 01 11 dışındaki taban külü ve cüruf",
+      "hazardous": false,
+      "classification": null
+    },
+    "190113": {
+      "description": "Tehlikeli maddeler içeren uçucu kül",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190114": {
+      "description": "19 01 13 dışındaki uçucu kül",
+      "hazardous": false,
+      "classification": null
+    },
+    "190115": {
+      "description": "Tehlikeli maddeler içeren kazan tozu",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190116": {
+      "description": "19 01 15 dışındaki kazan tozu",
+      "hazardous": false,
+      "classification": null
+    },
+    "190117": {
+      "description": "Tehlikeli maddeler içeren piroliz atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190118": {
+      "description": "19 01 17 dışındaki piroliz atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "190119": {
+      "description": "Akışkan yatak kumları",
+      "hazardous": false,
+      "classification": null
+    },
+    "190199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190203": {
+      "description": "Tehlikeli olmayan atıkların önceden karıştırılması ile oluşmuş atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190204": {
+      "description": "En az bir tehlikeli atık ile önceden karıştırılması ile oluşmuş atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190205": {
+      "description": "Fiziksel ve kimyasal işlemlerden kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190206": {
+      "description": "19 02 05 dışındaki fiziksel ve kimyasal işlemlerden kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190207": {
+      "description": "Ayrışmadan oluşan yağ ve konsantrasyonlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190208": {
+      "description": "Tehlikeli maddeler içeren sıvı yanabilir atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190209": {
+      "description": "Tehlikeli maddeler içeren katı yanabilir atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190210": {
+      "description": "19 02 08 ve 19 02 09 dışında yanabilir atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190211": {
+      "description": "Tehlikeli maddeler içeren diğer atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190299": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190304": {
+      "description": "19 03 08 dışındaki tehlikeli olarak işaretlenmiş kısmen (6) stabilize olmuş atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190305": {
+      "description": "19 03 04 dışındaki stabilize olmuş atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190306": {
+      "description": "Tehlikeli olarak sınıflandırılmış, katılaştırılmış atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190307": {
+      "description": "19 03 06 dışındaki katılaştırılmış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190308": {
+      "description": "Kısmen stabilize olmuş cıva",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190401": {
+      "description": "Vitrifiye edilmiş atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190402": {
+      "description": "Uçucu kül ve diğer baca gazı arıtma atıkları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190403": {
+      "description": "Vitrifiye olmamış katılar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190404": {
+      "description": "Vitrifiye atık tavlanmasından çıkan sulu sıvı",
+      "hazardous": false,
+      "classification": null
+    },
+    "190501": {
+      "description": "Belediye ve benzeri atıklarının kompostlanmamış fraksiyonları",
+      "hazardous": false,
+      "classification": null
+    },
+    "190502": {
+      "description": "Hayvansal ve bitkisel atıklarının kompostlanmamış fraksiyonları",
+      "hazardous": false,
+      "classification": null
+    },
+    "190503": {
+      "description": "Standart dışı kompost (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "190599": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190603": {
+      "description": "Belediye atıklarının anaerobik arıtımından kaynaklanan sıvılar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190604": {
+      "description": "Belediye atıklarının anaerobik arıtımından kaynaklanan posalar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "190605": {
+      "description": "Hayvansal ve bitkisel atıkların anaerobik arıtımından kaynaklanan sıvılar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190606": {
+      "description": "Hayvansal ve bitkisel atıklarını anaerobik arıtımından kaynaklanan posalar (8",
+      "hazardous": false,
+      "classification": null
+    },
+    "190699": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190702": {
+      "description": "Tehlikeli maddeler içeren düzenli depolama sahası sızıntı suları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190703": {
+      "description": "19 07 02 dışındaki düzenli depolama sahası sızıntı suları",
+      "hazardous": false,
+      "classification": null
+    },
+    "190801": {
+      "description": "Elek üstü maddeler",
+      "hazardous": false,
+      "classification": null
+    },
+    "190802": {
+      "description": "Kum ayırma işleminden kaynaklanan atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "190805": {
+      "description": "Kentsel atıksuyun arıtılmasından kaynaklanan çamurlar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "190806": {
+      "description": "Doymuş ya da kullanılmış iyon değiştirici reçineler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190807": {
+      "description": "İyon değiştiricilerinin rejenerasyonundan kaynaklanan solüsyonlar ve çamurl",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190808": {
+      "description": "Ağır metaller içeren membran sistemi atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190809": {
+      "description": "Yağ ve su ayrışmasından kaynaklanan sadece yenilebilir yağlar içeren yağ karışımları ve gres",
+      "hazardous": false,
+      "classification": null
+    },
+    "190810": {
+      "description": "19 08 09 dışındaki yağ ve su ayrışmasından çıkan yağ karışımları ve gres",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "190811": {
+      "description": "Endüstriyel atıksuyun biyolojik arıtılmasından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190812": {
+      "description": "19 08 11 dışındaki endüstriyel atıksuyun biyolojik arıtılmasından kaynaklanan çamurlar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "190813": {
+      "description": "Endüstriyel atıksuyun diğer yöntemlerle arıtılmasından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "190814": {
+      "description": "19 08 13 dışındaki endüstriyel atıksuyun diğer yöntemlerle arıtılmasından kaynaklanan çamurlar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "190899": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190901": {
+      "description": "İlk filtreleme ve süzme işlemlerinden kaynaklanan katı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190902": {
+      "description": "Su berraklaştırılmasından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190903": {
+      "description": "Karbonat gidermeden kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "190904": {
+      "description": "Kullanılmış aktif karbon",
+      "hazardous": false,
+      "classification": null
+    },
+    "190905": {
+      "description": "Doymuş ya da kullanılmış iyon değiştirme reçinesi",
+      "hazardous": false,
+      "classification": null
+    },
+    "190906": {
+      "description": "İyon değiştiricilerinin rejenerasyonundan kaynaklanan solüsyonlar ve çamurl",
+      "hazardous": false,
+      "classification": null
+    },
+    "190999": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "191001": {
+      "description": "Demir ve çelik atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "191002": {
+      "description": "Demir olmayan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "191003": {
+      "description": "Tehlikeli maddeler içeren uçucu atık parçacıkları ve tozlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "191004": {
+      "description": "19 10 03 dışındaki uçucu atık parçacıkları ve tozlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "191005": {
+      "description": "Tehlikeli maddeler içeren diğer kalıntılar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "191006": {
+      "description": "19 10 05 dışındaki diğer kalıntılar",
+      "hazardous": false,
+      "classification": null
+    },
+    "191101": {
+      "description": "Kullanılmış filtre killeri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "191102": {
+      "description": "Asit katranları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "191103": {
+      "description": "Sulu sıvı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "191104": {
+      "description": "Yakıtların bazlarla temizlenmesinden kaynaklanan atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "191105": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "191106": {
+      "description": "19 11 05 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "191107": {
+      "description": "Baca gazı temizleme atıkları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "191199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "191201": {
+      "description": "Kağıt ve karton",
+      "hazardous": false,
+      "classification": null
+    },
+    "191202": {
+      "description": "Demir metali",
+      "hazardous": false,
+      "classification": null
+    },
+    "191203": {
+      "description": "Demir dışı metal",
+      "hazardous": false,
+      "classification": null
+    },
+    "191204": {
+      "description": "Plastik ve lastik",
+      "hazardous": false,
+      "classification": null
+    },
+    "191205": {
+      "description": "Cam",
+      "hazardous": false,
+      "classification": null
+    },
+    "191206": {
+      "description": "Tehlikeli maddeler içeren ahşap",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "191207": {
+      "description": "19 12 06 dışındaki ahşap",
+      "hazardous": false,
+      "classification": null
+    },
+    "191208": {
+      "description": "Tekstil malzemeleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "191209": {
+      "description": "Mineraller (örneğin kum, taşlar)",
+      "hazardous": false,
+      "classification": null
+    },
+    "191210": {
+      "description": "Yanabilir atıklar (atıktan türetilmiş yakıt)",
+      "hazardous": false,
+      "classification": null
+    },
+    "191211": {
+      "description": "Atıkların mekanik işlenmesinden kaynaklanan tehlikeli maddeler içeren diğer atıklar (karışık malzemeler dahil)",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "191212": {
+      "description": "19 12 11 dışında atıkların mekanik işlenmesinden kaynaklanan diğer atıklar (karışık malzemeler dahil)",
+      "hazardous": false,
+      "classification": null
+    },
+    "191301": {
+      "description": "Toprak ıslahından kaynaklanan tehlikeli maddeler içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "191302": {
+      "description": "19 13 01 dışında toprak ıslahından kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "191303": {
+      "description": "Toprak ıslahından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "191304": {
+      "description": "19 13 03 dışındaki toprak ıslahından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "191305": {
+      "description": "Yeraltı suyunun ıslahından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "191306": {
+      "description": "19 13 05 dışındaki yeraltı suyunun ıslahından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "191307": {
+      "description": "Yeraltı suyunun ıslahından kaynaklanan tehlikeli maddeler içeren sulu sıvı atıklar ve sulu konsantrasyonlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "191308": {
+      "description": "19 13 07 dışındaki yeraltı suyunun ıslahından kaynaklanan sulu sıvı atıklar ve sulu konsantrasyonlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "200101": {
+      "description": "Kâğıt ve karton",
+      "hazardous": false,
+      "classification": null
+    },
+    "200102": {
+      "description": "Cam",
+      "hazardous": false,
+      "classification": null
+    },
+    "200108": {
+      "description": "Biyolojik olarak bozunabilir mutfak ve kantin atıkları (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "200110": {
+      "description": "Giysiler",
+      "hazardous": false,
+      "classification": null
+    },
+    "200111": {
+      "description": "Tekstil ürünleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "200113": {
+      "description": "Çözücüler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200114": {
+      "description": "Asitler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200115": {
+      "description": "Alkalinler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200117": {
+      "description": "Foto kimyasallar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200119": {
+      "description": "Pestisitler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200121": {
+      "description": "Flüoresan lambalar ve diğer cıva içeren atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200123": {
+      "description": "Kloroflorokarbonlar içeren ıskartaya çıkartılmış ekipmanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200125": {
+      "description": "Yenilebilir sıvı ve katı yağlar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "200126": {
+      "description": "20 01 25 dışındaki sıvı ve katı yağlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200127": {
+      "description": "Tehlikeli maddeler içeren boya, mürekkepler, yapıştırıcılar ve reçineler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "200128": {
+      "description": "20 01 27 dışındaki boya, mürekkepler, yapıştırıcılar ve reçineler",
+      "hazardous": false,
+      "classification": null
+    },
+    "200129": {
+      "description": "Tehlikeli maddeler içeren deterjanlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "200130": {
+      "description": "20 01 29 dışındaki deterjanlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "200131": {
+      "description": "Sitotoksik ve sitostatik ilaçlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200132": {
+      "description": "20 01 31 dışındaki ilaçlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "200133": {
+      "description": "16 06 01, 16 06 02 veya 16 06 03’un altında geçen pil ve akümülatörler ve bu pilleri içeren sınıflandırılmamış karışık pil ve akümülatörler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200134": {
+      "description": "20 01 33 dışındaki pil ve akümülatörler",
+      "hazardous": false,
+      "classification": null
+    },
+    "200135": {
+      "description": "20 01 21 ve 20 01 23 dışındaki tehlikeli parçalar (7) içeren ve ıskartaya çıkmış elektrikli ve elektronik ekipmanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "200136": {
+      "description": "20 01 21, 20 01 23 ve 20 01 35 dışındaki ıskarta elektrikli ve elektronik ekipmanlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "200137": {
+      "description": "Tehlikeli maddeler içeren ahşap",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "200138": {
+      "description": "20 01 37 dışındaki ahşap (1) (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "200139": {
+      "description": "Plastikler",
+      "hazardous": false,
+      "classification": null
+    },
+    "200140": {
+      "description": "Metaller",
+      "hazardous": false,
+      "classification": null
+    },
+    "200141": {
+      "description": "Baca temizliğinden kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "200199": {
+      "description": "Başka bir şekilde tanımlanmamış fraksiyonlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "200201": {
+      "description": "Biyolojik olarak bozunabilir atıklar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "200202": {
+      "description": "Toprak ve taşlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "200203": {
+      "description": "Biyolojik olarak bozunamayan diğer atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "200301": {
+      "description": "Karışık belediye atıkları (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "200302": {
+      "description": "Pazarlardan kaynaklanan atıklar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "200303": {
+      "description": "Sokak temizleme kalıntıları",
+      "hazardous": false,
+      "classification": null
+    },
+    "200304": {
+      "description": "Fosseptik çamurları (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "200306": {
+      "description": "Kanalizasyon temizliğinden kaynaklanan atıklar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "200307": {
+      "description": "Hacimli atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "200399": {
+      "description": "Başka bir şekilde tanımlanmamış belediye atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "010101": {
+      "description": "Metalik maden kazılarından kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "010102": {
+      "description": "Metalik olmayan maden kazılarından kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "010304": {
+      "description": "Sülfürlü cevherlerin işlenmesinden kaynaklanan asit üretici maden atıkları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "010305": {
+      "description": "Tehlikeli madde içeren diğer maden atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "010306": {
+      "description": "01 03 04 ve 01 03 05 dışındaki diğer maden atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "010307": {
+      "description": "Metalik minerallerin fiziki ve kimyasal işlenmesinden kaynaklanan tehlikeli maddeler içeren diğer atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "010308": {
+      "description": "01 03 07 dışındaki diğer tozumsu ve pudramsı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "010309": {
+      "description": "01 03 10 dışındaki alüminyum oksit üretiminden çıkan kırmızı çamur",
+      "hazardous": false,
+      "classification": null
+    },
+    "010310": {
+      "description": "01 03 07 dışındaki alüminyum oksit üretiminden çıkan tehlikeli maddeler içeren kırmızı çamur",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "010399": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "010407": {
+      "description": "Metalik olmayan minerallerin fiziki ve kimyasal işlenmesinden kaynaklanan tehlikeli maddeler içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "010408": {
+      "description": "01 04 07 dışındaki atık kaya ve çakıl taşı atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "010409": {
+      "description": "Atık kum ve killer",
+      "hazardous": false,
+      "classification": null
+    },
+    "010410": {
+      "description": "01 04 07 dışındaki tozumsu ve pudramsı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "010411": {
+      "description": "01 04 07 dışındaki potas ve kaya tuzu işlemesinden kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "010412": {
+      "description": "01 04 07 ve 01 04 11 dışındaki minerallerin yıkanması ve temizlenmesinden kaynaklanan ince taneli atıklar ve diğer atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "010413": {
+      "description": "01 04 07 dışındaki taş yontma ve kesme işlemlerinden kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "010499": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "010504": {
+      "description": "Tatlı su sondaj çamurları ve atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "010505": {
+      "description": "Yağ içeren sondaj çamurları ve atıkları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "010506": {
+      "description": "Tehlikeli maddeler içeren sondaj çamurları ve diğer sondaj atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "010507": {
+      "description": "01 05 05 ve 01 05 06 dışındaki barit içeren sondaj çamurları ve atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "010508": {
+      "description": "01 05 05 ve 01 05 06 dışındaki klorür içeren sondaj çamurları ve atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "010599": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020101": {
+      "description": "Yıkama ve temizleme işlemlerinden kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020102": {
+      "description": "Hayvan dokusu atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "020103": {
+      "description": "Bitki dokusu atıkları (1) (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020104": {
+      "description": "Atık plastikler (ambalajlar hariç)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020106": {
+      "description": "Ayrı toplanmış ve saha dışında işlem görecek hayvan dışkısı, idrar ve tezek (ve bunlarla temas etmiş saman dahil), akan sıvılar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020107": {
+      "description": "Ormancılık atıkları (1) (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020108": {
+      "description": "Tehlikeli maddeler içeren zirai kimyasal atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "020109": {
+      "description": "02 01 08 dışındaki zirai kimyasal atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "020110": {
+      "description": "Atık metal",
+      "hazardous": false,
+      "classification": null
+    },
+    "020199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020201": {
+      "description": "Yıkama ve temizlemeden kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020202": {
+      "description": "Hayvan dokusu atığı",
+      "hazardous": false,
+      "classification": null
+    },
+    "020203": {
+      "description": "Tüketime ya da işlenmeye uygun olmayan maddeler",
+      "hazardous": false,
+      "classification": null
+    },
+    "020204": {
+      "description": "İşletme sahası içerisindeki atıksu arıtımından kaynaklanan çamurlar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020299": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020301": {
+      "description": "Yıkama, temizleme, soyma, santrifüj ve ayırma işlemlerinden kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020302": {
+      "description": "Koruyucu katkı maddelerinden kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020303": {
+      "description": "Çözücü ekstraksiyonundan kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020304": {
+      "description": "Tüketime ya da işlenmeye uygun olmayan maddeler (1) (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020305": {
+      "description": "İşletme sahası içerisindeki atıksu arıtımından kaynaklanan atıklar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020399": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020401": {
+      "description": "Şeker pancarının temizlenmesinden ve yıkanmasından kaynaklanan toprak",
+      "hazardous": false,
+      "classification": null
+    },
+    "020402": {
+      "description": "Standart dışı kalsiyum karbonat",
+      "hazardous": false,
+      "classification": null
+    },
+    "020403": {
+      "description": "İşletme sahası içerisindeki atıksu arıtımından kaynaklanan çamurlar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020499": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020501": {
+      "description": "Tüketime ya da işlenmeye uygun olmayan maddeler",
+      "hazardous": false,
+      "classification": null
+    },
+    "020502": {
+      "description": "İşletme sahası içerisindeki atıksu arıtımından kaynaklanan çamurlar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020599": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020601": {
+      "description": "Tüketime ve işlenmeye uygun olmayan maddeler",
+      "hazardous": false,
+      "classification": null
+    },
+    "020602": {
+      "description": "Koruyucu katkı maddelerinden kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020603": {
+      "description": "İşletme sahası içerisindeki atıksu arıtımından kaynaklanan çamurlar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020699": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020701": {
+      "description": "Hammaddelerin yıkanmasından, temizlenmesinden ve mekanik olarak sıkılmasından kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020702": {
+      "description": "Alkol damıtılmasından kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "020703": {
+      "description": "Kimyasal işlem atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "020704": {
+      "description": "Tüketime ya da işlenmeye uygun olmayan maddeler (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020705": {
+      "description": "İşletme sahası içerisindeki atıksu arıtımından kaynaklanan çamurlar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "020799": {
+      "description": "Başka bir şekilde tanımlanmayan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "030101": {
+      "description": "Ağaç kabuğu ve mantar atıkları (1) (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "030104": {
+      "description": "Tehlikeli maddeler içeren talaş, yonga, kıymık, ahşap, kontraplak ve kaplamalar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "030105": {
+      "description": "03 01 04 dışındaki talaş, yonga, kıymık, ahşap, kontraplak ve kaplamalar (1) (",
+      "hazardous": false,
+      "classification": null
+    },
+    "030199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "030201": {
+      "description": "Halojenlenmemiş organik ahşap koruyucu maddeler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "030202": {
+      "description": "Organoklorlu ahşap koruyucu maddeler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "030203": {
+      "description": "Organometal içeren ahşap koruyucu maddeler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "030204": {
+      "description": "İnorganik ahşap koruyucu maddeler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "030205": {
+      "description": "Tehlikeli maddeler içeren diğer ahşap koruyucuları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "030299": {
+      "description": "Başka bir şekilde tanımlanmamış ahşap koruyucuları",
+      "hazardous": false,
+      "classification": null
+    },
+    "030301": {
+      "description": "Ağaç kabuğu ve odun atıkları (1) (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "030302": {
+      "description": "Yeşil sıvı çamuru (pişirme sıvısı geri kazanımından)",
+      "hazardous": false,
+      "classification": null
+    },
+    "030305": {
+      "description": "Kâğıt geri kazanım işleminden kaynaklanan mürekkep giderme çamurları",
+      "hazardous": false,
+      "classification": null
+    },
+    "030307": {
+      "description": "Atık kâğıt ve kartonun hamur haline getirilmesi sırasında mekanik olarak ayrılan ıskartalar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "030308": {
+      "description": "Geri dönüşüme gitmek üzere sınıflandırılan kağıt ve kartondan kaynaklanan atıklar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "030309": {
+      "description": "Kireç çamuru atığı",
+      "hazardous": false,
+      "classification": null
+    },
+    "030310": {
+      "description": "Mekanik ayırma sonucu oluşan elyaf ıskartaları, elyaf, dolgu ve yüzey kaplama maddesi çamuru (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "030311": {
+      "description": "03 03 10 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar (8)",
+      "hazardous": false,
+      "classification": null
+    },
+    "030399": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "040101": {
+      "description": "Sıyırma ve kireçleme ile deriden et sıyırma işleminden kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "040102": {
+      "description": "Kireçleme atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "040103": {
+      "description": "Sıvı halde olmayan çözücüler içeren yağ giderme atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "040104": {
+      "description": "Krom içeren sepi şerbeti",
+      "hazardous": false,
+      "classification": null
+    },
+    "040105": {
+      "description": "Krom içermeyen sepi şerbeti",
+      "hazardous": false,
+      "classification": null
+    },
+    "040106": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan krom içeren çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "040107": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan krom içermeyen çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "040108": {
+      "description": "Krom içeren tabaklanmış atık deri (çivitli parçalar, tıraşlamalar, kesmeler, parlatma tozu)",
+      "hazardous": false,
+      "classification": null
+    },
+    "040109": {
+      "description": "Perdah ve boyama atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "040199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "040209": {
+      "description": "Kompozit malzeme atıkları (emprenye edilmiş tekstil, elastomer, plastomer)",
+      "hazardous": false,
+      "classification": null
+    },
+    "040210": {
+      "description": "Doğal ürünlerden oluşan organik maddeler (örneğin yağ, mum)",
+      "hazardous": false,
+      "classification": null
+    },
+    "040214": {
+      "description": "Organik çözücüler içeren perdah atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "040215": {
+      "description": "04 02 14 dışındaki perdah atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "040216": {
+      "description": "Tehlikeli maddeler içeren boya maddeleri ve pigmentler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "040217": {
+      "description": "04 02 16 dışındaki boya maddeleri ve pigmentler",
+      "hazardous": false,
+      "classification": null
+    },
+    "040219": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "040220": {
+      "description": "04 02 19 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "040221": {
+      "description": "İşlenmemiş tekstil elyafı atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "040222": {
+      "description": "İşlenmiş tekstil elyafı atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "040299": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "050102": {
+      "description": "Tuz arındırma(tuz giderici) çamurları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050103": {
+      "description": "Tank dibi çamurları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050104": {
+      "description": "Asit alkil çamurları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050105": {
+      "description": "Petrol döküntüleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050106": {
+      "description": "İşletme ya da ekipman bakım çalışmalarından kaynaklanan yağlı çamurlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050107": {
+      "description": "Asit ziftleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050108": {
+      "description": "Diğer ziftler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050109": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli madde içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "050110": {
+      "description": "05 01 09 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "050111": {
+      "description": "Yakıtların bazlar ile temizlemesi sonucu oluşan atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050112": {
+      "description": "Yağ içeren asitler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050113": {
+      "description": "Kazan besleme suyu çamurları",
+      "hazardous": false,
+      "classification": null
+    },
+    "050114": {
+      "description": "Soğutma kolonlarından kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "050115": {
+      "description": "Kullanılmış filtre killeri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050116": {
+      "description": "Petrol desülfürizasyonu sonucu oluşan kükürt içeren atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "050117": {
+      "description": "Bitüm",
+      "hazardous": false,
+      "classification": null
+    },
+    "050199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "050601": {
+      "description": "Asit ziftleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050603": {
+      "description": "Diğer ziftler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "050604": {
+      "description": "Soğutma kolonlarından kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "050699": {
+      "description": "Başka bir şekilde tanımlanmayan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "050701": {
+      "description": "Cıva içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "050702": {
+      "description": "Kükürt içeren atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "050799": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060101": {
+      "description": "Sülfürik asit ve sülfüröz asit",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060102": {
+      "description": "Hidroklorik asit",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060103": {
+      "description": "Hidroflorik asit",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060104": {
+      "description": "Fosforik ve fosforöz asit",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060105": {
+      "description": "Nitrik asit ve nitröz asit",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060106": {
+      "description": "Diğer asitler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060201": {
+      "description": "Kalsiyum hidroksit",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060203": {
+      "description": "Amonyum hidroksit",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060204": {
+      "description": "Sodyum ve potasyum hidroksit",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060205": {
+      "description": "Diğer bazlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060299": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060311": {
+      "description": "Siyanür içeren katı tuzlar ve solüsyonlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060313": {
+      "description": "Ağır metal içeren katı tuzlar ve solüsyonlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060314": {
+      "description": "06 03 11 ve 06 03 13 dışındaki katı tuzlar ve solüsyonlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060315": {
+      "description": "Ağır metal içeren metal oksitler",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060316": {
+      "description": "06 03 15 dışındaki diğer metal oksitler",
+      "hazardous": false,
+      "classification": null
+    },
+    "060399": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060403": {
+      "description": "Arsenik içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060404": {
+      "description": "Cıva içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060405": {
+      "description": "Başka ağır metaller içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060499": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060502": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060503": {
+      "description": "06 05 02 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060602": {
+      "description": "Tehlikeli kükürt bileşenleri içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060603": {
+      "description": "06 06 02 dışındaki kükürt bileşenlerini içeren atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060699": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060701": {
+      "description": "Elektrolizden kaynaklanan asbest içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060702": {
+      "description": "Klor üretiminden kaynaklanan aktif karbon",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060703": {
+      "description": "Cıva içeren baryum sülfat çamuru",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060704": {
+      "description": "Çözeltiler ve asitler, örneğin kontakt asidi",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "060799": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060802": {
+      "description": "Zararlı klorosilan içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060899": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "060902": {
+      "description": "Fosforlu cüruf",
+      "hazardous": false,
+      "classification": null
+    },
+    "060903": {
+      "description": "Tehlikeli maddeler içeren ya da tehlikeli maddelerle kontamine olmuş kalsiyum bazlı reaksiyon atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "060904": {
+      "description": "06 09 03 dışındaki kalsiyum bazlı reaksiyon atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "060999": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "061002": {
+      "description": "Tehlikeli maddeler içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "061099": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "061101": {
+      "description": "Titanyum dioksit üretiminden kaynaklanan kalsiyum bazlı reaksiyon atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "061199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "061301": {
+      "description": "İnorganik bitki koruma ürünleri, ahşap koruma ürünleri ve diğer biyositler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "061302": {
+      "description": "Kullanılmış aktif karbon (06 07 02 hariç)",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "061303": {
+      "description": "Karbon siyahı",
+      "hazardous": false,
+      "classification": null
+    },
+    "061304": {
+      "description": "Asbest işlenmesinden kaynaklanan atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "061305": {
+      "description": "Kurum",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "061399": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070101": {
+      "description": "Su bazlı yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070103": {
+      "description": "Halojenli organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070104": {
+      "description": "Diğer organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070107": {
+      "description": "Halojenli dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070108": {
+      "description": "Diğer dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070109": {
+      "description": "Halojenli filtre keki ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070110": {
+      "description": "Diğer filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070111": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070112": {
+      "description": "07 01 11 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070199": {
+      "description": "Başka şekilde tanımlanmayan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070201": {
+      "description": "Su bazlı yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070203": {
+      "description": "Halojenli organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070204": {
+      "description": "Diğer organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070207": {
+      "description": "Halojenli dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070208": {
+      "description": "Diğer dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070209": {
+      "description": "Halojenli filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070210": {
+      "description": "Diğer filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070211": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070212": {
+      "description": "07 02 11 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070213": {
+      "description": "Atık plastik",
+      "hazardous": false,
+      "classification": null
+    },
+    "070214": {
+      "description": "Tehlikeli maddeler içeren katkı maddelerinin atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070215": {
+      "description": "07 02 14 dışındaki katkı maddelerinin atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "070216": {
+      "description": "Zararlı silikonlar içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070217": {
+      "description": "07 02 16 dışında silikon içeren atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070299": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070301": {
+      "description": "Su bazlı yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070303": {
+      "description": "Halojenli organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070304": {
+      "description": "Diğer organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070307": {
+      "description": "Halojenli dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070308": {
+      "description": "Diğer dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070309": {
+      "description": "Halojenli filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070310": {
+      "description": "Diğer filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070311": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070312": {
+      "description": "07 03 11 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070399": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070401": {
+      "description": "Su bazlı yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070403": {
+      "description": "Halojenli organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070404": {
+      "description": "Diğer organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070407": {
+      "description": "Halojenli dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070408": {
+      "description": "Diğer dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070409": {
+      "description": "Halojenli filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070410": {
+      "description": "Diğer filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070411": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070412": {
+      "description": "07 04 11 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070413": {
+      "description": "Tehlikeli madde içeren katı atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070499": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070501": {
+      "description": "Su bazlı yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070503": {
+      "description": "Halojenli organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070504": {
+      "description": "Diğer organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070507": {
+      "description": "Halojenli dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070508": {
+      "description": "Diğer dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070509": {
+      "description": "Halojenli filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070510": {
+      "description": "Diğer filtre tabakaları kekleri, kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070511": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070512": {
+      "description": "07 05 11 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070513": {
+      "description": "Tehlikeli madde içeren katı atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070514": {
+      "description": "07 05 13 dışındaki katı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070599": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070601": {
+      "description": "Su bazlı yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070603": {
+      "description": "Halojenli organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070604": {
+      "description": "Diğer organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070607": {
+      "description": "Halojenli dip tortuları ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070608": {
+      "description": "Diğer dip tortuları ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070609": {
+      "description": "Halojenli filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070610": {
+      "description": "Diğer filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070611": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070612": {
+      "description": "07 06 11 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070699": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070701": {
+      "description": "Su bazlı yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070703": {
+      "description": "Halojenli organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070704": {
+      "description": "Diğer organik çözücüler, yıkama sıvıları ve ana çözeltiler",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070707": {
+      "description": "Halojenli dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070708": {
+      "description": "Diğer dip tortusu ve reaksiyon kalıntıları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070709": {
+      "description": "Halojenli filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070710": {
+      "description": "Diğer filtre kekleri ve kullanılmış absorbanlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "070711": {
+      "description": "Saha içi atıksu arıtımından kaynaklanan tehlikeli maddeler içeren çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "070712": {
+      "description": "07 07 11 dışındaki saha içi atıksu arıtımından kaynaklanan çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "070799": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080111": {
+      "description": "Organik çözücüler ya da diğer tehlikeli maddeler içeren atık boya ve vernikle",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080112": {
+      "description": "08 01 11 dışındaki atık boya ve vernikler",
+      "hazardous": false,
+      "classification": null
+    },
+    "080113": {
+      "description": "Organik çözücüler ya da diğer tehlikeli maddeler içeren boya ve vernik çamurları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080114": {
+      "description": "08 01 13 dışındaki boya ve vernik çamurları",
+      "hazardous": false,
+      "classification": null
+    },
+    "080115": {
+      "description": "Organik çözücüler ya da diğer tehlikeli maddeler içeren boya ve vernikli sulu çamurlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080116": {
+      "description": "08 01 15 dışındaki boya ve vernik içeren sulu çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080117": {
+      "description": "Organik çözücüler ya da diğer tehlikeli maddeler içeren boya ve verniğin sökülmesinden kaynaklanan atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080118": {
+      "description": "08 01 17 dışındaki boya ve vernik sökülmesinden kaynaklanan atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080119": {
+      "description": "Organik çözücüler ya da diğer tehlikeli maddeler içeren boya ve vernik sökülmesinden kaynaklanan sulu süspansiyonlar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080120": {
+      "description": "08 01 19 dışındaki sulu boya ya da vernik içeren sulu süspansiyonlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080121": {
+      "description": "Boya ya da vernik sökücü atıkları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "080199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080201": {
+      "description": "Atık kaplama tozları",
+      "hazardous": false,
+      "classification": null
+    },
+    "080202": {
+      "description": "Seramik malzemeler içeren sulu çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080203": {
+      "description": "Seramik malzemeler içeren sulu süspansiyonlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080299": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080307": {
+      "description": "Mürekkep içeren sulu çamurlar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080308": {
+      "description": "Mürekkep içeren sulu sıvı atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080312": {
+      "description": "Tehlikeli maddeler içeren mürekkep atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080313": {
+      "description": "08 03 12 dışındaki mürekkep atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "080314": {
+      "description": "Tehlikeli maddeler içeren mürekkep çamurları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080315": {
+      "description": "08 05 14 dışındaki mürekkep çamurları",
+      "hazardous": false,
+      "classification": null
+    },
+    "080316": {
+      "description": "Atık aşındırma solüsyonları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "080317": {
+      "description": "Tehlikeli maddeler içeren atık baskı tonerleri",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080318": {
+      "description": "08 03 17 dışındaki atık baskı tonerleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "080319": {
+      "description": "Dağıtıcı yağ",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "080399": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080409": {
+      "description": "Organik çözücüler ya da diğer tehlikeli maddeler içeren atık yapışkanlar ve dolgu macunları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080410": {
+      "description": "08 04 09 dışındaki atık yapışkanlar ve dolgu macunları",
+      "hazardous": false,
+      "classification": null
+    },
+    "080411": {
+      "description": "Organik çözücüler ya da diğer tehlikeli maddeler içeren yapışkan ve dolgu macunu çamurları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080412": {
+      "description": "08 04 11 dışındaki yapışkan ve dolgu macunu çamurları",
+      "hazardous": false,
+      "classification": null
+    },
+    "080413": {
+      "description": "Organik çözücüler ya da diğer tehlikeli maddeler içeren sulu yapışkan veya dolgu macunu çamurları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080414": {
+      "description": "08 04 13 dışındaki sulu organik yapışkan veya dolgu macunu çamurları",
+      "hazardous": false,
+      "classification": null
+    },
+    "080415": {
+      "description": "Organik çözücüler ya da diğer tehlikeli maddeler içeren sulu yapışkan veya dolgu macunlarının sıvı atıkları",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "080416": {
+      "description": "08 04 15 dışındaki yapışkan veya dolgu macunlarının sulu atıkları",
+      "hazardous": false,
+      "classification": null
+    },
+    "080417": {
+      "description": "Reçine yağı",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "080499": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    },
+    "080501": {
+      "description": "Atık izosiyanatlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "090101": {
+      "description": "Su bazlı banyo ve aktifleştirici solüsyonları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "090102": {
+      "description": "Su bazlı ofset plakası banyo solüsyonu",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "090103": {
+      "description": "Çözücü bazlı banyo solüsyonları",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "090104": {
+      "description": "Sabitleyici solüsyonlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "090105": {
+      "description": "Ağartıcı solüsyonları ve ağartıcı sabitleyici solüsyonlar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "090106": {
+      "description": "Fotoğrafçılık atıklarının saha içi arıtılmasından oluşan gümüş içeren atıklar",
+      "hazardous": true,
+      "classification": "M"
+    },
+    "090107": {
+      "description": "Gümüş veya da gümüş bileşenleri içeren fotoğraf filmi ve kâğıdı",
+      "hazardous": false,
+      "classification": null
+    },
+    "090108": {
+      "description": "Gümüş veya gümüş bileşenleri içermeyen fotoğraf filmi ve kâğıdı",
+      "hazardous": false,
+      "classification": null
+    },
+    "090110": {
+      "description": "Pilsiz çalışan tek kullanımlık fotoğraf makineleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "090111": {
+      "description": "16 06 01, 16 06 02 ya da 16 06 03’ün altında geçen pillerle çalışan tek kullanımlık fotoğraf makineleri",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "090112": {
+      "description": "09 01 11 dışındaki pille çalışan tek kullanımlık fotoğraf makineleri",
+      "hazardous": false,
+      "classification": null
+    },
+    "090113": {
+      "description": "09 01 06 dışındaki gümüş geri kazanımı için yapılan arıtmadan kalan sulu sıvı atıklar",
+      "hazardous": true,
+      "classification": "A"
+    },
+    "090199": {
+      "description": "Başka bir şekilde tanımlanmamış atıklar",
+      "hazardous": false,
+      "classification": null
+    }
+  }
+}

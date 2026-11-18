@@ -1,9 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Http\Middleware\EnsureEnvironmentModuleSelected;
+use App\Http\Middleware\EnsureWasteModuleSelected;
 use App\Models\AppModule;
 
 // CONTROLLER SINIFLARI
@@ -62,8 +64,12 @@ Route::middleware(['auth', 'session.current'])->group(function () {
             'modules' => $query->get()->map(fn (AppModule $module) => [
                 'name' => $module->name,
                 'description' => $module->description,
-                'available' => $module->is_active && $module->key === 'environment',
-                'href' => $module->key === 'environment' && $module->is_active ? '/moduller/cevre-takip' : null,
+                'available' => $module->is_active && in_array($module->key, ['environment', 'waste'], true),
+                'href' => $module->is_active ? match ($module->key) {
+                    'environment' => '/moduller/cevre-takip',
+                    'waste' => '/moduller/atik-takip',
+                    default => null,
+                } : null,
             ])->values(),
         ]);
     })->name('modules.index');
@@ -72,6 +78,50 @@ Route::middleware(['auth', 'session.current'])->group(function () {
 
         return redirect()->route('dashboard');
     })->middleware('module.access:environment')->name('modules.select.environment');
+
+    Route::post('/moduller/atik-takip', function (Request $request) {
+        abort_unless(AppModule::where('key', 'waste')->where('is_active', true)->exists(), 404);
+        $request->session()->put('active_module', 'waste');
+
+        return redirect()->route('waste.dashboard');
+    })->middleware('module.access:waste')->name('modules.select.waste');
+
+    Route::middleware([EnsureWasteModuleSelected::class, 'module.access:waste'])->group(function () {
+        Route::get('/atik-takip/yedek', [\App\Http\Controllers\Api\WasteBackupController::class, 'download'])->middleware('admin')->name('waste.backup');
+        Route::post('/atik-takip/ice-aktar/onizleme', [\App\Http\Controllers\Api\WasteImportController::class, 'preview'])->middleware('admin');
+        Route::post('/atik-takip/ice-aktar/onay', [\App\Http\Controllers\Api\WasteImportController::class, 'commit'])->middleware('admin');
+        Route::put('/atik-takip/tesis-karti', [\App\Http\Controllers\Api\WasteTransportController::class, 'saveFacilityCard'])->middleware('admin');
+        Route::get('/atik-takip', function () {
+            $today = now('Europe/Istanbul')->startOfDay();
+            $weekEnd = $today->copy()->endOfWeek()->toDateString();
+            $monthStart = $today->copy()->startOfMonth()->toDateString();
+            $monthEnd = $today->copy()->endOfMonth()->toDateString();
+            $week = DB::table('waste_imports')->whereDate('waste_date', '>=', $today->toDateString())
+                ->whereDate('waste_date', '<=', $weekEnd)
+                ->where(fn ($query) => $query->whereNull('transport_status')->orWhere('transport_status', '!=', 'cancelled'));
+            $month = DB::table('waste_imports')->whereDate('waste_date', '>=', $monthStart)
+                ->whereDate('waste_date', '<=', $monthEnd)
+                ->where(fn ($query) => $query->whereNull('transport_status')->orWhere('transport_status', '!=', 'cancelled'));
+            return Inertia::render('AtikTakipDashboard', [
+                'weekCount' => (clone $week)->count(),
+                'weekRecords' => $week->orderBy('waste_date')->orderBy('id')->limit(5)
+                    ->get(['id', 'waste_date', 'producer_name', 'processor_name']),
+                'monthCount' => $month->count(),
+                'weekUrl' => '/atik-takip/kayitlar?from='.$today->toDateString().'&to='.$weekEnd,
+                'monthUrl' => '/atik-takip/kayitlar?from='.$monthStart.'&to='.$monthEnd,
+            ]);
+        })->name('waste.dashboard');
+        Route::get('/atik-takip/kayitlar', [\App\Http\Controllers\Api\WasteTransportController::class, 'index'])->name('waste.records');
+        Route::get('/atik-takip/kayitlar/excel', [\App\Http\Controllers\Api\WasteTransportController::class, 'exportExcel'])->name('waste.records.excel');
+        Route::patch('/atik-takip/kayitlar/{id}/adr', [\App\Http\Controllers\Api\WasteTransportController::class, 'classifyAdr'])->whereNumber('id');
+        Route::patch('/atik-takip/adr-yetki', [\App\Http\Controllers\Api\WasteTransportController::class, 'updateAdrAccess'])->middleware('admin');
+        Route::post('/atik-takip/kayitlar', [\App\Http\Controllers\Api\WasteTransportController::class, 'save'])->middleware('module.write:waste');
+        Route::put('/atik-takip/kayitlar/{id}', [\App\Http\Controllers\Api\WasteTransportController::class, 'save'])->whereNumber('id')->middleware('module.write:waste');
+        Route::patch('/atik-takip/kayitlar/{id}/gerceklesmedi', [\App\Http\Controllers\Api\WasteTransportController::class, 'cancel'])->whereNumber('id')->middleware('admin');
+        Route::get('/atik-takip/ureticiler', [\App\Http\Controllers\Api\WasteTransportController::class, 'index'])->defaults('facilityView', 'producer')->name('waste.producers');
+        Route::get('/atik-takip/isleme-tesisleri', [\App\Http\Controllers\Api\WasteTransportController::class, 'index'])->defaults('facilityView', 'processor')->name('waste.processors');
+        Route::get('/atik-takip/istatistikler', [\App\Http\Controllers\Api\WasteTransportController::class, 'index'])->middleware('admin')->defaults('statisticsView', true)->name('waste.statistics');
+    });
 
     Route::middleware([EnsureEnvironmentModuleSelected::class, 'module.access:environment'])->group(function () {
     Route::get('/duyurular', [\App\Http\Controllers\Api\AnnouncementController::class, 'index']);
