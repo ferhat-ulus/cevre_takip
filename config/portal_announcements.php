@@ -11,4 +11,14 @@ return [
             'Belge düzenli yenileme gerektiriyorsa Yenileme takibine dön düğmesini kullanın. OSB tesislerinde periyodik yenileme takibi devam eder.',
         ],
     ],
+    'gfb-environmental-permit-tracking' => [
+        'published' => true,
+        'context' => 'portal',
+        'title' => 'Çevre İzin/Lisans sürecinde GFB takibi',
+        'paragraphs' => [
+            'Tesis detaylarındaki Çevre İzin/Lisans başlık seçimine Geçici Faaliyet Belgesi (GFB) seçeneği eklendi.',
+            'GFB seçildiğinde belge tarihi girilebilir. Sistem, Çevre İzin/Lisans başvurusunun son gününü GFB tarihinden 180 gün sonrası olarak hesaplar ve bu son tarihten 60 ve 30 gün önce uyarı verir. GFB’nin geçerlilik süresi de ekranda bir yıl olarak gösterilir.',
+            'GFB süreci olan tesisler için bu seçenek kullanılmalıdır.',
+        ],
+    ],
 ];
