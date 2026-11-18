@@ -11,12 +11,4 @@ return [
             'Belge düzenli yenileme gerektiriyorsa Yenileme takibine dön düğmesini kullanın. OSB tesislerinde periyodik yenileme takibi devam eder.',
         ],
     ],
-    'dark-theme-select-options' => [
-        'published' => true,
-        'context' => 'portal',
-        'title' => 'Karanlık temada seçim listesi görünümü düzeltildi',
-        'paragraphs' => [
-            'Karanlık temada açılır seçim listelerinin seçenek renkleri okunabilir olacak şekilde güncellendi.',
-        ],
-    ],
 ];
