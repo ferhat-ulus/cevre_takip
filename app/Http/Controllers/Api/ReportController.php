@@ -156,7 +156,9 @@ class ReportController extends Controller
 
     private static function compareDetailedTasks(array $a, array $b): int
     {
-        $rank = (ComplianceEngine::RANK[$a['state']] ?? 99) <=> (ComplianceEngine::RANK[$b['state']] ?? 99);
+        $rankA = $a['state'] === 'missing' ? PHP_INT_MAX : (ComplianceEngine::RANK[$a['state']] ?? 99);
+        $rankB = $b['state'] === 'missing' ? PHP_INT_MAX : (ComplianceEngine::RANK[$b['state']] ?? 99);
+        $rank = $rankA <=> $rankB;
         if ($rank !== 0) return $rank;
         $days = ($a['days'] ?? PHP_INT_MAX) <=> ($b['days'] ?? PHP_INT_MAX);
         if ($days !== 0) return $days;
