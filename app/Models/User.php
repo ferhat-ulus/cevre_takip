@@ -60,10 +60,7 @@ class User extends Authenticatable
 
     public function scopeConsultantCapable(Builder $query): Builder
     {
-        return $query->where(function (Builder $query) {
-            $query->where('role', 'employee')
-                ->orWhere('can_be_consultant', true);
-        });
+        return $query->where('can_be_consultant', true);
     }
 
     public function scopeActiveConsultants(Builder $query): Builder
@@ -73,7 +70,7 @@ class User extends Authenticatable
 
     public function isConsultantCapable(): bool
     {
-        return $this->role === 'employee' || $this->can_be_consultant;
+        return (bool) $this->can_be_consultant;
     }
 
     public function moduleAccesses(): HasMany

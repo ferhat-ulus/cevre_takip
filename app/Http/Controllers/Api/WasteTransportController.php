@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppModule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -308,6 +309,137 @@ class WasteTransportController extends Controller
         return $this->savedFacility($role, $name, $address) ?? $this->legacyFacility($role, $name, $address);
     }
 
+    private function statisticsFacilityKey(string $role, object $record): string
+    {
+        $name = trim((string) $record->{$role.'_name'});
+        $addressField = $role === 'producer' ? 'address' : 'processor_address';
+        $address = trim((string) ($record->{$addressField} ?? ''));
+        if ($facility = $this->confirmedFacility($role, $name, $address)) {
+            return 'confirmed:'.$facility['id'];
+        }
+
+        $vkn = trim((string) ($record->{$role.'_vkn'} ?? ''));
+        if ($this->suspectFacilityVkn($name, $vkn)) $vkn = '';
+        $normalize = fn ($value) => trim(preg_replace('/\s+/u', ' ', mb_strtolower(trim((string) $value), 'UTF-8')));
+        $district = $role === 'processor' ? $normalize($record->district ?? '') : '';
+
+        return hash('sha256', implode('|', [$normalize($name), $vkn, $normalize($address), $district]));
+    }
+
+    private function summarizeStatisticsDays(array $days): array
+    {
+        krsort($days);
+        $producers = [];
+        $processors = [];
+        $daily = [];
+        $rows = 0;
+        $producerDayCount = 0;
+
+        foreach ($days as $date => $day) {
+            $producers += $day['producers'];
+            $processors += $day['processors'];
+            $producerDayCount += count($day['producers']);
+            $rows += $day['rows'];
+            $daily[] = [
+                'date' => $date,
+                'producers' => ['size' => count($day['producers'])],
+                'processors' => ['size' => count($day['processors'])],
+                'rows' => $day['rows'],
+            ];
+        }
+
+        return [
+            'workingDays' => count($days),
+            'producerCount' => count($producers),
+            'processorCount' => count($processors),
+            'producerDayCount' => $producerDayCount,
+            'rows' => $rows,
+            'daily' => $daily,
+        ];
+    }
+
+    private function vehicleStatisticsData(string $today): array
+    {
+        $plates = ['34PFH301', '34PTR373'];
+        $daysByPlate = [];
+        $missingByMonth = [];
+        $latestDate = null;
+        $records = DB::table('waste_imports')
+            ->where(fn ($query) => $query->whereNull('transport_status')->orWhere('transport_status', '!=', 'cancelled'))
+            ->get(['waste_date', 'plate', 'producer_name', 'processor_name', 'producer_vkn', 'processor_vkn', 'address', 'processor_address', 'district']);
+
+        foreach ($records as $record) {
+            $date = substr((string) $record->waste_date, 0, 10);
+            $month = substr($date, 0, 7);
+            $plate = preg_replace('/[^A-Z0-9]/', '', strtoupper((string) $record->plate));
+            if ($plate === '') {
+                $missingByMonth[$month] = ($missingByMonth[$month] ?? 0) + 1;
+            }
+            if (!in_array($plate, $plates, true)) continue;
+
+            $latestDate = $latestDate === null || $date > $latestDate ? $date : $latestDate;
+            $daysByPlate[$plate][$date] ??= ['producers' => [], 'processors' => [], 'rows' => 0];
+            $daysByPlate[$plate][$date]['rows']++;
+            $daysByPlate[$plate][$date]['producers'][$this->statisticsFacilityKey('producer', $record)] = true;
+            $daysByPlate[$plate][$date]['processors'][$this->statisticsFacilityKey('processor', $record)] = true;
+        }
+
+        $initialMonth = $latestDate ? substr($latestDate, 0, 7) : substr($today, 0, 7);
+        $initialYear = substr($initialMonth, 0, 4);
+        $monthKeys = [];
+        foreach ($daysByPlate as $days) {
+            foreach (array_keys($days) as $date) $monthKeys[substr($date, 0, 7)] = true;
+        }
+        foreach (array_keys($missingByMonth) as $month) $monthKeys[$month] = true;
+        $years = array_values(array_unique(array_map(fn ($month) => substr($month, 0, 4), array_keys($monthKeys))));
+        if (!$years) $years = [$initialYear];
+        rsort($years);
+
+        $months = [];
+        foreach (array_keys($monthKeys) as $month) {
+            $vehicles = [];
+            foreach ($plates as $plate) {
+                $monthDays = array_filter($daysByPlate[$plate] ?? [], fn ($day, $date) => str_starts_with($date, $month), ARRAY_FILTER_USE_BOTH);
+                $vehicles[] = ['plate' => $plate, ...$this->summarizeStatisticsDays($monthDays)];
+            }
+            $months[$month] = ['vehicles' => $vehicles, 'missingPlates' => $missingByMonth[$month] ?? 0];
+        }
+
+        $annual = [];
+        foreach ($years as $year) {
+            $vehicles = [];
+            $monthly = [];
+            for ($index = 1; $index <= 12; $index++) {
+                $month = $year.'-'.str_pad((string) $index, 2, '0', STR_PAD_LEFT);
+                $monthlyVehicles = [];
+                foreach ($plates as $plate) {
+                    $monthDays = array_filter($daysByPlate[$plate] ?? [], fn ($day, $date) => str_starts_with($date, $month), ARRAY_FILTER_USE_BOTH);
+                    $monthlyVehicles[] = ['plate' => $plate, ...$this->summarizeStatisticsDays($monthDays)];
+                }
+                $monthLabel = \Carbon\Carbon::createFromDate((int) $year, $index, 1)->locale('tr')->translatedFormat('F');
+                $monthly[] = ['month' => $month, 'label' => $monthLabel, 'vehicles' => $monthlyVehicles];
+            }
+
+            foreach ($plates as $plate) {
+                $yearDays = array_filter($daysByPlate[$plate] ?? [], fn ($day, $date) => str_starts_with($date, $year), ARRAY_FILTER_USE_BOTH);
+                $summary = ['plate' => $plate, ...$this->summarizeStatisticsDays($yearDays)];
+                $plateIndex = array_search($plate, $plates, true);
+                $summary['monthly'] = array_map(fn ($month) => [
+                    'month' => $month['month'], 'label' => $month['label'], ...$month['vehicles'][$plateIndex],
+                ], $monthly);
+                $vehicles[] = $summary;
+            }
+
+            $annual[$year] = [
+                'vehicles' => $vehicles,
+                'missingPlates' => array_sum(array_map(fn ($month) => $missingByMonth[$month] ?? 0, array_filter(array_keys($missingByMonth), fn ($month) => str_starts_with($month, $year)))),
+            ];
+            unset($monthly);
+        }
+
+        return ['initialMonth' => $initialMonth, 'initialYear' => $initialYear, 'years' => $years, 'months' => $months, 'annual' => $annual];
+    }
+
     public function transferVerifiedFacilityCards(): array
     {
         $groups = [];
@@ -431,6 +563,32 @@ class WasteTransportController extends Controller
     {
         $user = $request->user();
         $admin = $user->role === 'admin';
+        $wasteRole = $admin ? null : $user->moduleAccesses()
+            ->whereHas('module', fn ($query) => $query->where('key', 'waste'))
+            ->value('role');
+        $statisticsOnly = !$admin && $request->routeIs('waste.statistics') && $wasteRole === AppModule::ROLE_VIEWER;
+
+        if ($statisticsOnly) {
+            $today = now('Europe/Istanbul')->toDateString();
+
+            return Inertia::render('AtikTasimaKayitlari', [
+                'records' => [],
+                'history' => [],
+                'admin' => false,
+                'canWrite' => false,
+                'today' => $today,
+                'wasteCatalog' => ['codes' => []],
+                'adrEntegre' => [],
+                'canClassifyAdr' => false,
+                'adrCatalog' => [],
+                'adrUsers' => [],
+                'facilityView' => null,
+                'statisticsView' => true,
+                'statisticsOnly' => true,
+                'vehicleStatisticsData' => $this->vehicleStatisticsData($today),
+            ]);
+        }
+
         $visibleRecords = DB::table('waste_imports')->when(!$admin, fn ($query) => $query
             ->where(fn ($status) => $status->whereNull('transport_status')->orWhere('transport_status', '!=', 'cancelled')));
         return Inertia::render('AtikTasimaKayitlari', [

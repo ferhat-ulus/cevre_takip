@@ -16,16 +16,21 @@ class HandleInertiaRequests extends Middleware
 
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $moduleAccesses = $user?->moduleAccesses()->with('module:id,key')->get()
+            ->mapWithKeys(fn ($access) => [$access->module->key => $access->role])->all() ?? [];
+
         return array_merge(parent::share($request), [
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'username' => $request->user()->username,
-                    'email' => $request->user()->email,
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'username' => $user->username,
+                    'email' => $user->email,
                     // Rolü zorla küçük harfe çevirerek gönderiyoruz
-                    'role' => strtolower(trim($request->user()->role)),
-                    'active' => (bool) $request->user()->active,
+                    'role' => strtolower(trim($user->role)),
+                    'active' => (bool) $user->active,
+                    'module_accesses' => $moduleAccesses,
                 ] : null,
             ],
             'flash' => [

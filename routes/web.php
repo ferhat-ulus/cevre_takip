@@ -65,7 +65,7 @@ Route::middleware(['auth', 'session.current'])->group(function () {
                 'name' => $module->name,
                 'description' => $module->description,
                 'available' => $module->is_active && in_array($module->key, ['environment', 'waste'], true),
-                'href' => $module->is_active ? match ($module->key) {
+        'href' => $module->is_active ? match ($module->key) {
                     'environment' => '/moduller/cevre-takip',
                     'waste' => '/moduller/atik-takip',
                     default => null,
@@ -83,10 +83,13 @@ Route::middleware(['auth', 'session.current'])->group(function () {
         abort_unless(AppModule::where('key', 'waste')->where('is_active', true)->exists(), 404);
         $request->session()->put('active_module', 'waste');
 
-        return redirect()->route('waste.dashboard');
+        $moduleRole = $request->user()->moduleAccesses()
+            ->whereHas('module', fn ($query) => $query->where('key', 'waste'))
+            ->value('role');
+        return redirect()->route($moduleRole === AppModule::ROLE_VIEWER ? 'waste.statistics' : 'waste.dashboard');
     })->middleware('module.access:waste')->name('modules.select.waste');
 
-    Route::middleware([EnsureWasteModuleSelected::class, 'module.access:waste'])->group(function () {
+    Route::middleware([EnsureWasteModuleSelected::class, 'module.access:waste', 'waste.statistics-only'])->group(function () {
         Route::get('/atik-takip/yedek', [\App\Http\Controllers\Api\WasteBackupController::class, 'download'])->middleware('admin')->name('waste.backup');
         Route::post('/atik-takip/ice-aktar/onizleme', [\App\Http\Controllers\Api\WasteImportController::class, 'preview'])->middleware('admin');
         Route::post('/atik-takip/ice-aktar/onay', [\App\Http\Controllers\Api\WasteImportController::class, 'commit'])->middleware('admin');
@@ -131,7 +134,7 @@ Route::middleware(['auth', 'session.current'])->group(function () {
         Route::patch('/atik-takip/kayitlar/{id}/gerceklesmedi', [\App\Http\Controllers\Api\WasteTransportController::class, 'cancel'])->whereNumber('id')->middleware('admin');
         Route::get('/atik-takip/ureticiler', [\App\Http\Controllers\Api\WasteTransportController::class, 'index'])->defaults('facilityView', 'producer')->name('waste.producers');
         Route::get('/atik-takip/isleme-tesisleri', [\App\Http\Controllers\Api\WasteTransportController::class, 'index'])->defaults('facilityView', 'processor')->name('waste.processors');
-        Route::get('/atik-takip/istatistikler', [\App\Http\Controllers\Api\WasteTransportController::class, 'index'])->middleware('admin')->defaults('statisticsView', true)->name('waste.statistics');
+        Route::get('/atik-takip/istatistikler', [\App\Http\Controllers\Api\WasteTransportController::class, 'index'])->middleware('waste.statistics-access')->defaults('statisticsView', true)->name('waste.statistics');
     });
 
     Route::middleware([EnsureEnvironmentModuleSelected::class, 'module.access:environment'])->group(function () {

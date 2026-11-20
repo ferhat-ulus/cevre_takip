@@ -31,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'password.changed' => \App\Http\Middleware\EnsurePasswordHasBeenChanged::class,
             'module.access' => \App\Http\Middleware\EnsureModuleAccess::class,
             'module.write' => \App\Http\Middleware\EnsureModuleWriteAccess::class,
+            'waste.statistics-only' => \App\Http\Middleware\EnsureWasteStatisticsOnly::class,
+            'waste.statistics-access' => \App\Http\Middleware\EnsureWasteStatisticsAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

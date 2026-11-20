@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue';
 import PlatformLayout from '@/layouts/PlatformLayout.vue';
 
 defineOptions({ layout: PlatformLayout });
-const props = defineProps({ records: Array, history: Object, admin: Boolean, canWrite: Boolean, today: String, wasteCatalog: Object, adrEntegre: Object, canClassifyAdr: Boolean, adrCatalog: Object, adrUsers: Array, facilityView: String, statisticsView: Boolean });
+const props = defineProps({ records: Array, history: Object, admin: Boolean, canWrite: Boolean, today: String, wasteCatalog: Object, adrEntegre: Object, canClassifyAdr: Boolean, adrCatalog: Object, adrUsers: Array, facilityView: String, statisticsView: Boolean, statisticsOnly: Boolean, vehicleStatisticsData: Object });
 const newFacility = ref({});
 const chosenFacility = ref({});
 const cardEditing = ref(false);
@@ -413,12 +413,12 @@ const targetPercentage = (actual, target) => new Intl.NumberFormat('tr-TR', {
 const normalizePlate = value => String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const latestVehicleRecord = props.records.find(record => vehiclePlates.includes(normalizePlate(record.plate)));
 const statisticsViewMode = ref('month');
-const statisticsMonth = ref(dateKey(latestVehicleRecord?.waste_date || props.today).slice(0, 7));
-const statisticsYear = ref(dateKey(latestVehicleRecord?.waste_date || props.today).slice(0, 4));
+const statisticsMonth = ref(props.vehicleStatisticsData?.initialMonth || dateKey(latestVehicleRecord?.waste_date || props.today).slice(0, 7));
+const statisticsYear = ref(props.vehicleStatisticsData?.initialYear || dateKey(latestVehicleRecord?.waste_date || props.today).slice(0, 4));
 const statisticsYears = computed(() => [...new Set([
-    ...props.records.filter(record => record.transport_status !== 'cancelled'
+    ...(props.vehicleStatisticsData?.years || props.records.filter(record => record.transport_status !== 'cancelled'
         && vehiclePlates.includes(normalizePlate(record.plate)))
-        .map(record => dateKey(record.waste_date).slice(0, 4)).filter(year => /^\d{4}$/.test(year)),
+        .map(record => dateKey(record.waste_date).slice(0, 4)).filter(year => /^\d{4}$/.test(year))),
     statisticsYear.value,
 ])].sort((a, b) => b.localeCompare(a)));
 const statisticsGroupKeys = computed(() => Object.fromEntries(Object.entries(facilityGroups.value).map(([type, groups]) => [
@@ -448,27 +448,35 @@ function summarizeVehicle(plate, records) {
 }
 const selectedMonthRecords = computed(() => props.records.filter(record => record.transport_status !== 'cancelled'
     && dateKey(record.waste_date).slice(0, 7) === statisticsMonth.value));
-const vehicleStats = computed(() => ({
-    vehicles: vehiclePlates.map(plate => summarizeVehicle(plate, selectedMonthRecords.value)),
-    missingPlates: selectedMonthRecords.value.filter(record => !normalizePlate(record.plate)).length,
-}));
+const emptyVehicleStats = () => ({
+    vehicles: vehiclePlates.map(plate => ({ plate, daily: [], workingDays: 0, producerCount: 0, processorCount: 0, producerDayCount: 0, rows: 0 })),
+    missingPlates: 0,
+});
+const vehicleStats = computed(() => props.vehicleStatisticsData
+    ? props.vehicleStatisticsData.months[statisticsMonth.value] || emptyVehicleStats()
+    : {
+        vehicles: vehiclePlates.map(plate => summarizeVehicle(plate, selectedMonthRecords.value)),
+        missingPlates: selectedMonthRecords.value.filter(record => !normalizePlate(record.plate)).length,
+    });
 const selectedYearRecords = computed(() => props.records.filter(record => record.transport_status !== 'cancelled'
     && dateKey(record.waste_date).slice(0, 4) === statisticsYear.value));
-const annualVehicleStats = computed(() => ({
-    vehicles: vehiclePlates.map(plate => {
-        const yearlyRecords = selectedYearRecords.value;
-        const monthly = Array.from({ length: 12 }, (_, index) => {
-            const month = `${statisticsYear.value}-${String(index + 1).padStart(2, '0')}`;
-            return {
-                month,
-                label: new Intl.DateTimeFormat('tr-TR', { month: 'long' }).format(new Date(`${month}-01T12:00:00`)),
-                ...summarizeVehicle(plate, yearlyRecords.filter(record => dateKey(record.waste_date).slice(0, 7) === month)),
-            };
-        });
-        return { ...summarizeVehicle(plate, yearlyRecords), monthly };
-    }),
-    missingPlates: selectedYearRecords.value.filter(record => !normalizePlate(record.plate)).length,
-}));
+const annualVehicleStats = computed(() => props.vehicleStatisticsData
+    ? props.vehicleStatisticsData.annual[statisticsYear.value] || emptyVehicleStats()
+    : {
+        vehicles: vehiclePlates.map(plate => {
+            const yearlyRecords = selectedYearRecords.value;
+            const monthly = Array.from({ length: 12 }, (_, index) => {
+                const month = `${statisticsYear.value}-${String(index + 1).padStart(2, '0')}`;
+                return {
+                    month,
+                    label: new Intl.DateTimeFormat('tr-TR', { month: 'long' }).format(new Date(`${month}-01T12:00:00`)),
+                    ...summarizeVehicle(plate, yearlyRecords.filter(record => dateKey(record.waste_date).slice(0, 7) === month)),
+                };
+            });
+            return { ...summarizeVehicle(plate, yearlyRecords), monthly };
+        }),
+        missingPlates: selectedYearRecords.value.filter(record => !normalizePlate(record.plate)).length,
+    });
 </script>
 
 <template>

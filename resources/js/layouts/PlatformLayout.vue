@@ -5,6 +5,10 @@ import LogoutButton from '@/components/LogoutButton.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user || null);
+const wasteStatisticsOnly = computed(() => user.value?.role !== 'admin' && user.value?.module_accesses?.waste === 'viewer');
+const accountRoleLabel = computed(() => user.value?.role === 'admin'
+    ? 'Sistem Yöneticisi'
+    : wasteStatisticsOnly.value ? 'Atık İstatistikleri' : 'Kullanıcı');
 const isModuleSelectionPage = computed(() => page.url.split('?')[0] === '/moduller');
 const isWastePage = computed(() => page.url.startsWith('/atik-takip'));
 const pageTitle = computed(() => isModuleSelectionPage.value ? 'Modül Seçimi' : isWastePage.value ? 'Atık Takip' : 'Kullanıcılar ve Erişimler');
@@ -71,11 +75,11 @@ const toggleTheme = () => {
                 </div>
                 <div v-if="isWastePage" class="space-y-1">
                     <p v-show="!isCollapsed || isMobileMenuOpen" class="flex min-h-9 items-center px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Atık Takip</p>
-                    <Link href="/atik-takip" :class="navItemClasses('/atik-takip')" :aria-current="isActivePath('/atik-takip') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Genel Bakış</span></Link>
-                    <Link href="/atik-takip/kayitlar" :class="navItemClasses('/atik-takip/kayitlar')" :aria-current="isActivePath('/atik-takip/kayitlar') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Tüm Taşıma Kayıtları</span></Link>
-                    <Link href="/atik-takip/ureticiler" :class="navItemClasses('/atik-takip/ureticiler')" :aria-current="isActivePath('/atik-takip/ureticiler') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Atık Üreticisi Tesisler</span></Link>
-                    <Link href="/atik-takip/isleme-tesisleri" :class="navItemClasses('/atik-takip/isleme-tesisleri')" :aria-current="isActivePath('/atik-takip/isleme-tesisleri') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Atık İşleme Tesisleri</span></Link>
-                    <Link v-if="user?.role === 'admin'" href="/atik-takip/istatistikler" title="Araç İstatistikleri" :class="navItemClasses('/atik-takip/istatistikler')" :aria-current="isActivePath('/atik-takip/istatistikler') ? 'page' : undefined" @click="isMobileMenuOpen = false">Araç İstatistikleri</Link>
+                    <Link v-if="!wasteStatisticsOnly" href="/atik-takip" :class="navItemClasses('/atik-takip')" :aria-current="isActivePath('/atik-takip') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Genel Bakış</span></Link>
+                    <Link v-if="!wasteStatisticsOnly" href="/atik-takip/kayitlar" :class="navItemClasses('/atik-takip/kayitlar')" :aria-current="isActivePath('/atik-takip/kayitlar') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Tüm Taşıma Kayıtları</span></Link>
+                    <Link v-if="!wasteStatisticsOnly" href="/atik-takip/ureticiler" :class="navItemClasses('/atik-takip/ureticiler')" :aria-current="isActivePath('/atik-takip/ureticiler') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Atık Üreticisi Tesisler</span></Link>
+                    <Link v-if="!wasteStatisticsOnly" href="/atik-takip/isleme-tesisleri" :class="navItemClasses('/atik-takip/isleme-tesisleri')" :aria-current="isActivePath('/atik-takip/isleme-tesisleri') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Atık İşleme Tesisleri</span></Link>
+                    <Link v-if="user?.role === 'admin' || wasteStatisticsOnly" href="/atik-takip/istatistikler" title="Araç İstatistikleri" :class="navItemClasses('/atik-takip/istatistikler')" :aria-current="isActivePath('/atik-takip/istatistikler') ? 'page' : undefined" @click="isMobileMenuOpen = false">Araç İstatistikleri</Link>
                     <a v-if="user?.role === 'admin'" href="/atik-takip/yedek" class="group flex min-h-9 cursor-pointer items-center rounded-lg px-3 py-1.5 text-[13px] text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white">Tam veritabanı yedeğini indir</a>
                 </div>
                 <div v-if="user?.role === 'admin'" class="space-y-1">
@@ -94,7 +98,7 @@ const toggleTheme = () => {
                     <div v-show="!isCollapsed || isMobileMenuOpen" class="min-w-0 flex-1">
                         <p class="truncate text-[10px] text-slate-500 dark:text-slate-400">Hoş geldiniz</p>
                         <p class="truncate text-xs font-semibold text-slate-800 dark:text-white">{{ user?.name || 'Kullanıcı' }}</p>
-                        <p class="truncate text-[10px] text-slate-500 dark:text-slate-400">Sistem Yöneticisi</p>
+                        <p class="truncate text-[10px] text-slate-500 dark:text-slate-400">{{ accountRoleLabel }}</p>
                     </div>
                     <LogoutButton />
                 </div>

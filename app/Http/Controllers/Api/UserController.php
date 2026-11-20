@@ -411,7 +411,7 @@ class UserController extends Controller
             'username' => $this->makeUniqueUsername($request->input('username') ?: $request->name),
             'email' => $request->email,
             'role' => $request->role,
-            'can_be_consultant' => $request->role === 'employee' || $request->boolean('can_be_consultant'),
+            'can_be_consultant' => $request->boolean('can_be_consultant', $request->role === 'employee'),
             'password' => Hash::make($tempPassword),
             'active' => 1,
             'must_change' => $request->password ? 0 : 1,
@@ -451,10 +451,9 @@ class UserController extends Controller
         $nextRole = isset($patch['role']) && in_array($patch['role'], ['admin', 'employee'], true)
             ? $patch['role']
             : $user->role;
-        $nextConsultantCapability = $nextRole === 'employee'
-            || (array_key_exists('can_be_consultant', $patch)
-                ? (bool) $patch['can_be_consultant']
-                : $user->can_be_consultant);
+        $nextConsultantCapability = array_key_exists('can_be_consultant', $patch)
+            ? (bool) $patch['can_be_consultant']
+            : ($nextRole === 'employee' && $user->role !== 'employee' ? true : (bool) $user->can_be_consultant);
 
         if ($hasAssignedFirms
             && (($user->active && array_key_exists('active', $patch) && !(bool) $patch['active'])
