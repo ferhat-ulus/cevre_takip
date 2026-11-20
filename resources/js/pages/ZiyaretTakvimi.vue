@@ -95,9 +95,9 @@ const calendarOptions = computed(() => ({
     headerToolbar: {
         left: 'prev,next today',
         center: 'title',
-        right: 'dayGridMonth'
+        right: props.isAdmin ? 'dayGridMonth,dayGridWeek' : ''
     },
-    buttonText: { today: 'Bugün', month: 'Ay' },
+    buttonText: { today: 'Bugün', month: 'Ay', week: 'Hafta' },
     events: calendarEvents.value,
     dateClick: handleDateClick,
     eventClick: handleEventClick,
