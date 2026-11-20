@@ -104,8 +104,8 @@ Route::middleware(['auth', 'session.current'])->group(function () {
                 ->where(fn ($query) => $query->whereNull('transport_status')->orWhere('transport_status', '!=', 'cancelled'));
             return Inertia::render('AtikTakipDashboard', [
                 'weekCount' => (clone $week)->count(),
-                'weekRecords' => $week->orderBy('waste_date')->orderBy('id')->limit(5)
-                    ->get(['id', 'waste_date', 'producer_name', 'processor_name']),
+                'weekRecords' => (clone $week)->selectRaw('DATE(waste_date) as waste_date, COUNT(*) as count')
+                    ->groupByRaw('DATE(waste_date)')->orderBy('waste_date')->get(),
                 'monthCount' => $month->count(),
                 'weekUrl' => '/atik-takip/kayitlar?from='.$today->toDateString().'&to='.$weekEnd,
                 'monthUrl' => '/atik-takip/kayitlar?from='.$monthStart.'&to='.$monthEnd,

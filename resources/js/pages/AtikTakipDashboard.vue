@@ -4,7 +4,11 @@ import PlatformLayout from '@/layouts/PlatformLayout.vue';
 
 defineOptions({ layout: PlatformLayout });
 defineProps({ weekCount: Number, weekRecords: Array, monthCount: Number, weekUrl: String, monthUrl: String });
-const formatDate = value => String(value).slice(0, 10).split('-').reverse().join('.');
+const formatDay = value => new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' }).format(new Date(`${String(value).slice(0, 10)}T12:00:00`));
+const dayUrl = value => {
+    const date = String(value).slice(0, 10);
+    return `/atik-takip/kayitlar?from=${date}&to=${date}`;
+};
 </script>
 
 <template>
@@ -22,10 +26,13 @@ const formatDate = value => String(value).slice(0, 10).split('-').reverse().join
         <section class="grid gap-4 md:grid-cols-2">
             <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-[#1e293b]">
                 <h2 class="font-bold text-slate-900 dark:text-white">Bu hafta yapılacak taşımalar</h2>
-                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ weekCount }} planlanan · Bugünden pazar gününe</p>
-                <ul v-if="weekRecords.length" class="mt-2 space-y-2 text-sm">
-                    <li v-for="record in weekRecords" :key="record.id">
-                        <span class="font-semibold">{{ formatDate(record.waste_date) }}</span> · {{ record.producer_name }} → {{ record.processor_name }}
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ weekCount }} planlanan taşıma · Bugünden pazar gününe</p>
+                <ul v-if="weekRecords.length" class="mt-3 divide-y divide-slate-100 dark:divide-slate-700">
+                    <li v-for="day in weekRecords" :key="day.waste_date">
+                        <Link :href="dayUrl(day.waste_date)" class="flex items-center justify-between gap-3 rounded-md py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-brand-300">
+                            <span class="font-semibold">{{ formatDay(day.waste_date) }}</span>
+                            <span class="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-200">{{ day.count }} taşıma</span>
+                        </Link>
                     </li>
                 </ul>
                 <Link v-if="weekCount" :href="weekUrl" class="mt-3 inline-block text-sm font-semibold text-brand-700 dark:text-brand-400">Haftanın kayıtlarını aç</Link>
