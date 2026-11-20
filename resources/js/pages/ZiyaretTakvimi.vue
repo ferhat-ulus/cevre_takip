@@ -10,6 +10,7 @@ const props = defineProps({
     firms: { type: Array, default: () => [] },
     consultants: { type: Array, default: () => [] },
     holidays: { type: Array, default: () => [] },
+    approvalRequests: { type: Array, default: () => [] },
     timezone: { type: String, default: 'Europe/Istanbul' },
     isAdmin: Boolean
 });
@@ -19,10 +20,13 @@ const user = page.props.auth?.user;
 
 const calendarEvents = ref([]);
 const loading = ref(true);
+const approvalRequests = ref([...props.approvalRequests]);
+const reviewingApprovalId = ref(null);
 
 const showAddModal = ref(false);
 const isSaving = ref(false);
 const errorMsg = ref('');
+const sameDayConflict = ref(false);
 
 const showEventModal = ref(false);
 const selectedEvent = ref({ id: null, title: '', consultant: '', notes: '' });
@@ -81,6 +85,7 @@ const triggerToast = (msg, type = 'error') => {
     showToast.value = true;
     setTimeout(() => { showToast.value = false; }, 5000);
 };
+const visitDateLabel = (date) => new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(`${date}T12:00:00`));
 
 const calendarOptions = computed(() => ({
     plugins: [dayGridPlugin, interactionPlugin],
@@ -128,6 +133,14 @@ watch(selectedConsultant, () => {
     fetchEvents();
 });
 
+watch(() => props.approvalRequests, (requests) => {
+    approvalRequests.value = [...(requests || [])];
+});
+
+watch(() => [form.value.visit_date, form.value.firm_id], () => {
+    sameDayConflict.value = false;
+});
+
 const handleDateClick = (arg) => {
     if (arg.dateStr <= todayInAppTimezone.value) {
         triggerToast('Ziyaret yalnızca yarın ve sonraki tarihler için planlanabilir.', 'error');
@@ -165,6 +178,7 @@ const openNewVisitModal = (dateStr = '') => {
         user_id: props.isAdmin ? '' : user.id
     };
     errorMsg.value = '';
+    sameDayConflict.value = false;
     showAddModal.value = true;
 };
 
@@ -229,7 +243,7 @@ const confirmDelete = async () => {
     }
 };
 
-const saveVisit = async () => {
+const saveVisit = async ({ requestApproval = false, adminOverride = false } = {}) => {
     if (!form.value.firm_id) {
         errorMsg.value = 'Lütfen bir tesis seçin.';
         return;
@@ -240,6 +254,11 @@ const saveVisit = async () => {
     }
     if (form.value.visit_date <= todayInAppTimezone.value) {
         errorMsg.value = 'Ziyaret yalnızca yarın ve sonraki tarihler için planlanabilir.';
+        return;
+    }
+
+    if (requestApproval && !props.isAdmin && !form.value.notes.trim()) {
+        errorMsg.value = 'Yöneticiye göndermeden önce açıklama notu yazın.';
         return;
     }
 
@@ -254,12 +273,25 @@ const saveVisit = async () => {
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
             },
-            body: JSON.stringify(form.value)
+            body: JSON.stringify({
+                ...form.value,
+                request_approval: requestApproval && !props.isAdmin,
+                admin_override: adminOverride && props.isAdmin,
+            })
         });
 
         const data = await response.json();
 
-        if (response.ok) {
+        if (data.same_day_conflict) {
+            sameDayConflict.value = true;
+            errorMsg.value = '';
+        } else if (data.conflict_cleared) {
+            sameDayConflict.value = false;
+            errorMsg.value = data.error || '';
+        } else if (data.approval_requested) {
+            showAddModal.value = false;
+            triggerToast('Onay isteğiniz yöneticiye iletildi. Atama, onaylandıktan sonra takvime eklenecek.', 'success');
+        } else if (response.ok) {
             showAddModal.value = false;
             fetchEvents();
             triggerToast('Ziyaret başarıyla planlandı.', 'success');
@@ -270,6 +302,36 @@ const saveVisit = async () => {
         errorMsg.value = 'Sunucu hatası oluştu.';
     } finally {
         isSaving.value = false;
+    }
+};
+
+const decideApproval = async (approval, decision) => {
+    reviewingApprovalId.value = approval.id;
+    try {
+        const response = await fetch(`/api/visits/approvals/${approval.id}/${decision}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+            },
+            body: JSON.stringify({}),
+        });
+        const data = await response.json();
+        if (data.status === 'expired') {
+            approvalRequests.value = approvalRequests.value.filter(item => item.id !== approval.id);
+        }
+        if (!response.ok) {
+            triggerToast(data.error || data.message || 'İstek sonuçlandırılamadı.', 'error');
+            return;
+        }
+        approvalRequests.value = approvalRequests.value.filter(item => item.id !== approval.id);
+        if (decision === 'approve') fetchEvents();
+        triggerToast(decision === 'approve' ? 'İstek onaylandı ve takvime eklendi.' : 'İstek reddedildi.', 'success');
+    } catch (err) {
+        triggerToast('Sunucu hatası oluştu.', 'error');
+    } finally {
+        reviewingApprovalId.value = null;
     }
 };
 
@@ -311,8 +373,7 @@ onUnmounted(() => {
                     <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-2 whitespace-nowrap">Danışman:</span>
                     <select v-model="selectedConsultant" class="w-full bg-transparent border-none text-sm font-medium text-indigo-600 dark:text-indigo-400 outline-none cursor-pointer">
                         <option value="all" class="dark:bg-gray-800">Tümü (Hepsi)</option>
-                        <!-- Filtrede isim kullanıyoruz -->
-                        <option v-for="c in consultants" :key="c.id" :value="c.name" class="dark:bg-gray-800">{{ c.name }}</option>
+                        <option v-for="c in consultants" :key="c.id" :value="c.id" class="dark:bg-gray-800">{{ c.name }}</option>
                     </select>
                 </div>
 
@@ -322,7 +383,32 @@ onUnmounted(() => {
             </div>
         </div>
 
+        <section v-if="isAdmin && approvalRequests.length" class="space-y-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <h2 class="font-bold">Aynı gün atama için yönetici onayı bekliyor</h2>
+                <span class="rounded-full bg-amber-200 px-2.5 py-1 text-xs font-bold text-amber-900 dark:bg-amber-400/20 dark:text-amber-100">{{ approvalRequests.length }} bekleyen</span>
+            </div>
+            <article v-for="approval in approvalRequests" :key="approval.id" class="rounded-lg border border-amber-200 bg-white/80 p-3 dark:border-amber-500/30 dark:bg-slate-900/30">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="space-y-1 text-sm">
+                        <p class="font-semibold">{{ visitDateLabel(approval.visit_date) }} · {{ facilityDisplayName(approval.firm_name) }}</p>
+                        <p class="text-xs opacity-80">Atanacak danışman: {{ approval.assigned_user }}<template v-if="approval.requested_by !== approval.assigned_user"> · İsteği gönderen: {{ approval.requested_by }}</template></p>
+                        <p class="pt-1 text-xs font-semibold">Yöneticiye iletilen not</p>
+                        <p class="whitespace-pre-wrap text-sm">{{ approval.notes }}</p>
+                    </div>
+                    <div class="flex shrink-0 gap-2">
+                        <button type="button" :disabled="reviewingApprovalId === approval.id" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50" @click="decideApproval(approval, 'approve')">Onayla</button>
+                        <button type="button" :disabled="reviewingApprovalId === approval.id" class="rounded-lg border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-500/40 dark:text-rose-300 dark:hover:bg-rose-500/10 disabled:opacity-50" @click="decideApproval(approval, 'reject')">Reddet</button>
+                    </div>
+                </div>
+            </article>
+        </section>
+
         <div class="bg-white dark:bg-[#1e293b] p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="mb-3 flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300" aria-label="Takvim açıklaması">
+                <span class="inline-block h-3 w-3 rounded-sm bg-amber-600"></span>
+                <span>Not eklenmiş ziyaret</span>
+            </div>
             <div v-if="loading" class="text-center py-10 text-slate-500">Takvim Yükleniyor...</div>
             <FullCalendar v-else :options="calendarOptions" class="custom-calendar" />
         </div>
@@ -338,6 +424,11 @@ onUnmounted(() => {
                 </div>
 
                 <div v-if="errorMsg" class="mb-4 p-3 bg-rose-50 text-rose-700 text-xs rounded-lg border border-rose-200">{{ errorMsg }}</div>
+                <div v-if="sameDayConflict" class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+                    <p class="font-bold">Takvim ataması aynı güne denk geliyor.</p>
+                    <p v-if="isAdmin" class="mt-1">Yönetici olarak istisnayı onaylayıp atamayı kaydedebilirsiniz.</p>
+                    <p v-else class="mt-1">Bu istisna için yönetici onayı gerekiyor. İstek gönderilirken açıklama notu zorunludur.</p>
+                </div>
 
                 <div class="space-y-4">
                     <div>
@@ -368,15 +459,19 @@ onUnmounted(() => {
                     </div>
                     
                     <div>
-                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Notlar</label>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Notlar<span v-if="sameDayConflict && !isAdmin" class="text-rose-500"> *</span></label>
                         <textarea v-model="form.notes" rows="2" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm"></textarea>
+                        <p v-if="sameDayConflict && !isAdmin" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Yöneticiye neden aynı gün için ek atama gerektiğini açıklayın.</p>
                     </div>
                 </div>
 
                 <div class="flex justify-end space-x-2 mt-6">
                     <button @click="showAddModal = false" class="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition">İptal</button>
-                    <button @click="saveVisit" :disabled="isSaving" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50">
+                    <button v-if="!sameDayConflict" @click="saveVisit()" :disabled="isSaving" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50">
                         {{ isSaving ? 'Kaydediliyor...' : 'Kaydet' }}
+                    </button>
+                    <button v-else @click="isAdmin ? saveVisit({ adminOverride: true }) : saveVisit({ requestApproval: true })" :disabled="isSaving || (!isAdmin && !form.notes.trim())" class="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-lg transition disabled:opacity-50">
+                        {{ isSaving ? 'İşleniyor...' : isAdmin ? 'Yönetici onayıyla kaydet' : 'Yöneticiye Sor' }}
                     </button>
                 </div>
             </div>
@@ -404,7 +499,7 @@ onUnmounted(() => {
                         </div>
                         <div>
                             <span class="text-xs text-slate-500 dark:text-slate-400">Notlar:</span>
-                            <div class="text-slate-600 dark:text-slate-400 italic mt-1">{{ selectedEvent.notes || 'Not girilmemiş.' }}</div>
+                            <div :class="['mt-1 rounded-md p-2 italic', selectedEvent.notes ? 'border border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100' : 'text-slate-600 dark:text-slate-400']">{{ selectedEvent.notes || 'Not girilmemiş.' }}</div>
                         </div>
                     </div>
                     

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Firm;
 use App\Models\Config;
 use App\Models\Visit;
+use App\Models\VisitApprovalRequest;
 use App\Services\ComplianceEngine;
 use App\Services\BusinessCalendar;
 use Carbon\Carbon;
@@ -137,6 +138,9 @@ class DashboardController extends Controller
             'consultants' => $consultants,
             'calendarReminder' => $user->role === 'admin' ? $calendar->reminder() : null,
             'visitPlanningReminder' => $this->visitPlanningReminder($user, $firmsRaw),
+            'pendingVisitApprovalCount' => $user->role === 'admin'
+                ? VisitApprovalRequest::where('status', 'pending')->count()
+                : 0,
         ]);
     }
 

@@ -8,8 +8,10 @@ use App\Models\Visit;
 use App\Models\Firm;
 use App\Models\User;
 use App\Models\ActivityLog;
+use App\Models\VisitApprovalRequest;
 use App\Services\BusinessCalendar;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class VisitController extends Controller
@@ -44,9 +46,31 @@ class VisitController extends Controller
             }
         }
 
+        $approvalRequests = $user->role === 'admin'
+            ? VisitApprovalRequest::with(['firm', 'assignedUser:id,name', 'requestedBy:id,name'])
+                ->where('status', 'pending')->orderBy('visit_date')->orderBy('created_at')->get()
+                ->map(function (VisitApprovalRequest $request) {
+                    $firmData = is_array($request->firm?->data) ? $request->firm->data : [];
+
+                    return [
+                        'id' => $request->id,
+                        'firm_id' => $request->firm_id,
+                        'firm_name' => $firmData['name'] ?? 'Bilinmeyen tesis',
+                        'assigned_user_id' => $request->assigned_user_id,
+                        'assigned_user' => $request->assignedUser?->name ?? 'Bilinmiyor',
+                        'requested_by' => $request->requestedBy?->name ?? 'Bilinmiyor',
+                        'visit_date' => $request->visit_date->toDateString(),
+                        'title' => $request->title ?? 'Tesis Ziyareti',
+                        'notes' => $request->notes,
+                        'created_at' => $request->created_at?->toIso8601String(),
+                    ];
+                })->values()
+            : [];
+
         return Inertia::render('ZiyaretTakvimi', [
             'firms' => $firms,
             'consultants' => $consultants,
+            'approvalRequests' => $approvalRequests,
             'holidays' => $this->calendar->blockedDates(now(BusinessCalendar::TIMEZONE)->year - 1, now(BusinessCalendar::TIMEZONE)->year + 3),
             'isAdmin' => $user->role === 'admin',
             'timezone' => BusinessCalendar::TIMEZONE,
@@ -78,11 +102,13 @@ class VisitController extends Controller
                 'title' => $firmName . ' - ' . $visitTitle,
                 'start' => $v->visit_date,
                 'allDay' => true,
-                'backgroundColor' => '#4f46e5',
-                'borderColor' => '#4f46e5',
+                'backgroundColor' => filled(trim((string) $v->notes)) ? '#d97706' : '#4f46e5',
+                'borderColor' => filled(trim((string) $v->notes)) ? '#b45309' : '#4f46e5',
+                'textColor' => '#ffffff',
+                'classNames' => filled(trim((string) $v->notes)) ? ['visit-has-note'] : [],
                 'extendedProps' => [
                     'user_id' => $v->user_id,
-                    'notes' => $v->notes ?? '',
+                    'notes' => trim((string) $v->notes),
                     'consultant' => $userName
                 ]
             ];
@@ -97,7 +123,9 @@ class VisitController extends Controller
             'firm_id' => 'required|exists:firms,id',
             'visit_date' => 'required|date_format:Y-m-d',
             'title' => 'nullable|string|max:255',
-            'notes' => 'nullable|string',
+            'notes' => [$request->boolean('request_approval') ? 'required' : 'nullable', 'string', 'max:5000'],
+            'request_approval' => 'sometimes|boolean',
+            'admin_override' => 'sometimes|boolean',
             'user_id' => 'nullable|exists:users,id' // ID kontrolü
         ]);
 
@@ -130,28 +158,186 @@ class VisitController extends Controller
             return response()->json(['error' => 'Seçtiğiniz gün resmi tatildir, ziyaret planlanamaz.'], 422);
         }
 
-        $existingVisit = Visit::where('user_id', $userId)->whereDate('visit_date', $dateString)->first();
+        $existingVisit = Visit::with(['firm:id,data'])->where('user_id', $userId)->whereDate('visit_date', $dateString)->first();
         if ($existingVisit) {
-            $existingFirmName = ($existingVisit->firm && isset($existingVisit->firm->data['name'])) ? $existingVisit->firm->data['name'] : 'başka bir tesis';
-            return response()->json(['error' => "Bu danışmanın seçilen günde zaten bir ziyareti var: $existingFirmName"], 422);
+            if ($request->boolean('request_approval')) {
+                abort_if($user->role === 'admin', 403, 'Yönetici kendi hesabından onay isteği gönderemez.');
+                $notes = trim((string) $request->input('notes'));
+                if ($notes === '') {
+                    return response()->json(['error' => 'Yöneticiye göndermeden önce açıklama notu yazın.'], 422);
+                }
+
+                $approval = DB::transaction(function () use ($user, $userId, $request, $dateString, $notes) {
+                    User::query()->lockForUpdate()->findOrFail($userId);
+                    $stillConflicted = Visit::where('user_id', $userId)->whereDate('visit_date', $dateString)->exists();
+                    if (!$stillConflicted) return 'conflict_cleared';
+
+                    $pending = VisitApprovalRequest::where('assigned_user_id', $userId)
+                        ->whereDate('visit_date', $dateString)->where('status', 'pending')->exists();
+                    if ($pending) return null;
+
+                    return VisitApprovalRequest::create([
+                        'firm_id' => (string) $request->firm_id,
+                        'assigned_user_id' => $userId,
+                        'requested_by_user_id' => $user->id,
+                        'visit_date' => $dateString,
+                        'title' => $request->title ?? 'Tesis Ziyareti',
+                        'notes' => $notes,
+                        'status' => 'pending',
+                    ]);
+                });
+
+                if ($approval === 'conflict_cleared') {
+                    return response()->json([
+                        'conflict_cleared' => true,
+                        'error' => 'Aynı gün çakışması artık bulunmuyor. Kaydet düğmesine yeniden basarak normal şekilde devam edin.',
+                    ], 409);
+                }
+
+                if (!$approval) {
+                    return response()->json(['error' => 'Bu danışman ve gün için zaten bekleyen bir yönetici onayı var.'], 409);
+                }
+
+                ActivityLog::create([
+                    'user_id' => $user->id,
+                    'action' => 'visit_approval_requested',
+                    'description' => "Aynı gün ziyaret onayı istendi: {$firmData['name']} / Tarih: " . Carbon::parse($dateString)->format('d.m.Y') . " / Not: {$notes}",
+                    'ip_address' => $request->ip(),
+                ]);
+
+                return response()->json(['ok' => true, 'approval_requested' => true], 202);
+            }
+
+            if (!($user->role === 'admin' && $request->boolean('admin_override'))) {
+                $existingFirmName = ($existingVisit->firm && isset($existingVisit->firm->data['name'])) ? $existingVisit->firm->data['name'] : 'başka bir tesis';
+                return response()->json([
+                    'same_day_conflict' => true,
+                    'error' => "Bu danışmanın {$date->format('d.m.Y')} tarihinde zaten bir ziyareti var: {$existingFirmName}.",
+                ], 409);
+            }
         }
 
-        Visit::create([
-            'firm_id' => $request->firm_id,
-            'user_id' => $userId,
-            'visit_date' => $dateString,
-            'title' => $request->title ?? 'Tesis Ziyareti',
-            'notes' => $request->notes
-        ]);
+        if ($request->boolean('request_approval')) {
+            return response()->json(['error' => 'Aynı gün çakışması kalmadığı için yönetici onayı isteği gönderilemedi.'], 409);
+        }
 
-        ActivityLog::create([
-            'user_id' => $user->id,
-            'action' => 'visit_created',
-            'description' => "Ziyaret planlandı: {$firmData['name']} / Tarih: " . Carbon::parse($dateString)->format('d.m.Y'),
-            'ip_address' => $request->ip()
-        ]);
+        $created = DB::transaction(function () use ($user, $userId, $request, $dateString, $firmData) {
+            User::query()->lockForUpdate()->findOrFail($userId);
+            $currentConflict = Visit::with(['firm:id,data'])->where('user_id', $userId)->whereDate('visit_date', $dateString)->first();
+            $sameDayOverride = (bool) $currentConflict && $user->role === 'admin' && $request->boolean('admin_override');
+            if ($currentConflict && !$sameDayOverride) return ['conflict' => $currentConflict];
+
+            Visit::create([
+                'firm_id' => $request->firm_id,
+                'user_id' => $userId,
+                'visit_date' => $dateString,
+                'title' => $request->title ?? 'Tesis Ziyareti',
+                'notes' => $request->notes,
+            ]);
+
+            ActivityLog::create([
+                'user_id' => $user->id,
+                'action' => $sameDayOverride ? 'visit_same_day_override' : 'visit_created',
+                'description' => ($sameDayOverride ? 'Yönetici onayıyla aynı güne istisnai ziyaret planlandı: ' : 'Ziyaret planlandı: ')
+                    . ($firmData['name'] ?? 'İsimsiz tesis') . ' / Tarih: ' . Carbon::parse($dateString)->format('d.m.Y'),
+                'ip_address' => $request->ip(),
+            ]);
+
+            return ['same_day_override' => $sameDayOverride];
+        });
+
+        if (isset($created['conflict'])) {
+            $existingFirmName = $created['conflict']->firm?->data['name'] ?? 'başka bir tesis';
+            return response()->json([
+                'same_day_conflict' => true,
+                'error' => "Bu danışmanın {$date->format('d.m.Y')} tarihinde zaten bir ziyareti var: {$existingFirmName}.",
+            ], 409);
+        }
 
         return response()->json(['ok' => true]);
+    }
+
+    public function decideApproval(Request $request, int $id, string $decision)
+    {
+        abort_unless($request->user()->role === 'admin', 403);
+        abort_unless(in_array($decision, ['approve', 'reject'], true), 404);
+        $input = $request->validate(['decision_note' => 'nullable|string|max:1000']);
+
+        $result = DB::transaction(function () use ($request, $id, $decision, $input) {
+            $approval = VisitApprovalRequest::findOrFail($id);
+            User::query()->lockForUpdate()->findOrFail($approval->assigned_user_id);
+            $approval = VisitApprovalRequest::query()->lockForUpdate()->with('firm')->findOrFail($id);
+            abort_unless($approval->status === 'pending', 409, 'Bu onay isteği daha önce sonuçlandırılmış.');
+
+            if ($decision === 'reject') {
+                $approval->update([
+                    'status' => 'rejected', 'reviewed_by_user_id' => $request->user()->id,
+                    'reviewed_at' => now(BusinessCalendar::TIMEZONE), 'decision_note' => $input['decision_note'] ?? null,
+                ]);
+
+                ActivityLog::create([
+                    'user_id' => $request->user()->id,
+                    'action' => 'visit_approval_rejected',
+                    'description' => "Aynı gün ziyaret isteği reddedildi: " . ($approval->firm?->data['name'] ?? 'Bilinmeyen tesis')
+                        . ' / Tarih: ' . $approval->visit_date->format('d.m.Y') . " / Danışman: {$approval->assignedUser?->name}"
+                        . " / İstek notu: {$approval->notes} / Karar notu: " . ($input['decision_note'] ?? 'Belirtilmedi'),
+                    'ip_address' => $request->ip(),
+                ]);
+
+                return ['status' => 'rejected'];
+            }
+
+            $date = Carbon::parse($approval->visit_date)->startOfDay();
+            $today = Carbon::now(BusinessCalendar::TIMEZONE)->startOfDay();
+            if ($date->lte($today) || $date->isWeekend() || $this->calendar->isBlockedDate($date->toDateString())) {
+                $approval->update([
+                    'status' => 'expired', 'reviewed_by_user_id' => $request->user()->id,
+                    'reviewed_at' => now(BusinessCalendar::TIMEZONE), 'decision_note' => 'Onay anında ziyaret tarihi geçmiş veya planlamaya kapalıydı.',
+                ]);
+
+                ActivityLog::create([
+                    'user_id' => $request->user()->id,
+                    'action' => 'visit_approval_expired',
+                    'description' => "Aynı gün ziyaret isteği süresi dolduğu için onaylanamadı: " . ($approval->firm?->data['name'] ?? 'Bilinmeyen tesis')
+                        . ' / Tarih: ' . $approval->visit_date->format('d.m.Y') . " / İstek notu: {$approval->notes}",
+                    'ip_address' => $request->ip(),
+                ]);
+
+                return ['status' => 'expired'];
+            }
+
+            $firm = Firm::findOrFail($approval->firm_id);
+            $firmData = is_array($firm->data) ? $firm->data : json_decode($firm->data, true);
+            abort_unless((int) $firm->consultant_user_id === (int) $approval->assigned_user_id, 409, 'Tesis danışmanı değişmiş. İstek güncellenmeli.');
+
+            $visit = Visit::create([
+                'firm_id' => $approval->firm_id,
+                'user_id' => $approval->assigned_user_id,
+                'visit_date' => $approval->visit_date->toDateString(),
+                'title' => $approval->title ?? 'Tesis Ziyareti',
+                'notes' => $approval->notes,
+            ]);
+            $approval->update([
+                'status' => 'approved', 'reviewed_by_user_id' => $request->user()->id,
+                'reviewed_at' => now(BusinessCalendar::TIMEZONE), 'decision_note' => $input['decision_note'] ?? null,
+                'visit_id' => $visit->id,
+            ]);
+
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'visit_approval_approved',
+                'description' => "Aynı gün ziyaret isteği onaylandı: " . ($firmData['name'] ?? 'İsimsiz tesis') . ' / Tarih: ' . $approval->visit_date->format('d.m.Y') . " / Danışman: {$approval->assignedUser?->name} / İstek notu: {$approval->notes}",
+                'ip_address' => $request->ip(),
+            ]);
+
+            return ['status' => 'approved', 'firm_name' => $firmData['name'] ?? 'İsimsiz tesis'];
+        });
+
+        if ($result['status'] === 'expired') {
+            return response()->json(['ok' => false, 'status' => 'expired', 'error' => 'İstek sonuçlandırıldı; ziyaret tarihi geçmiş veya planlamaya kapalı olduğu için onaylanamadı.'], 422);
+        }
+
+        return response()->json(['ok' => true, 'status' => $result['status']]);
     }
 
     public function destroy(Request $request, $id)

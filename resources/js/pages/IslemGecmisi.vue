@@ -23,9 +23,22 @@ const getActionBadge = (action) => {
         case 'database_wipe': return 'bg-rose-100 text-rose-700 border-rose-200';
         case 'visit_created': return 'bg-teal-100 text-teal-700 border-teal-200';
         case 'visit_deleted': return 'bg-orange-100 text-orange-700 border-orange-200';
+        case 'visit_approval_requested': return 'bg-amber-100 text-amber-800 border-amber-300';
+        case 'visit_approval_approved': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+        case 'visit_approval_rejected': return 'bg-rose-100 text-rose-700 border-rose-200';
+        case 'visit_approval_expired': return 'bg-slate-100 text-slate-700 border-slate-300';
+        case 'visit_same_day_override': return 'bg-orange-100 text-orange-700 border-orange-300';
         default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
 };
+
+const getActionLabel = (action) => ({
+    visit_approval_requested: 'YÖNETİCİ ONAYI İSTENDİ',
+    visit_approval_approved: 'YÖNETİCİ ONAYLADI',
+    visit_approval_rejected: 'YÖNETİCİ REDDETTİ',
+    visit_approval_expired: 'ONAY SÜRESİ DOLDU',
+    visit_same_day_override: 'AYNI GÜN İSTİSNASI',
+}[action] || action.toUpperCase());
 </script>
 
 <template>
@@ -61,7 +74,7 @@ const getActionBadge = (action) => {
                             </td>
                             <td class="px-4 py-3">
                                 <span :class="['px-2 py-1 rounded-md text-[10px] font-bold border', getActionBadge(log.action)]">
-                                    {{ log.action.toUpperCase() }}
+                                    {{ getActionLabel(log.action) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-slate-700 dark:text-slate-300">

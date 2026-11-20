@@ -12,6 +12,7 @@ const props = defineProps({
     calendarReminder: Object,
     wastewaterReminders: Array,
     visitPlanningReminder: Object,
+    pendingVisitApprovalCount: { type: Number, default: 0 },
 });
 
 const page = usePage();
@@ -57,6 +58,14 @@ const kalanSure = (days) => (days === null || days === undefined ? 'Belirsiz' : 
                 <p class="mt-0.5 text-xs sm:text-sm">{{ calendarReminder.message }}</p>
             </div>
             <Link href="/takvim-ayarlari" class="shrink-0 rounded-lg bg-amber-700 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-800">Takvimi Düzenle</Link>
+        </div>
+
+        <div v-if="isAdmin && pendingVisitApprovalCount" class="flex flex-col gap-3 rounded-xl border border-orange-300 bg-orange-50 p-4 text-sm text-orange-950 dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-100 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="font-bold">Ziyaret takviminde yönetici onayı bekleyen atama var</p>
+                <p class="mt-0.5 text-xs sm:text-sm">{{ pendingVisitApprovalCount }} aynı gün atama isteği notuyla birlikte incelemenizi bekliyor.</p>
+            </div>
+            <Link href="/ziyaret-takvimi" class="shrink-0 rounded-lg bg-orange-700 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-800">İstekleri İncele</Link>
         </div>
 
         <div v-if="visitPlanningReminder?.visible" class="flex flex-col gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-100 sm:flex-row sm:items-center sm:justify-between">
