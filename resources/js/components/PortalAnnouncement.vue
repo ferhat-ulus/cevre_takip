@@ -14,6 +14,15 @@ function formatPublishedDate(value) {
     return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
         .format(new Date(year, month - 1, day));
 }
+
+function formatAcknowledgedDate(value) {
+    if (!value) return '';
+    const date = new Date(value.includes('T') ? value : value.replace(' ', 'T'));
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('tr-TR', {
+        day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    }).format(date);
+}
 </script>
 
 <template>
@@ -23,7 +32,7 @@ function formatPublishedDate(value) {
                 <span>{{ announcement.title }}</span>
                 <span class="flex items-center gap-2 text-xs font-medium">
                     <span v-if="announcement.publishedAt">{{ formatPublishedDate(announcement.publishedAt) }}</span>
-                    <span>{{ announcement.acknowledgedAt ? '✓ Okundu' : 'Yeni' }}</span>
+                    <span>{{ announcement.acknowledgedAt ? `✓ ${formatAcknowledgedDate(announcement.acknowledgedAt)} tarihinde onaylandı` : 'Yeni' }}</span>
                 </span>
             </span>
         </summary>
@@ -36,7 +45,9 @@ function formatPublishedDate(value) {
         <details v-if="announcement.readers">
             <summary class="cursor-pointer font-semibold">{{ announcement.readers.length }} kullanıcı onayladı</summary>
             <ul class="mt-1 list-inside list-disc">
-                <li v-for="reader in announcement.readers" :key="reader.username">{{ reader.name }} · {{ reader.username }}</li>
+                <li v-for="reader in announcement.readers" :key="reader.username">
+                    {{ reader.name }} · {{ reader.username }} · {{ formatAcknowledgedDate(reader.acknowledged_at) }}
+                </li>
             </ul>
         </details>
         </div>
