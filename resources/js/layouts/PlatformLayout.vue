@@ -13,6 +13,20 @@ const isDark = ref(false);
 const isCollapsed = ref(false);
 const isMobileMenuOpen = ref(false);
 
+const isActivePath = (href) => {
+    const currentPath = page.url.split('?')[0].split('#')[0];
+    return href === '/atik-takip'
+        ? currentPath === href
+        : currentPath === href || currentPath.startsWith(`${href}/`);
+};
+
+const navItemClasses = (href) => [
+    'group flex min-h-9 cursor-pointer items-center gap-3 rounded-lg px-3 py-1.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600',
+    isActivePath(href)
+        ? 'bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-400'
+        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white',
+];
+
 onMounted(() => {
     isCollapsed.value = localStorage.getItem('sidebar-collapsed-v2') === 'true';
     isDark.value = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -57,12 +71,12 @@ const toggleTheme = () => {
                 </div>
                 <div v-if="isWastePage" class="space-y-1">
                     <p v-show="!isCollapsed || isMobileMenuOpen" class="flex min-h-9 items-center px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Atık Takip</p>
-                    <Link href="/atik-takip" class="flex min-h-9 items-center gap-3 rounded-lg px-3 py-1.5 text-[13px]" :class="page.url === '/atik-takip' ? 'bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/10 dark:text-brand-400' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'"><span>Genel Bakış</span></Link>
-                    <Link href="/atik-takip/kayitlar" class="flex min-h-9 items-center gap-3 rounded-lg px-3 py-1.5 text-[13px] text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"><span>Tüm Taşıma Kayıtları</span></Link>
-                    <Link href="/atik-takip/ureticiler" class="flex min-h-9 items-center gap-3 rounded-lg px-3 py-1.5 text-[13px] text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"><span>Atık Üreticisi Tesisler</span></Link>
-                    <Link href="/atik-takip/isleme-tesisleri" class="flex min-h-9 items-center gap-3 rounded-lg px-3 py-1.5 text-[13px] text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"><span>Atık İşleme Tesisleri</span></Link>
-                    <Link v-if="user?.role === 'admin'" href="/atik-takip/istatistikler" title="Araç İstatistikleri" class="flex min-h-9 items-center rounded-lg px-3 py-1.5 text-[13px] hover:bg-slate-100 dark:hover:bg-slate-800">Araç İstatistikleri</Link>
-                    <a v-if="user?.role === 'admin'" href="/atik-takip/yedek" class="flex min-h-9 items-center rounded-lg px-3 py-1.5 text-[13px] hover:bg-slate-100 dark:hover:bg-slate-800">Tam veritabanı yedeğini indir</a>
+                    <Link href="/atik-takip" :class="navItemClasses('/atik-takip')" :aria-current="isActivePath('/atik-takip') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Genel Bakış</span></Link>
+                    <Link href="/atik-takip/kayitlar" :class="navItemClasses('/atik-takip/kayitlar')" :aria-current="isActivePath('/atik-takip/kayitlar') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Tüm Taşıma Kayıtları</span></Link>
+                    <Link href="/atik-takip/ureticiler" :class="navItemClasses('/atik-takip/ureticiler')" :aria-current="isActivePath('/atik-takip/ureticiler') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Atık Üreticisi Tesisler</span></Link>
+                    <Link href="/atik-takip/isleme-tesisleri" :class="navItemClasses('/atik-takip/isleme-tesisleri')" :aria-current="isActivePath('/atik-takip/isleme-tesisleri') ? 'page' : undefined" @click="isMobileMenuOpen = false"><span>Atık İşleme Tesisleri</span></Link>
+                    <Link v-if="user?.role === 'admin'" href="/atik-takip/istatistikler" title="Araç İstatistikleri" :class="navItemClasses('/atik-takip/istatistikler')" :aria-current="isActivePath('/atik-takip/istatistikler') ? 'page' : undefined" @click="isMobileMenuOpen = false">Araç İstatistikleri</Link>
+                    <a v-if="user?.role === 'admin'" href="/atik-takip/yedek" class="group flex min-h-9 cursor-pointer items-center rounded-lg px-3 py-1.5 text-[13px] text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white">Tam veritabanı yedeğini indir</a>
                 </div>
                 <div v-if="user?.role === 'admin'" class="space-y-1">
                     <p v-show="!isCollapsed || isMobileMenuOpen" class="flex min-h-9 items-center px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Yönetim</p>
