@@ -2,11 +2,14 @@
 param(
     [string]$ServerAddress = '94.73.180.180',
     [string]$DeployUser = 'ulusdeploy',
-    [string]$IdentityFile = (Join-Path (Split-Path -Parent $PSScriptRoot) '.codex-build\portal-deploy-nov2026')
+    [string]$IdentityFile
 )
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($IdentityFile)) {
+    $IdentityFile = Join-Path $repoRoot '.codex-build\portal-deploy-nov2026'
+}
 $remoteScriptSource = Join-Path $PSScriptRoot 'deploy-live-remote.sh'
 $buildDirectory = Join-Path $repoRoot 'public\build'
 $codexBuildDirectory = Join-Path $repoRoot '.codex-build'
