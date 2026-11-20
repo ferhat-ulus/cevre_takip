@@ -406,6 +406,7 @@ const monthlyVehicleTargets = [
     { label: 'Çalışma günü hedefi', field: 'workingDays', target: 26 },
     { label: 'Üretici tesis ziyareti hedefi', field: 'producerDayCount', target: 52 },
 ];
+const annualVehicleTargets = monthlyVehicleTargets.map(goal => ({ ...goal, target: goal.target * 12 }));
 const targetPercentage = (actual, target) => new Intl.NumberFormat('tr-TR', {
     style: 'percent', maximumFractionDigits: 1,
 }).format(actual / target);
@@ -491,13 +492,13 @@ const annualVehicleStats = computed(() => ({
             </select></label>
         </div>
         <p v-if="statisticsViewMode === 'month'">Çalışma günü, seçili ayda araç için en az bir taşıma satırı bulunan tarihtir. Aynı gün aynı üreticideki atık kalemleri tek tesis günü olarak sayılır.</p>
-        <p v-else>Yıllık toplamlar seçilen takvim yılındaki kayıtlardan hesaplanır. Aylık döküm, yıl içindeki değişimi gösterir; aylık hedefler yalnızca aylık görünümde kullanılır.</p>
+        <p v-else>Yıllık toplamlar seçilen takvim yılındaki kayıtlardan hesaplanır. Hedefler aylık hedeflerin 12 katıdır; yıl tamamlanmadıysa gerçekleşen toplam yıl sonu tahmini içermez.</p>
         <p v-if="statisticsViewMode === 'month' && vehicleStats.missingPlates" class="text-amber-700 dark:text-amber-300">{{ vehicleStats.missingPlates }} satırda plaka eksik.</p>
         <p v-if="statisticsViewMode === 'year' && annualVehicleStats.missingPlates" class="text-amber-700 dark:text-amber-300">{{ annualVehicleStats.missingPlates }} satırda plaka eksik.</p>
         <article v-for="vehicle in (statisticsViewMode === 'month' ? vehicleStats.vehicles : annualVehicleStats.vehicles)" :key="vehicle.plate" class="space-y-3 rounded-lg border border-slate-500/40 p-4">
             <h2 class="text-lg font-semibold">{{ vehicle.plate }}</h2>
-            <div v-if="statisticsViewMode === 'month'" class="grid gap-3 sm:grid-cols-2">
-                <div v-for="goal in monthlyVehicleTargets" :key="goal.field" class="rounded-lg bg-slate-100 p-3 dark:bg-slate-800">
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div v-for="goal in (statisticsViewMode === 'month' ? monthlyVehicleTargets : annualVehicleTargets)" :key="goal.field" class="rounded-lg bg-slate-100 p-3 dark:bg-slate-800">
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
                         <span>{{ goal.label }}</span>
                         <span class="font-semibold">{{ vehicle[goal.field] }} / {{ goal.target }} · {{ targetPercentage(vehicle[goal.field], goal.target) }}</span>
