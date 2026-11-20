@@ -19,6 +19,13 @@ $localRemoteScript = Join-Path $codexBuildDirectory "deploy-live-$timestamp.sh"
 $remoteArchive = "/home/$DeployUser/portal-build-$timestamp.tar.gz"
 $remoteScript = "/home/$DeployUser/deploy-live-$timestamp.sh"
 $sshTarget = "$DeployUser@$ServerAddress"
+$originalConsoleOutputEncoding = [Console]::OutputEncoding
+$originalConsoleInputEncoding = [Console]::InputEncoding
+$originalPipelineEncoding = $OutputEncoding
+$utf8ConsoleEncoding = [System.Text.UTF8Encoding]::new($false)
+[Console]::OutputEncoding = $utf8ConsoleEncoding
+[Console]::InputEncoding = $utf8ConsoleEncoding
+$OutputEncoding = $utf8ConsoleEncoding
 
 function Invoke-CheckedNative {
     param(
@@ -100,4 +107,7 @@ finally {
         Remove-Item -LiteralPath $localRemoteScript -Force
     }
     Pop-Location
+    [Console]::OutputEncoding = $originalConsoleOutputEncoding
+    [Console]::InputEncoding = $originalConsoleInputEncoding
+    $OutputEncoding = $originalPipelineEncoding
 }
