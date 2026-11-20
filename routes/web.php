@@ -99,14 +99,24 @@ Route::middleware(['auth', 'session.current'])->group(function () {
             $week = DB::table('waste_imports')->whereDate('waste_date', '>=', $today->toDateString())
                 ->whereDate('waste_date', '<=', $weekEnd)
                 ->where(fn ($query) => $query->whereNull('transport_status')->orWhere('transport_status', '!=', 'cancelled'));
-            $month = DB::table('waste_imports')->whereDate('waste_date', '>=', $monthStart)
-                ->whereDate('waste_date', '<=', $monthEnd)
-                ->where(fn ($query) => $query->whereNull('transport_status')->orWhere('transport_status', '!=', 'cancelled'));
+            $weekRecords = (clone $week)->select(['waste_date', 'producer_name', 'processor_name', 'waste_code'])
+                ->orderBy('waste_date')->get()
+                ->groupBy(fn ($record) => substr((string) $record->waste_date, 0, 10))
+                ->map(function ($records, $date) {
+                    $companies = $records->pluck('producer_name')->merge($records->pluck('processor_name'))
+                        ->filter()->map(fn ($name) => trim((string) $name))->filter()->unique()->values();
+
+                    return [
+                        'waste_date' => $date,
+                        'transport_count' => $records->count(),
+                        'company_count' => $companies->count(),
+                        'waste_type_count' => $records->pluck('waste_code')->filter()->unique()->count(),
+                        'companies' => $companies,
+                    ];
+                })->values();
             return Inertia::render('AtikTakipDashboard', [
                 'weekCount' => (clone $week)->count(),
-                'weekRecords' => (clone $week)->selectRaw('DATE(waste_date) as waste_date, COUNT(*) as count')
-                    ->groupByRaw('DATE(waste_date)')->orderBy('waste_date')->get(),
-                'monthCount' => $month->count(),
+                'weekRecords' => $weekRecords,
                 'weekUrl' => '/atik-takip/kayitlar?from='.$today->toDateString().'&to='.$weekEnd,
                 'monthUrl' => '/atik-takip/kayitlar?from='.$monthStart.'&to='.$monthEnd,
             ]);
