@@ -21,7 +21,7 @@ const formatDay = value => new Intl.DateTimeFormat('tr-TR', { day: 'numeric', mo
         </section>
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-[#1e293b]">
             <h2 class="font-bold text-slate-900 dark:text-white">Bu hafta yapılacak taşımalar</h2>
-            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ weekCount }} planlanan taşıma · Bugünden pazar gününe</p>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ weekCount }} taşıma · Pazartesi–pazar</p>
             <ul v-if="weekRecords.length" class="mt-3 divide-y divide-slate-100 dark:divide-slate-700">
                 <li v-for="day in weekRecords" :key="day.waste_date">
                     <details class="group rounded-md">

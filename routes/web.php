@@ -93,10 +93,11 @@ Route::middleware(['auth', 'session.current'])->group(function () {
         Route::put('/atik-takip/tesis-karti', [\App\Http\Controllers\Api\WasteTransportController::class, 'saveFacilityCard'])->middleware('admin');
         Route::get('/atik-takip', function () {
             $today = now('Europe/Istanbul')->startOfDay();
-            $weekEnd = $today->copy()->endOfWeek()->toDateString();
+            $weekStart = $today->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
+            $weekEnd = $weekStart->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
             $monthStart = $today->copy()->startOfMonth()->toDateString();
             $monthEnd = $today->copy()->endOfMonth()->toDateString();
-            $week = DB::table('waste_imports')->whereDate('waste_date', '>=', $today->toDateString())
+            $week = DB::table('waste_imports')->whereDate('waste_date', '>=', $weekStart->toDateString())
                 ->whereDate('waste_date', '<=', $weekEnd)
                 ->where(fn ($query) => $query->whereNull('transport_status')->orWhere('transport_status', '!=', 'cancelled'));
             $weekRecords = (clone $week)->select(['waste_date', 'producer_name', 'processor_name', 'waste_code'])
@@ -117,7 +118,7 @@ Route::middleware(['auth', 'session.current'])->group(function () {
             return Inertia::render('AtikTakipDashboard', [
                 'weekCount' => (clone $week)->count(),
                 'weekRecords' => $weekRecords,
-                'weekUrl' => '/atik-takip/kayitlar?from='.$today->toDateString().'&to='.$weekEnd,
+                'weekUrl' => '/atik-takip/kayitlar?from='.$weekStart->toDateString().'&to='.$weekEnd->toDateString(),
                 'monthUrl' => '/atik-takip/kayitlar?from='.$monthStart.'&to='.$monthEnd,
             ]);
         })->name('waste.dashboard');

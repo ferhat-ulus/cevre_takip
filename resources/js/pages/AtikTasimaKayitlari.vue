@@ -411,49 +411,92 @@ const targetPercentage = (actual, target) => new Intl.NumberFormat('tr-TR', {
 }).format(actual / target);
 const normalizePlate = value => String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const latestVehicleRecord = props.records.find(record => vehiclePlates.includes(normalizePlate(record.plate)));
+const statisticsViewMode = ref('month');
 const statisticsMonth = ref(dateKey(latestVehicleRecord?.waste_date || props.today).slice(0, 7));
-const vehicleStats = computed(() => {
-    const month = statisticsMonth.value;
-    const records = month ? props.records.filter(record => record.transport_status !== 'cancelled' && dateKey(record.waste_date).slice(0, 7) === month) : [];
-    const groupKeys = Object.fromEntries(Object.entries(facilityGroups.value).map(([type, groups]) => [
+const statisticsYear = ref(dateKey(latestVehicleRecord?.waste_date || props.today).slice(0, 4));
+const statisticsYears = computed(() => [...new Set([
+    ...props.records.filter(record => record.transport_status !== 'cancelled'
+        && vehiclePlates.includes(normalizePlate(record.plate)))
+        .map(record => dateKey(record.waste_date).slice(0, 4)).filter(year => /^\d{4}$/.test(year)),
+    statisticsYear.value,
+])].sort((a, b) => b.localeCompare(a)));
+const statisticsGroupKeys = computed(() => Object.fromEntries(Object.entries(facilityGroups.value).map(([type, groups]) => [
         type, new Map(groups.flatMap(group => [...group.ids].map(id => [id, group.key]))),
-    ]));
-    const vehicles = vehiclePlates.map(plate => {
-        const days = new Map();
-        const producers = new Set();
-        const processors = new Set();
-        for (const record of records) {
-            if (normalizePlate(record.plate) !== plate) continue;
-            const date = dateKey(record.waste_date);
-            if (!days.has(date)) days.set(date, { date, producers: new Set(), processors: new Set(), rows: 0 });
-            const day = days.get(date);
-            day.rows++;
-            const producer = groupKeys.producer.get(record.id);
-            const processor = groupKeys.processor.get(record.id);
-            if (producer) { producers.add(producer); day.producers.add(producer); }
-            if (processor) { processors.add(processor); day.processors.add(processor); }
-        }
-        const daily = [...days.values()].sort((a, b) => b.date.localeCompare(a.date));
-        return {
-            plate, daily, workingDays: daily.length, producerCount: producers.size, processorCount: processors.size,
-            producerDayCount: daily.reduce((sum, day) => sum + day.producers.size, 0),
-            rows: daily.reduce((sum, day) => sum + day.rows, 0),
-        };
-    });
-    return { vehicles, missingPlates: records.filter(record => !normalizePlate(record.plate)).length };
-});
+    ])));
+function summarizeVehicle(plate, records) {
+    const days = new Map();
+    const producers = new Set();
+    const processors = new Set();
+    for (const record of records) {
+        if (normalizePlate(record.plate) !== plate) continue;
+        const date = dateKey(record.waste_date);
+        if (!days.has(date)) days.set(date, { date, producers: new Set(), processors: new Set(), rows: 0 });
+        const day = days.get(date);
+        day.rows++;
+        const producer = statisticsGroupKeys.value.producer.get(record.id);
+        const processor = statisticsGroupKeys.value.processor.get(record.id);
+        if (producer) { producers.add(producer); day.producers.add(producer); }
+        if (processor) { processors.add(processor); day.processors.add(processor); }
+    }
+    const daily = [...days.values()].sort((a, b) => b.date.localeCompare(a.date));
+    return {
+        plate, daily, workingDays: daily.length, producerCount: producers.size, processorCount: processors.size,
+        producerDayCount: daily.reduce((sum, day) => sum + day.producers.size, 0),
+        rows: daily.reduce((sum, day) => sum + day.rows, 0),
+    };
+}
+const selectedMonthRecords = computed(() => props.records.filter(record => record.transport_status !== 'cancelled'
+    && dateKey(record.waste_date).slice(0, 7) === statisticsMonth.value));
+const vehicleStats = computed(() => ({
+    vehicles: vehiclePlates.map(plate => summarizeVehicle(plate, selectedMonthRecords.value)),
+    missingPlates: selectedMonthRecords.value.filter(record => !normalizePlate(record.plate)).length,
+}));
+const selectedYearRecords = computed(() => props.records.filter(record => record.transport_status !== 'cancelled'
+    && dateKey(record.waste_date).slice(0, 4) === statisticsYear.value));
+const annualVehicleStats = computed(() => ({
+    vehicles: vehiclePlates.map(plate => {
+        const yearlyRecords = selectedYearRecords.value;
+        const monthly = Array.from({ length: 12 }, (_, index) => {
+            const month = `${statisticsYear.value}-${String(index + 1).padStart(2, '0')}`;
+            return {
+                month,
+                label: new Intl.DateTimeFormat('tr-TR', { month: 'long' }).format(new Date(`${month}-01T12:00:00`)),
+                ...summarizeVehicle(plate, yearlyRecords.filter(record => dateKey(record.waste_date).slice(0, 7) === month)),
+            };
+        });
+        return { ...summarizeVehicle(plate, yearlyRecords), monthly };
+    }),
+    missingPlates: selectedYearRecords.value.filter(record => !normalizePlate(record.plate)).length,
+}));
 </script>
 
 <template>
     <Head :title="statisticsView ? 'Araç İstatistikleri' : facilityView ? facilityTitle : 'Taşıma Kayıtları'" />
     <section v-if="statisticsView" class="space-y-5">
         <h1 class="text-2xl font-bold">Araç İstatistikleri</h1>
-        <label class="block max-w-xs">Ay<input v-model="statisticsMonth" type="month" :class="inputStyle" /></label>
-        <p>Çalışma günü, seçili ayda araç için en az bir taşıma satırı bulunan tarihtir. Aynı gün aynı üreticideki atık kalemleri tek tesis günü olarak sayılır.</p>
-        <p v-if="vehicleStats.missingPlates" class="text-amber-700 dark:text-amber-300">{{ vehicleStats.missingPlates }} satırda plaka eksik.</p>
-        <article v-for="vehicle in vehicleStats.vehicles" :key="vehicle.plate" class="space-y-3 rounded-lg border border-slate-500/40 p-4">
+        <div class="flex flex-wrap items-end gap-3">
+            <div class="flex gap-2" role="group" aria-label="İstatistik dönemi">
+                <button type="button" :aria-pressed="statisticsViewMode === 'month'"
+                    class="rounded-lg border px-3 py-2 text-sm font-semibold"
+                    :class="statisticsViewMode === 'month' ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-slate-400'"
+                    @click="statisticsViewMode = 'month'">Aylık</button>
+                <button type="button" :aria-pressed="statisticsViewMode === 'year'"
+                    class="rounded-lg border px-3 py-2 text-sm font-semibold"
+                    :class="statisticsViewMode === 'year' ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-slate-400'"
+                    @click="statisticsViewMode = 'year'">Yıllık</button>
+            </div>
+            <label v-if="statisticsViewMode === 'month'" class="block max-w-xs">Ay<input v-model="statisticsMonth" type="month" :class="inputStyle" /></label>
+            <label v-else class="block max-w-xs">Yıl<select v-model="statisticsYear" :class="inputStyle">
+                <option v-for="year in statisticsYears" :key="year" :value="year">{{ year }}</option>
+            </select></label>
+        </div>
+        <p v-if="statisticsViewMode === 'month'">Çalışma günü, seçili ayda araç için en az bir taşıma satırı bulunan tarihtir. Aynı gün aynı üreticideki atık kalemleri tek tesis günü olarak sayılır.</p>
+        <p v-else>Yıllık toplamlar seçilen takvim yılındaki kayıtlardan hesaplanır. Aylık döküm, yıl içindeki değişimi gösterir; aylık hedefler yalnızca aylık görünümde kullanılır.</p>
+        <p v-if="statisticsViewMode === 'month' && vehicleStats.missingPlates" class="text-amber-700 dark:text-amber-300">{{ vehicleStats.missingPlates }} satırda plaka eksik.</p>
+        <p v-if="statisticsViewMode === 'year' && annualVehicleStats.missingPlates" class="text-amber-700 dark:text-amber-300">{{ annualVehicleStats.missingPlates }} satırda plaka eksik.</p>
+        <article v-for="vehicle in (statisticsViewMode === 'month' ? vehicleStats.vehicles : annualVehicleStats.vehicles)" :key="vehicle.plate" class="space-y-3 rounded-lg border border-slate-500/40 p-4">
             <h2 class="text-lg font-semibold">{{ vehicle.plate }}</h2>
-            <div class="grid gap-3 sm:grid-cols-2">
+            <div v-if="statisticsViewMode === 'month'" class="grid gap-3 sm:grid-cols-2">
                 <div v-for="goal in monthlyVehicleTargets" :key="goal.field" class="rounded-lg bg-slate-100 p-3 dark:bg-slate-800">
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
                         <span>{{ goal.label }}</span>
@@ -470,7 +513,7 @@ const vehicleStats = computed(() => {
                     ['Taşıma satırı', vehicle.rows], ['Kilometre', 'Arvento verisi yok'],
                 ]" :key="label"><dt class="text-xs">{{ label }}</dt><dd class="font-semibold">{{ value }}</dd></div>
             </dl>
-            <details v-if="vehicle.daily.length">
+            <details v-if="statisticsViewMode === 'month' && vehicle.rows">
                 <summary class="cursor-pointer underline">Günlük tesis sayılarını göster</summary>
                 <div class="overflow-x-auto">
                     <table class="mt-2 w-full text-left text-sm">
@@ -482,7 +525,23 @@ const vehicleStats = computed(() => {
                     </table>
                 </div>
             </details>
-            <p v-else>Seçili ayda bu plakaya ait taşıma kaydı yok.</p>
+            <div v-else-if="statisticsViewMode === 'year' && vehicle.rows" class="overflow-x-auto">
+                <h3 class="mb-2 font-semibold">{{ statisticsYear }} aylık dökümü</h3>
+                <table class="w-full min-w-[680px] text-left text-sm">
+                    <thead class="border-b border-slate-500/40">
+                        <tr><th class="p-2">Ay</th><th class="p-2">Çalışma günü</th><th class="p-2">Üretici tesisi</th><th class="p-2">İşleme tesisi</th><th class="p-2">Üretici tesis günü</th><th class="p-2">Taşıma satırı</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="month in vehicle.monthly" :key="month.month" class="border-b border-slate-500/20">
+                            <td class="p-2 capitalize">{{ month.label }}</td><td class="p-2">{{ month.workingDays }}</td>
+                            <td class="p-2">{{ month.producerCount }}</td><td class="p-2">{{ month.processorCount }}</td>
+                            <td class="p-2">{{ month.producerDayCount }}</td><td class="p-2">{{ month.rows }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p v-else-if="statisticsViewMode === 'month'">Seçili ayda bu plakaya ait taşıma kaydı yok.</p>
+            <p v-else>Seçili yılda bu plakaya ait taşıma kaydı yok.</p>
         </article>
     </section>
     <section v-else-if="facilityView" class="space-y-4">
