@@ -134,18 +134,13 @@ class VisitController extends Controller
                     $transferStatus = 'stale';
                 }
 
-                $event['backgroundColor'] = match ($transferStatus) {
-                    'pending' => '#dc2626',
-                    'stale' => '#c2410c',
-                    'entered' => '#16a34a',
-                    default => $event['backgroundColor'],
-                };
                 $event['borderColor'] = match ($transferStatus) {
                     'pending' => '#b91c1c',
                     'stale' => '#9a3412',
                     'entered' => '#15803d',
-                    default => $event['borderColor'],
+                    default => '#64748b',
                 };
+                $event['classNames'][] = 'visit-ministry-' . $transferStatus;
                 $event['extendedProps']['ministry_transfer_status'] = $transferStatus;
                 $event['extendedProps']['ministry_entered_at'] = $v->ministry_entered_at?->toIso8601String();
                 $event['extendedProps']['ministry_entered_by'] = $v->ministryEnteredBy?->name;

@@ -476,14 +476,21 @@ onUnmounted(() => {
 
         <div class="bg-white dark:bg-[#1e293b] p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
             <div class="mb-3 flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300" aria-label="Takvim açıklaması">
-                <span v-if="!isAdmin" class="inline-block h-3 w-3 rounded-sm bg-amber-600"></span>
-                <span v-else aria-hidden="true">✎</span>
-                <span>Not eklenmiş ziyaret</span>
                 <template v-if="isAdmin">
-                    <span class="ml-2 inline-block h-3 w-3 rounded-sm bg-rose-600"></span>
-                    <span>Bakanlığa aktarılacak</span>
-                    <span class="ml-2 inline-block h-3 w-3 rounded-sm bg-emerald-600"></span>
-                    <span>Bakanlığa aktarıldı</span>
+                    <span class="inline-block h-3 w-3 rounded-sm bg-amber-600"></span>
+                    <span>Not eklenmiş</span>
+                    <span class="ml-2 inline-block h-3 w-3 rounded-sm bg-indigo-600"></span>
+                    <span>Not yok</span>
+                    <span class="ml-2 inline-block h-3 w-3 rounded-sm border-2 border-rose-700 bg-white dark:bg-slate-800"></span>
+                    <span>Aktarılacak</span>
+                    <span class="ml-2 inline-block h-3 w-3 rounded-sm border-2 border-orange-800 bg-white dark:bg-slate-800"></span>
+                    <span>Güncelleme gerekli</span>
+                    <span class="ml-2 inline-block h-3 w-3 rounded-sm border-2 border-emerald-700 bg-white dark:bg-slate-800"></span>
+                    <span>Aktarıldı</span>
+                </template>
+                <template v-else>
+                    <span class="inline-block h-3 w-3 rounded-sm bg-amber-600"></span>
+                    <span>Not eklenmiş ziyaret</span>
                 </template>
             </div>
             <div v-if="loading" class="text-center py-10 text-slate-500">Takvim Yükleniyor...</div>
@@ -672,6 +679,7 @@ onUnmounted(() => {
 .dark .fc-col-header-cell-cushion { color: #cbd5e1; }
 .dark .fc-daygrid-day-number { color: #e2e8f0; }
 .custom-calendar .fc-event.visit-has-note .fc-event-title::after { content: ' ✎'; font-weight: 700; }
+.custom-calendar .fc-event[class*='visit-ministry-'] { border-width: 1px !important; border-left-width: 4px !important; }
 
 @keyframes fade-in-down {
     from { opacity: 0; transform: translateY(-10px); }
