@@ -21,6 +21,7 @@ const user = page.props.auth?.user;
 const calendarEvents = ref([]);
 const loading = ref(true);
 const isUpdatingTransfer = ref(false);
+const confirmingTransferVisitId = ref(null);
 const approvalRequests = ref([...props.approvalRequests]);
 const reviewingApprovalId = ref(null);
 
@@ -216,11 +217,11 @@ const openVisitDetails = (event) => {
 
 const handleEventClick = (info) => openVisitDetails(info.event);
 
-const setMinistryTransfer = async (transferred) => {
-    if (!props.isAdmin || !selectedEvent.value.id || isUpdatingTransfer.value) return;
+const setMinistryTransfer = async (transferred, visitId = selectedEvent.value.id) => {
+    if (!props.isAdmin || !visitId || isUpdatingTransfer.value) return;
     isUpdatingTransfer.value = true;
     try {
-        const response = await fetch(`/api/visits/${selectedEvent.value.id}/ministry-transfer`, {
+        const response = await fetch(`/api/visits/${visitId}/ministry-transfer`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -234,9 +235,12 @@ const setMinistryTransfer = async (transferred) => {
             triggerToast(data.error || data.message || 'Aktarım durumu kaydedilemedi.', 'error');
             return;
         }
-        selectedEvent.value.ministryTransferStatus = data.status;
-        selectedEvent.value.ministryEnteredAt = data.ministry_entered_at;
-        selectedEvent.value.ministryEnteredBy = data.ministry_entered_by;
+        if (String(selectedEvent.value.id) === String(visitId)) {
+            selectedEvent.value.ministryTransferStatus = data.status;
+            selectedEvent.value.ministryEnteredAt = data.ministry_entered_at;
+            selectedEvent.value.ministryEnteredBy = data.ministry_entered_by;
+        }
+        confirmingTransferVisitId.value = null;
         await fetchEvents();
         triggerToast(transferred ? 'Bakanlık aktarımı kaydedildi.' : 'Kayıt yeniden aktarım listesine alındı.', 'success');
     } catch (err) {
@@ -462,14 +466,30 @@ onUnmounted(() => {
                 <span class="rounded-full bg-rose-200 px-2.5 py-1 text-xs font-bold text-rose-900 dark:bg-rose-400/20 dark:text-rose-100">{{ pendingTransferVisits.length }} kayıt</span>
             </summary>
             <div v-if="pendingTransferVisits.length" class="max-h-64 space-y-1 overflow-y-auto border-t border-rose-200 px-3 py-2 dark:border-rose-500/30">
-                <button v-for="event in pendingTransferVisits" :key="event.id" type="button"
-                        class="flex w-full flex-col gap-0.5 rounded-lg px-2 py-2 text-left text-sm hover:bg-rose-100 dark:hover:bg-rose-500/10 sm:flex-row sm:items-center sm:justify-between"
-                        @click="openVisitDetails(event)">
-                    <span><strong>{{ visitDateLabel(String(event.start).slice(0, 10)) }}</strong> · {{ facilityDisplayName(event.extendedProps.firm_name) }} · {{ event.extendedProps.consultant }}</span>
-                    <span :class="event.extendedProps.ministry_transfer_status === 'stale' ? 'font-bold text-orange-700 dark:text-orange-300' : 'font-semibold'">
-                        {{ transferStatusLabel(event.extendedProps.ministry_transfer_status) }}
-                    </span>
-                </button>
+                <div v-for="event in pendingTransferVisits" :key="event.id" class="flex flex-col gap-2 rounded-lg px-2 py-2 text-sm hover:bg-rose-100 dark:hover:bg-rose-500/10 sm:flex-row sm:items-center">
+                    <button type="button" class="min-w-0 flex-1 text-left" @click="openVisitDetails(event)">
+                        <span><strong>{{ visitDateLabel(String(event.start).slice(0, 10)) }}</strong> · {{ facilityDisplayName(event.extendedProps.firm_name) }} · {{ event.extendedProps.consultant }}</span>
+                        <span :class="['ml-2', event.extendedProps.ministry_transfer_status === 'stale' ? 'font-bold text-orange-700 dark:text-orange-300' : 'font-semibold']">
+                            {{ transferStatusLabel(event.extendedProps.ministry_transfer_status) }}
+                        </span>
+                    </button>
+                    <div v-if="confirmingTransferVisitId !== event.id" class="flex shrink-0 items-center gap-2">
+                        <button type="button" :disabled="isUpdatingTransfer"
+                                class="rounded-md border border-emerald-700/30 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:cursor-wait disabled:opacity-50 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
+                                @click="confirmingTransferVisitId = event.id">
+                            {{ event.extendedProps.ministry_transfer_status === 'stale' ? 'Güncel hali aktarıldı' : 'Bakanlığa aktarıldı' }}
+                        </button>
+                    </div>
+                    <div v-else class="flex shrink-0 flex-wrap items-center gap-2 rounded-md border border-emerald-300 bg-white px-2 py-1.5 text-xs dark:border-emerald-500/30 dark:bg-slate-900">
+                        <span>{{ event.extendedProps.ministry_transfer_status === 'stale' ? 'Güncel halini aktardınız mı?' : 'Bakanlığa aktardınız mı?' }}</span>
+                        <button type="button" :disabled="isUpdatingTransfer" class="rounded bg-emerald-700 px-2 py-1 font-semibold text-white hover:bg-emerald-800 disabled:opacity-50" @click="setMinistryTransfer(true, event.id)">
+                            {{ isUpdatingTransfer ? 'Kaydediliyor…' : 'Evet' }}
+                        </button>
+                        <button type="button" :disabled="isUpdatingTransfer" class="rounded px-2 py-1 font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800" @click="confirmingTransferVisitId = null">
+                            Vazgeç
+                        </button>
+                    </div>
+                </div>
             </div>
             <p v-else class="border-t border-rose-200 px-4 py-3 text-sm dark:border-rose-500/30">Bekleyen güncelleme yok; takvime eklenen yeni kayıtlar burada listelenecek.</p>
         </details>
