@@ -11,9 +11,10 @@ return [
             'files' => [
                 'include' => array_values(array_filter([
                     base_path(),
+                    storage_path('app/templates/master_template.xlsx'),
                     $databaseConnection === 'sqlite' ? database_path('database.sqlite') : null,
                 ])),
-                'exclude' => array_values(array_filter([
+                'exclude' => array_values(array_filter(array_merge([
                     base_path('vendor'),
                     base_path('node_modules'),
                     base_path('.env'),
@@ -22,7 +23,7 @@ return [
                     base_path('.git'),
                     storage_path(),
                     $databaseConnection !== 'sqlite' ? database_path('database.sqlite') : null,
-                ])),
+                ], glob(base_path('public/build.previous.*')) ?: []))),
                 'follow_links' => false,
                 'ignore_unreadable_directories' => false,
                 'relative_path' => null,

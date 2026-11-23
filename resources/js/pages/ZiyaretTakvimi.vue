@@ -38,6 +38,15 @@ const currentTime = ref(Date.now());
 let clockInterval;
 
 const selectedConsultant = ref('all');
+const facilitySearch = ref('');
+const showFacilitySuggestions = ref(false);
+const facilitySuggestions = computed(() => {
+    const query = facilitySearch.value.trim().toLocaleLowerCase('tr-TR');
+    if (query.length < 2 || form.value.firm_id) return [];
+    return props.firms
+        .filter(firm => facilityDisplayName(firm.name).toLocaleLowerCase('tr-TR').includes(query))
+        .slice(0, 10);
+});
 
 const form = ref({
     firm_id: '',
@@ -193,9 +202,18 @@ const openNewVisitModal = (dateStr = '') => {
         notes: '',
         user_id: props.isAdmin ? '' : user.id
     };
+    facilitySearch.value = '';
+    showFacilitySuggestions.value = false;
     errorMsg.value = '';
     sameDayConflict.value = false;
     showAddModal.value = true;
+};
+
+const selectFacility = (firm) => {
+    form.value.firm_id = String(firm.id);
+    facilitySearch.value = facilityDisplayName(firm.name);
+    showFacilitySuggestions.value = false;
+    errorMsg.value = '';
 };
 
 const openVisitDetails = (event) => {
@@ -540,12 +558,24 @@ onUnmounted(() => {
                         <input type="date" v-model="form.visit_date" :min="tomorrowInAppTimezone" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
                     </div>
                     
-                    <div>
-                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Tesis Seçin <span class="text-rose-500">*</span></label>
-                        <select v-model="form.firm_id" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm">
-                            <option value="">Bir tesis seçin...</option>
-                            <option v-for="f in firms" :key="f.id" :value="f.id">{{ facilityDisplayName(f.name) }} ({{ f.consultant }})</option>
-                        </select>
+                    <div class="relative" @focusout="event => { if (!event.currentTarget.contains(event.relatedTarget)) showFacilitySuggestions = false; }" @keydown.esc="showFacilitySuggestions = false">
+                        <label for="visit-facility-search" class="block text-xs font-medium mb-1 dark:text-slate-300">Tesis Seçin <span class="text-rose-500">*</span></label>
+                        <input id="visit-facility-search" v-model="facilitySearch" type="search" autocomplete="off"
+                               placeholder="Tesis adının bir kısmını yazın"
+                               class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm"
+                               @focus="showFacilitySuggestions = !form.firm_id && facilitySearch.trim().length >= 2"
+                               @input="form.firm_id = ''; showFacilitySuggestions = true" />
+                        <ul v-if="showFacilitySuggestions && facilitySearch.trim().length >= 2 && !form.firm_id"
+                            class="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-800">
+                            <li v-for="firm in facilitySuggestions" :key="firm.id">
+                                <button type="button" class="w-full px-3 py-2 text-left text-sm hover:bg-slate-100 focus:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700 dark:focus:bg-slate-700" @click="selectFacility(firm)">
+                                    <span class="block font-medium">{{ facilityDisplayName(firm.name) }}</span>
+                                    <span class="block text-xs text-slate-500 dark:text-slate-400">{{ firm.consultant || 'Danışman atanmamış' }}</span>
+                                </button>
+                            </li>
+                            <li v-if="facilitySuggestions.length === 0" class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">Eşleşen tesis bulunamadı.</li>
+                        </ul>
+                        <p v-if="form.firm_id" class="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">Tesis seçildi</p>
                     </div>
                     
                     <div v-if="isAdmin">
