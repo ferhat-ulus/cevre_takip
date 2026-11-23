@@ -83,6 +83,9 @@ class VisitController extends Controller
         $consultantFilter = $request->query('consultant', 'all');
         
         $query = Visit::with(['firm', 'user']);
+        if ($user->role === 'admin') {
+            $query->with('ministryEnteredBy:id,name');
+        }
 
         if ($user->role !== 'admin') {
             $query->where('user_id', $user->id);
@@ -92,12 +95,12 @@ class VisitController extends Controller
 
         $visits = $query->get();
 
-        $events = $visits->map(function($v) {
+        $events = $visits->map(function($v) use ($user) {
             $firmName = ($v->firm && isset($v->firm->data['name'])) ? $v->firm->data['name'] : 'Bilinmeyen Tesis';
             $userName = $v->user ? $v->user->name : 'Bilinmiyor';
             $visitTitle = $v->title ?? 'Ziyaret';
-            
-            return [
+
+            $event = [
                 'id' => $v->id,
                 'title' => $firmName . ' - ' . $visitTitle,
                 'start' => $v->visit_date,
@@ -108,10 +111,47 @@ class VisitController extends Controller
                 'classNames' => filled(trim((string) $v->notes)) ? ['visit-has-note'] : [],
                 'extendedProps' => [
                     'user_id' => $v->user_id,
+                    'firm_name' => $firmName,
                     'notes' => trim((string) $v->notes),
                     'consultant' => $userName
                 ]
             ];
+
+            if ($user->role === 'admin') {
+                $snapshot = $v->ministry_transfer_snapshot ?? [];
+                $currentSnapshot = [
+                    'firm_id' => (string) $v->firm_id,
+                    'user_id' => (int) $v->user_id,
+                    'visit_date' => Carbon::parse($v->visit_date)->toDateString(),
+                    'notes' => trim((string) $v->notes),
+                ];
+                $snapshotMatches = (string) ($snapshot['firm_id'] ?? '') === $currentSnapshot['firm_id']
+                    && (int) ($snapshot['user_id'] ?? 0) === $currentSnapshot['user_id']
+                    && ($snapshot['visit_date'] ?? '') === $currentSnapshot['visit_date']
+                    && ($snapshot['notes'] ?? '') === $currentSnapshot['notes'];
+                $transferStatus = $v->ministry_transfer_status ?? 'untracked';
+                if ($transferStatus === 'entered' && !$snapshotMatches) {
+                    $transferStatus = 'stale';
+                }
+
+                $event['backgroundColor'] = match ($transferStatus) {
+                    'pending' => '#dc2626',
+                    'stale' => '#c2410c',
+                    'entered' => '#16a34a',
+                    default => $event['backgroundColor'],
+                };
+                $event['borderColor'] = match ($transferStatus) {
+                    'pending' => '#b91c1c',
+                    'stale' => '#9a3412',
+                    'entered' => '#15803d',
+                    default => $event['borderColor'],
+                };
+                $event['extendedProps']['ministry_transfer_status'] = $transferStatus;
+                $event['extendedProps']['ministry_entered_at'] = $v->ministry_entered_at?->toIso8601String();
+                $event['extendedProps']['ministry_entered_by'] = $v->ministryEnteredBy?->name;
+            }
+
+            return $event;
         });
 
         return response()->json(['events' => $events]);
@@ -233,6 +273,7 @@ class VisitController extends Controller
                 'visit_date' => $dateString,
                 'title' => $request->title ?? 'Tesis Ziyareti',
                 'notes' => $request->notes,
+                'ministry_transfer_status' => 'pending',
             ]);
 
             ActivityLog::create([
@@ -316,6 +357,7 @@ class VisitController extends Controller
                 'visit_date' => $approval->visit_date->toDateString(),
                 'title' => $approval->title ?? 'Tesis Ziyareti',
                 'notes' => $approval->notes,
+                'ministry_transfer_status' => 'pending',
             ]);
             $approval->update([
                 'status' => 'approved', 'reviewed_by_user_id' => $request->user()->id,
@@ -338,6 +380,46 @@ class VisitController extends Controller
         }
 
         return response()->json(['ok' => true, 'status' => $result['status']]);
+    }
+
+    public function setMinistryTransfer(Request $request, int $id)
+    {
+        abort_unless($request->user()->role === 'admin', 403);
+        $validated = $request->validate(['transferred' => ['required', 'boolean']]);
+
+        $visit = DB::transaction(function () use ($request, $id, $validated) {
+            $visit = Visit::query()->lockForUpdate()->findOrFail($id);
+            $transferred = (bool) $validated['transferred'];
+
+            $visit->ministry_transfer_status = $transferred ? 'entered' : 'pending';
+            $visit->ministry_entered_at = $transferred ? now(BusinessCalendar::TIMEZONE) : null;
+            $visit->ministry_entered_by_user_id = $transferred ? $request->user()->id : null;
+            $visit->ministry_transfer_snapshot = $transferred ? [
+                'firm_id' => (string) $visit->firm_id,
+                'user_id' => (int) $visit->user_id,
+                'visit_date' => Carbon::parse($visit->visit_date)->toDateString(),
+                'notes' => trim((string) $visit->notes),
+            ] : null;
+            $visit->save();
+
+            $firmName = $visit->firm?->data['name'] ?? 'Bilinmeyen tesis';
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => $transferred ? 'visit_ministry_transfer_marked' : 'visit_ministry_transfer_reset',
+                'description' => ($transferred ? 'Bakanlık sistemine aktarıldı olarak işaretlendi: ' : 'Yeniden aktarım listesine alındı: ')
+                    . $firmName . ' / Tarih: ' . Carbon::parse($visit->visit_date)->format('d.m.Y'),
+                'ip_address' => $request->ip(),
+            ]);
+
+            return $visit->load('ministryEnteredBy:id,name');
+        });
+
+        return response()->json([
+            'ok' => true,
+            'status' => $visit->ministry_transfer_status,
+            'ministry_entered_at' => $visit->ministry_entered_at?->toIso8601String(),
+            'ministry_entered_by' => $visit->ministryEnteredBy?->name,
+        ]);
     }
 
     public function destroy(Request $request, $id)

@@ -176,6 +176,8 @@ Route::middleware(['auth', 'session.current'])->group(function () {
     Route::get('/api/visits/form-data', [VisitController::class, 'getFormData']);
     Route::get('/api/visits', [VisitController::class, 'getEvents']);
     Route::post('/api/visits', [VisitController::class, 'store'])->middleware('module.write:environment');
+    Route::post('/api/visits/{id}/ministry-transfer', [VisitController::class, 'setMinistryTransfer'])
+        ->whereNumber('id')->middleware(['admin', 'module.write:environment']);
     Route::delete('/api/visits/{id}', [VisitController::class, 'destroy'])->middleware('module.write:environment');
     Route::post('/api/visits/approvals/{id}/{decision}', [VisitController::class, 'decideApproval'])
         ->whereNumber('id')->whereIn('decision', ['approve', 'reject'])->middleware('admin');

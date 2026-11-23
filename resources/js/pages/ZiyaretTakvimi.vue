@@ -20,6 +20,7 @@ const user = page.props.auth?.user;
 
 const calendarEvents = ref([]);
 const loading = ref(true);
+const isUpdatingTransfer = ref(false);
 const approvalRequests = ref([...props.approvalRequests]);
 const reviewingApprovalId = ref(null);
 
@@ -29,7 +30,7 @@ const errorMsg = ref('');
 const sameDayConflict = ref(false);
 
 const showEventModal = ref(false);
-const selectedEvent = ref({ id: null, title: '', consultant: '', notes: '' });
+const selectedEvent = ref({ id: null, title: '', consultant: '', notes: '', ministryTransferStatus: 'untracked' });
 const isDeleting = ref(false);
 const showDeleteConfirm = ref(false); 
 const currentTime = ref(Date.now());
@@ -86,6 +87,20 @@ const triggerToast = (msg, type = 'error') => {
     setTimeout(() => { showToast.value = false; }, 5000);
 };
 const visitDateLabel = (date) => new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(`${date}T12:00:00`));
+const transferDateLabel = (date) => date
+    ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium', timeStyle: 'short', timeZone: props.timezone }).format(new Date(date))
+    : '';
+const transferStatusLabel = (status) => ({
+    pending: 'Bakanlığa aktarılacak',
+    stale: 'Güncelleme gerekli',
+    entered: 'Bakanlığa aktarıldı',
+    untracked: 'Eski kayıt · aktarım bilgisi yok',
+}[status] || 'Bakanlığa aktarılacak');
+const pendingTransferVisits = computed(() => props.isAdmin
+    ? calendarEvents.value
+        .filter(event => ['pending', 'stale'].includes(event.extendedProps?.ministry_transfer_status))
+        .sort((a, b) => String(a.start).localeCompare(String(b.start)))
+    : []);
 
 const calendarOptions = computed(() => ({
     plugins: [dayGridPlugin, interactionPlugin],
@@ -182,16 +197,53 @@ const openNewVisitModal = (dateStr = '') => {
     showAddModal.value = true;
 };
 
-const handleEventClick = (info) => {
+const openVisitDetails = (event) => {
+    const date = event.startStr?.slice(0, 10) || String(event.start || '').slice(0, 10);
+    const extendedProps = event.extendedProps || {};
     selectedEvent.value = {
-        id: info.event.id,
-        title: info.event.title,
-        consultant: info.event.extendedProps.consultant,
-        notes: info.event.extendedProps.notes,
-        date: info.event.startStr.slice(0, 10)
+        id: event.id,
+        title: event.title,
+        consultant: extendedProps.consultant,
+        notes: extendedProps.notes,
+        date,
+        ministryTransferStatus: extendedProps.ministry_transfer_status || 'untracked',
+        ministryEnteredAt: extendedProps.ministry_entered_at || null,
+        ministryEnteredBy: extendedProps.ministry_entered_by || null,
     };
     showDeleteConfirm.value = false; 
     showEventModal.value = true;
+};
+
+const handleEventClick = (info) => openVisitDetails(info.event);
+
+const setMinistryTransfer = async (transferred) => {
+    if (!props.isAdmin || !selectedEvent.value.id || isUpdatingTransfer.value) return;
+    isUpdatingTransfer.value = true;
+    try {
+        const response = await fetch(`/api/visits/${selectedEvent.value.id}/ministry-transfer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+            },
+            body: JSON.stringify({ transferred }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            triggerToast(data.error || data.message || 'Aktarım durumu kaydedilemedi.', 'error');
+            return;
+        }
+        selectedEvent.value.ministryTransferStatus = data.status;
+        selectedEvent.value.ministryEnteredAt = data.ministry_entered_at;
+        selectedEvent.value.ministryEnteredBy = data.ministry_entered_by;
+        await fetchEvents();
+        triggerToast(transferred ? 'Bakanlık aktarımı kaydedildi.' : 'Kayıt yeniden aktarım listesine alındı.', 'success');
+    } catch (err) {
+        triggerToast('Sunucu hatası oluştu.', 'error');
+    } finally {
+        isUpdatingTransfer.value = false;
+    }
 };
 
 const askDelete = () => {
@@ -404,10 +456,35 @@ onUnmounted(() => {
             </article>
         </section>
 
+        <details v-if="isAdmin" class="rounded-xl border border-rose-300 bg-rose-50 text-rose-950 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100">
+            <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-4 py-3 font-bold">
+                <span>Bakanlık sistemine girilecek veya güncellenecek kayıtlar</span>
+                <span class="rounded-full bg-rose-200 px-2.5 py-1 text-xs font-bold text-rose-900 dark:bg-rose-400/20 dark:text-rose-100">{{ pendingTransferVisits.length }} kayıt</span>
+            </summary>
+            <div v-if="pendingTransferVisits.length" class="max-h-64 space-y-1 overflow-y-auto border-t border-rose-200 px-3 py-2 dark:border-rose-500/30">
+                <button v-for="event in pendingTransferVisits" :key="event.id" type="button"
+                        class="flex w-full flex-col gap-0.5 rounded-lg px-2 py-2 text-left text-sm hover:bg-rose-100 dark:hover:bg-rose-500/10 sm:flex-row sm:items-center sm:justify-between"
+                        @click="openVisitDetails(event)">
+                    <span><strong>{{ visitDateLabel(String(event.start).slice(0, 10)) }}</strong> · {{ facilityDisplayName(event.extendedProps.firm_name) }} · {{ event.extendedProps.consultant }}</span>
+                    <span :class="event.extendedProps.ministry_transfer_status === 'stale' ? 'font-bold text-orange-700 dark:text-orange-300' : 'font-semibold'">
+                        {{ transferStatusLabel(event.extendedProps.ministry_transfer_status) }}
+                    </span>
+                </button>
+            </div>
+            <p v-else class="border-t border-rose-200 px-4 py-3 text-sm dark:border-rose-500/30">Bekleyen güncelleme yok; takvime eklenen yeni kayıtlar burada listelenecek.</p>
+        </details>
+
         <div class="bg-white dark:bg-[#1e293b] p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
             <div class="mb-3 flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300" aria-label="Takvim açıklaması">
-                <span class="inline-block h-3 w-3 rounded-sm bg-amber-600"></span>
+                <span v-if="!isAdmin" class="inline-block h-3 w-3 rounded-sm bg-amber-600"></span>
+                <span v-else aria-hidden="true">✎</span>
                 <span>Not eklenmiş ziyaret</span>
+                <template v-if="isAdmin">
+                    <span class="ml-2 inline-block h-3 w-3 rounded-sm bg-rose-600"></span>
+                    <span>Bakanlığa aktarılacak</span>
+                    <span class="ml-2 inline-block h-3 w-3 rounded-sm bg-emerald-600"></span>
+                    <span>Bakanlığa aktarıldı</span>
+                </template>
             </div>
             <div v-if="loading" class="text-center py-10 text-slate-500">Takvim Yükleniyor...</div>
             <FullCalendar v-else :options="calendarOptions" class="custom-calendar" />
@@ -502,6 +579,41 @@ onUnmounted(() => {
                             <div :class="['mt-1 rounded-md p-2 italic', selectedEvent.notes ? 'border border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100' : 'text-slate-600 dark:text-slate-400']">{{ selectedEvent.notes || 'Not girilmemiş.' }}</div>
                         </div>
                     </div>
+
+                    <div v-if="isAdmin" :class="[
+                        'rounded-lg border p-3',
+                        selectedEvent.ministryTransferStatus === 'entered'
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-100'
+                            : selectedEvent.ministryTransferStatus === 'stale'
+                                ? 'border-orange-300 bg-orange-50 text-orange-950 dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-100'
+                                : selectedEvent.ministryTransferStatus === 'untracked'
+                                    ? 'border-slate-300 bg-slate-50 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100'
+                                    : 'border-rose-300 bg-rose-50 text-rose-950 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100'
+                    ]">
+                        <p class="font-bold">{{ transferStatusLabel(selectedEvent.ministryTransferStatus) }}</p>
+                        <p v-if="selectedEvent.ministryTransferStatus === 'entered' || selectedEvent.ministryTransferStatus === 'stale'" class="mt-1 text-xs">
+                            Son aktarım: {{ transferDateLabel(selectedEvent.ministryEnteredAt) }} · {{ selectedEvent.ministryEnteredBy || 'Kullanıcı bilgisi yok' }}
+                        </p>
+                        <p v-else-if="selectedEvent.ministryTransferStatus === 'untracked'" class="mt-1 text-xs">Bu kayıt özellik eklenmeden önce oluşturulmuş; aktarım durumu bilinmiyor.</p>
+                        <p v-else class="mt-1 text-xs">Yeni takvim kayıtları Bakanlık sistemine aktarıldıktan sonra burada işaretlenmelidir.</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <button v-if="selectedEvent.ministryTransferStatus !== 'entered'" type="button" :disabled="isUpdatingTransfer"
+                                    class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+                                    @click="setMinistryTransfer(true)">
+                                {{ isUpdatingTransfer ? 'Kaydediliyor...' : selectedEvent.ministryTransferStatus === 'stale' ? 'Güncel hali aktarıldı' : 'Bakanlığa aktarıldı olarak işaretle' }}
+                            </button>
+                            <button v-if="selectedEvent.ministryTransferStatus === 'entered' || selectedEvent.ministryTransferStatus === 'stale'" type="button" :disabled="isUpdatingTransfer"
+                                    class="rounded-lg border border-current/30 px-3 py-2 text-xs font-semibold hover:bg-white/50 disabled:opacity-50 dark:hover:bg-slate-900/30"
+                                    @click="setMinistryTransfer(false)">
+                                Yeniden aktarım listesine al
+                            </button>
+                            <button v-if="selectedEvent.ministryTransferStatus === 'untracked'" type="button" :disabled="isUpdatingTransfer"
+                                    class="rounded-lg border border-current/30 px-3 py-2 text-xs font-semibold hover:bg-white/50 disabled:opacity-50 dark:hover:bg-slate-900/30"
+                                    @click="setMinistryTransfer(false)">
+                                Aktarılacak olarak takibe al
+                            </button>
+                        </div>
+                    </div>
                     
                     <!-- DURUM 1: İlk Ekran (Silme İsteği) -->
                     <div v-if="!showDeleteConfirm" class="text-center pt-2">
@@ -559,6 +671,7 @@ onUnmounted(() => {
 }
 .dark .fc-col-header-cell-cushion { color: #cbd5e1; }
 .dark .fc-daygrid-day-number { color: #e2e8f0; }
+.custom-calendar .fc-event.visit-has-note .fc-event-title::after { content: ' ✎'; font-weight: 700; }
 
 @keyframes fade-in-down {
     from { opacity: 0; transform: translateY(-10px); }
