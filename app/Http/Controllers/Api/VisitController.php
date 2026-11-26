@@ -47,21 +47,38 @@ class VisitController extends Controller
         }
 
         $approvalRequests = $user->role === 'admin'
-            ? VisitApprovalRequest::with(['firm', 'assignedUser:id,name', 'requestedBy:id,name'])
+            ? VisitApprovalRequest::with(['firm', 'assignedUser:id,name', 'requestedBy:id,name', 'visit'])
                 ->where('status', 'pending')->orderBy('visit_date')->orderBy('created_at')->get()
                 ->map(function (VisitApprovalRequest $request) {
                     $firmData = is_array($request->firm?->data) ? $request->firm->data : [];
+                    $permitScope = mb_strtoupper(trim((string) ($firmData['profile']['izinKonusu'] ?? '')), 'UTF-8');
+                    $normalizedPermitScope = preg_replace('/[^A-Z0-9]/u', '', $permitScope) ?? $permitScope;
+                    $monthlyLimit = str_contains($normalizedPermitScope, 'EK1') ? 2 : 1;
+                    $monthStart = $request->visit_date->copy()->startOfMonth()->toDateString();
+                    $monthEnd = $request->visit_date->copy()->endOfMonth()->toDateString();
+                    $monthlyCount = Visit::query()->where('firm_id', (string) $request->firm_id)
+                        ->whereBetween('visit_date', [$monthStart, $monthEnd])->count()
+                        + VisitApprovalRequest::query()->where('firm_id', (string) $request->firm_id)
+                            ->whereBetween('visit_date', [$monthStart, $monthEnd])->where('status', 'pending')
+                            ->whereNull('visit_id')->whereIn('request_type', ['create', 'monthly_override'])->count();
 
                     return [
                         'id' => $request->id,
+                        'request_type' => $request->request_type ?? 'create',
+                        'visit_id' => $request->visit_id,
                         'firm_id' => $request->firm_id,
                         'firm_name' => $firmData['name'] ?? 'Bilinmeyen tesis',
+                        'permit_scope' => $permitScope ?: 'Belirtilmemiş (Ek-2 sınırı uygulanıyor)',
+                        'monthly_visit_count' => $monthlyCount,
+                        'monthly_visit_limit' => $monthlyLimit,
                         'assigned_user_id' => $request->assigned_user_id,
                         'assigned_user' => $request->assignedUser?->name ?? 'Bilinmiyor',
                         'requested_by' => $request->requestedBy?->name ?? 'Bilinmiyor',
                         'visit_date' => $request->visit_date->toDateString(),
                         'title' => $request->title ?? 'Tesis Ziyareti',
                         'notes' => $request->notes,
+                        'visit_notes' => $request->visit?->notes,
+                        'ministry_transfer_status' => $request->visit?->ministry_transfer_status,
                         'created_at' => $request->created_at?->toIso8601String(),
                     ];
                 })->values()
@@ -94,8 +111,16 @@ class VisitController extends Controller
         }
 
         $visits = $query->get();
+        $pendingDeletionIds = VisitApprovalRequest::query()
+            ->where('request_type', 'delete')
+            ->where('status', 'pending')
+            ->whereNotNull('visit_id')
+            ->pluck('visit_id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+        $pendingDeletionLookup = array_fill_keys($pendingDeletionIds, true);
 
-        $events = $visits->map(function($v) use ($user) {
+        $events = $visits->map(function($v) use ($user, $pendingDeletionLookup) {
             $firmName = ($v->firm && isset($v->firm->data['name'])) ? $v->firm->data['name'] : 'Bilinmeyen Tesis';
             $userName = $v->user ? $v->user->name : 'Bilinmiyor';
             $visitTitle = $v->title ?? 'Ziyaret';
@@ -116,6 +141,12 @@ class VisitController extends Controller
                     'consultant' => $userName
                 ]
             ];
+
+            $deletionPending = isset($pendingDeletionLookup[(string) $v->id]);
+            $event['extendedProps']['deletion_pending'] = $deletionPending;
+            if ($deletionPending) {
+                $event['classNames'][] = 'visit-deletion-pending';
+            }
 
             if ($user->role === 'admin') {
                 $snapshot = $v->ministry_transfer_snapshot ?? [];
@@ -252,6 +283,70 @@ class VisitController extends Controller
             }
         }
 
+        $permitScope = mb_strtoupper(trim((string) ($firmData['profile']['izinKonusu'] ?? '')), 'UTF-8');
+        $normalizedPermitScope = preg_replace('/[^A-Z0-9]/u', '', $permitScope) ?? $permitScope;
+        $monthlyLimit = str_contains($normalizedPermitScope, 'EK1') ? 2 : 1;
+        $monthStart = Carbon::parse($dateString)->startOfMonth()->toDateString();
+        $monthEnd = Carbon::parse($dateString)->endOfMonth()->toDateString();
+        $monthlyVisitCount = Visit::query()->where('firm_id', (string) $firm->id)
+            ->whereBetween('visit_date', [$monthStart, $monthEnd])->count();
+        $pendingMonthlyAssignments = VisitApprovalRequest::query()
+            ->where('firm_id', (string) $firm->id)
+            ->whereBetween('visit_date', [$monthStart, $monthEnd])
+            ->where('status', 'pending')
+            ->whereNull('visit_id')
+            ->whereIn('request_type', ['create', 'monthly_override'])
+            ->count();
+        $monthlyVisitCount += $pendingMonthlyAssignments;
+
+        if ($monthlyVisitCount >= $monthlyLimit && $user->role !== 'admin') {
+            if (!$request->boolean('request_approval')) {
+                return response()->json([
+                    'monthly_limit_conflict' => true,
+                    'monthly_visit_count' => $monthlyVisitCount,
+                    'monthly_visit_limit' => $monthlyLimit,
+                    'permit_scope' => $permitScope ?: 'Belirtilmemiş (Ek-2 sınırı uygulanıyor)',
+                    'error' => 'Bu tesisin aylık ziyaret sınırı doldu. Devam etmek için yönetici onayı isteyin.',
+                ], 409);
+            }
+
+            $notes = trim((string) $request->input('notes'));
+            if ($notes === '') {
+                return response()->json(['error' => 'Aylık ziyaret sınırını aşmak için yöneticiye açıklama notu yazın.'], 422);
+            }
+
+            $pendingMonthlyOverride = VisitApprovalRequest::query()
+                ->where('firm_id', (string) $firm->id)
+                ->whereBetween('visit_date', [$monthStart, $monthEnd])
+                ->where('status', 'pending')->whereNull('visit_id')
+                ->whereIn('request_type', ['create', 'monthly_override'])->exists();
+            if ($pendingMonthlyOverride) {
+                return response()->json(['error' => 'Bu tesis için aynı ayda zaten bekleyen bir atama onayı var.'], 409);
+            }
+
+            $approval = VisitApprovalRequest::create([
+                'firm_id' => (string) $firm->id,
+                'assigned_user_id' => $userId,
+                'requested_by_user_id' => $user->id,
+                'visit_date' => $dateString,
+                'title' => $request->title ?? 'Tesis Ziyareti',
+                'notes' => $notes,
+                'status' => 'pending',
+                'request_type' => 'monthly_override',
+            ]);
+
+            ActivityLog::create([
+                'user_id' => $user->id,
+                'action' => 'visit_monthly_limit_approval_requested',
+                'description' => "Aylık ziyaret sınırı istisnası için yönetici onayı istendi: {$firmData['name']} / Tarih: "
+                    . Carbon::parse($dateString)->format('d.m.Y') . " / Kapsam: " . ($permitScope ?: 'Belirtilmemiş')
+                    . " / Mevcut veya bekleyen ziyaret: {$monthlyVisitCount} / Sınır: {$monthlyLimit} / Not: {$notes}",
+                'ip_address' => $request->ip(),
+            ]);
+
+            return response()->json(['ok' => true, 'approval_requested' => true, 'request_type' => 'monthly_override'], 202);
+        }
+
         if ($request->boolean('request_approval')) {
             return response()->json(['error' => 'Aynı gün çakışması kalmadığı için yönetici onayı isteği gönderilemedi.'], 409);
         }
@@ -305,16 +400,86 @@ class VisitController extends Controller
             $approval = VisitApprovalRequest::query()->lockForUpdate()->with('firm')->findOrFail($id);
             abort_unless($approval->status === 'pending', 409, 'Bu onay isteği daha önce sonuçlandırılmış.');
 
+            if (($approval->request_type ?? 'create') === 'delete') {
+                $visit = $approval->visit_id
+                    ? Visit::query()->with(['firm', 'user'])->lockForUpdate()->find($approval->visit_id)
+                    : null;
+
+                if (!$visit) {
+                    $approval->update([
+                        'status' => 'expired', 'reviewed_by_user_id' => $request->user()->id,
+                        'reviewed_at' => now(BusinessCalendar::TIMEZONE), 'decision_note' => 'Silinmek istenen ziyaret kaydı artık bulunamadı.',
+                    ]);
+
+                    return ['status' => 'expired_delete'];
+                }
+
+                $firmName = $visit->firm?->data['name'] ?? 'Bilinmeyen tesis';
+                $visitDate = Carbon::parse($visit->visit_date)->toDateString();
+                $dateLabel = Carbon::parse($visit->visit_date)->format('d.m.Y');
+                $consultantName = $visit->user?->name ?? 'Bilinmiyor';
+
+                if ($decision === 'reject') {
+                    $approval->update([
+                        'status' => 'rejected', 'reviewed_by_user_id' => $request->user()->id,
+                        'reviewed_at' => now(BusinessCalendar::TIMEZONE), 'decision_note' => $input['decision_note'] ?? null,
+                    ]);
+
+                    ActivityLog::create([
+                        'user_id' => $request->user()->id,
+                        'action' => 'visit_deletion_rejected',
+                        'description' => "Takvim ziyareti silme talebi reddedildi; kayıt korundu: {$firmName} / Tarih: {$dateLabel} / Danışman: {$consultantName} / Talep eden: {$approval->requestedBy?->name}",
+                        'ip_address' => $request->ip(),
+                    ]);
+
+                    return ['status' => 'rejected'];
+                }
+
+                $today = Carbon::now(BusinessCalendar::TIMEZONE);
+                if ($visitDate < $today->toDateString() || ($visitDate === $today->toDateString() && $today->hour >= 16)) {
+                    $approval->update([
+                        'status' => 'expired', 'reviewed_by_user_id' => $request->user()->id,
+                        'reviewed_at' => now(BusinessCalendar::TIMEZONE), 'decision_note' => 'Silme onayı verilirken ziyaret tarihi için silme süresi geçmişti.',
+                    ]);
+
+                    ActivityLog::create([
+                        'user_id' => $request->user()->id,
+                        'action' => 'visit_deletion_expired',
+                        'description' => "Takvim ziyareti silme talebi süresi geçtiği için uygulanmadı: {$firmName} / Tarih: {$dateLabel} / Danışman: {$consultantName}",
+                        'ip_address' => $request->ip(),
+                    ]);
+
+                    return ['status' => 'expired_delete'];
+                }
+
+                $approval->update([
+                    'status' => 'approved', 'reviewed_by_user_id' => $request->user()->id,
+                    'reviewed_at' => now(BusinessCalendar::TIMEZONE), 'decision_note' => $input['decision_note'] ?? null,
+                ]);
+                ActivityLog::create([
+                    'user_id' => $request->user()->id,
+                    'action' => 'visit_deletion_approved',
+                    'description' => "Takvim ziyareti silme talebi onaylandı ve kayıt silindi: {$firmName} / Tarih: {$dateLabel} / Danışman: {$consultantName} / Talep eden: {$approval->requestedBy?->name} / Kayıt ID: {$visit->id}",
+                    'ip_address' => $request->ip(),
+                ]);
+                $visit->delete();
+
+                return ['status' => 'deleted'];
+            }
+
             if ($decision === 'reject') {
                 $approval->update([
                     'status' => 'rejected', 'reviewed_by_user_id' => $request->user()->id,
                     'reviewed_at' => now(BusinessCalendar::TIMEZONE), 'decision_note' => $input['decision_note'] ?? null,
                 ]);
 
+                $approvalTypeLabel = ($approval->request_type ?? 'create') === 'monthly_override'
+                    ? 'Aylık ziyaret sınırı istisnası'
+                    : 'Aynı gün ziyaret';
                 ActivityLog::create([
                     'user_id' => $request->user()->id,
                     'action' => 'visit_approval_rejected',
-                    'description' => "Aynı gün ziyaret isteği reddedildi: " . ($approval->firm?->data['name'] ?? 'Bilinmeyen tesis')
+                    'description' => "{$approvalTypeLabel} isteği reddedildi: " . ($approval->firm?->data['name'] ?? 'Bilinmeyen tesis')
                         . ' / Tarih: ' . $approval->visit_date->format('d.m.Y') . " / Danışman: {$approval->assignedUser?->name}"
                         . " / İstek notu: {$approval->notes} / Karar notu: " . ($input['decision_note'] ?? 'Belirtilmedi'),
                     'ip_address' => $request->ip(),
@@ -360,17 +525,23 @@ class VisitController extends Controller
                 'visit_id' => $visit->id,
             ]);
 
+            $approvalTypeLabel = ($approval->request_type ?? 'create') === 'monthly_override'
+                ? 'Aylık ziyaret sınırı istisnası'
+                : 'Aynı gün ziyaret';
             ActivityLog::create([
                 'user_id' => $request->user()->id,
                 'action' => 'visit_approval_approved',
-                'description' => "Aynı gün ziyaret isteği onaylandı: " . ($firmData['name'] ?? 'İsimsiz tesis') . ' / Tarih: ' . $approval->visit_date->format('d.m.Y') . " / Danışman: {$approval->assignedUser?->name} / İstek notu: {$approval->notes}",
+                'description' => "{$approvalTypeLabel} isteği onaylandı: " . ($firmData['name'] ?? 'İsimsiz tesis') . ' / Tarih: ' . $approval->visit_date->format('d.m.Y') . " / Danışman: {$approval->assignedUser?->name} / İstek notu: {$approval->notes}",
                 'ip_address' => $request->ip(),
             ]);
 
             return ['status' => 'approved', 'firm_name' => $firmData['name'] ?? 'İsimsiz tesis'];
         });
 
-        if ($result['status'] === 'expired') {
+        if (in_array($result['status'], ['expired', 'expired_delete'], true)) {
+            if ($result['status'] === 'expired_delete') {
+                return response()->json(['ok' => false, 'status' => 'expired', 'error' => 'Silme talebi sonuçlandırıldı ancak ziyaret tarihi için silme süresi geçmişti; kayıt takvimde korundu.'], 422);
+            }
             return response()->json(['ok' => false, 'status' => 'expired', 'error' => 'İstek sonuçlandırıldı; ziyaret tarihi geçmiş veya planlamaya kapalı olduğu için onaylanamadı.'], 422);
         }
 
@@ -419,33 +590,75 @@ class VisitController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $visit = Visit::findOrFail($id);
         $user = $request->user();
+        $result = DB::transaction(function () use ($request, $id, $user) {
+            $visit = Visit::query()->with(['firm', 'user'])->lockForUpdate()->findOrFail($id);
 
-        if ($user->role !== 'admin' && $visit->user_id !== $user->id) {
-            return response()->json(['error' => 'Bu ziyareti silme yetkiniz yok.'], 403);
+            if ($user->role !== 'admin' && (int) $visit->user_id !== (int) $user->id) {
+                return ['error' => 'Bu ziyareti silme yetkiniz yok.', 'code' => 403];
+            }
+
+            $visitDate = Carbon::parse($visit->visit_date)->toDateString();
+            $today = Carbon::now(BusinessCalendar::TIMEZONE)->toDateString();
+            if ($visitDate < $today) {
+                return ['error' => 'Geçmiş tarihli ziyaretler silinemez.', 'code' => 422];
+            }
+            if ($visitDate === $today && Carbon::now(BusinessCalendar::TIMEZONE)->hour >= 16) {
+                return ['error' => 'Bugün tarihli ziyaretler saat 16.00’dan sonra silinemez.', 'code' => 422];
+            }
+
+            $pending = VisitApprovalRequest::query()
+                ->where('visit_id', $visit->id)
+                ->where('request_type', 'delete')
+                ->where('status', 'pending')
+                ->exists();
+            if ($pending) {
+                return ['error' => 'Bu ziyaret için yönetici onayını bekleyen bir silme talebi zaten var.', 'code' => 409];
+            }
+
+            $firmName = $visit->firm?->data['name'] ?? 'Bilinmeyen tesis';
+            $dateLabel = Carbon::parse($visit->visit_date)->format('d.m.Y');
+            $consultantName = $visit->user?->name ?? 'Bilinmiyor';
+
+            if ($user->role !== 'admin') {
+                $approval = VisitApprovalRequest::create([
+                    'firm_id' => (string) $visit->firm_id,
+                    'assigned_user_id' => $visit->user_id,
+                    'requested_by_user_id' => $user->id,
+                    'visit_date' => $visit->visit_date,
+                    'title' => $visit->title ?? 'Tesis Ziyareti',
+                    'notes' => (string) ($visit->notes ?? ''),
+                    'status' => 'pending',
+                    'visit_id' => $visit->id,
+                    'request_type' => 'delete',
+                ]);
+
+                ActivityLog::create([
+                    'user_id' => $user->id,
+                    'action' => 'visit_deletion_requested',
+                    'description' => "Takvim ziyareti için silme onayı istendi: {$firmName} / Tarih: {$dateLabel} / Danışman: {$consultantName} / Kayıt ID: {$visit->id}",
+                    'ip_address' => $request->ip(),
+                ]);
+
+                return ['approval_requested' => true, 'approval_id' => $approval->id];
+            }
+
+            $visit->delete();
+            ActivityLog::create([
+                'user_id' => $user->id,
+                'action' => 'visit_deleted',
+                'description' => "Yönetici takvim ziyaretini doğrudan sildi: {$firmName} / Tarih: {$dateLabel} / Danışman: {$consultantName} / Kayıt ID: {$id}",
+                'ip_address' => $request->ip(),
+            ]);
+
+            return ['deleted' => true];
+        });
+
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], $result['code']);
         }
 
-        $visitDate = Carbon::parse($visit->visit_date)->toDateString();
-        $today = Carbon::now(BusinessCalendar::TIMEZONE)->toDateString();
-
-        if ($visitDate < $today) {
-            return response()->json(['error' => 'Geçmiş tarihli ziyaretler silinemez.'], 422);
-        }
-
-        if ($visitDate === $today && Carbon::now(BusinessCalendar::TIMEZONE)->hour >= 16) {
-            return response()->json(['error' => 'Bugün tarihli ziyaretler saat 16.00’dan sonra silinemez.'], 422);
-        }
-
-        $visit->delete();
-
-        ActivityLog::create([
-            'user_id' => $user->id,
-            'action' => 'visit_deleted',
-            'description' => "Ziyaret kaydı silindi. ID: {$id}",
-            'ip_address' => $request->ip()
-        ]);
-
-        return response()->json(['ok' => true]);
+        $statusCode = ($result['approval_requested'] ?? false) ? 202 : 200;
+        return response()->json(['ok' => true] + $result, $statusCode);
     }
 }

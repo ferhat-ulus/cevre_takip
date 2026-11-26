@@ -18,8 +18,11 @@ test ! -e "$previous_build"
 
 git fetch origin main
 incoming_files="$(git diff --name-only HEAD..origin/main)"
-if grep -q '^database/migrations/' <<< "$incoming_files"; then
-    echo "Database migrations are present. Automatic deployment stopped for manual review." >&2
+expected_migration='database/migrations/2026_11_25_090000_add_request_type_to_visit_approval_requests.php'
+migration_files="$(grep '^database/migrations/' <<< "$incoming_files" || true)"
+if [[ -n "$migration_files" && "$migration_files" != "$expected_migration" ]]; then
+    echo "An unreviewed database migration is present. Deployment stopped for manual review:" >&2
+    printf '%s\n' "$migration_files" >&2
     exit 3
 fi
 if grep -Fxq 'config/waste_backup.php' <<< "$incoming_files"; then
@@ -40,6 +43,11 @@ bash /usr/local/bin/uluscevre-google-drive-backup
 
 echo "Updating application code..."
 git merge --ff-only origin/main
+
+if [[ -n "$migration_files" ]]; then
+    echo "Applying the reviewed visit approval request migration..."
+    php artisan migrate --force --path="$expected_migration"
+fi
 
 mkdir -p "$stage_dir"
 tar -xzf "$archive" -C "$stage_dir"

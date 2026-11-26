@@ -29,9 +29,10 @@ const showAddModal = ref(false);
 const isSaving = ref(false);
 const errorMsg = ref('');
 const sameDayConflict = ref(false);
+const monthlyLimitConflict = ref(null);
 
 const showEventModal = ref(false);
-const selectedEvent = ref({ id: null, title: '', consultant: '', notes: '', ministryTransferStatus: 'untracked' });
+const selectedEvent = ref({ id: null, title: '', consultant: '', notes: '', ministryTransferStatus: 'untracked', deletionPending: false });
 const isDeleting = ref(false);
 const showDeleteConfirm = ref(false); 
 const currentTime = ref(Date.now());
@@ -81,6 +82,7 @@ const tomorrowInAppTimezone = computed(() => {
     return addDaysToDateString(todayInAppTimezone.value, 1);
 });
 const canDeleteSelectedVisit = computed(() => {
+    if (selectedEvent.value.deletionPending) return false;
     if (!selectedEvent.value.date || selectedEvent.value.date < todayInAppTimezone.value) return false;
     if (selectedEvent.value.date > todayInAppTimezone.value) return true;
     return Number(getAppDateParts(new Date(currentTime.value)).hour) < 16;
@@ -164,6 +166,7 @@ watch(() => props.approvalRequests, (requests) => {
 
 watch(() => [form.value.visit_date, form.value.firm_id], () => {
     sameDayConflict.value = false;
+    monthlyLimitConflict.value = null;
 });
 
 const handleDateClick = (arg) => {
@@ -206,6 +209,7 @@ const openNewVisitModal = (dateStr = '') => {
     showFacilitySuggestions.value = false;
     errorMsg.value = '';
     sameDayConflict.value = false;
+    monthlyLimitConflict.value = null;
     showAddModal.value = true;
 };
 
@@ -228,6 +232,7 @@ const openVisitDetails = (event) => {
         ministryTransferStatus: extendedProps.ministry_transfer_status || 'untracked',
         ministryEnteredAt: extendedProps.ministry_entered_at || null,
         ministryEnteredBy: extendedProps.ministry_entered_by || null,
+        deletionPending: Boolean(extendedProps.deletion_pending),
     };
     showDeleteConfirm.value = false; 
     showEventModal.value = true;
@@ -302,12 +307,17 @@ const confirmDelete = async () => {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
             }
         });
-        if (response.ok) {
+        const data = await response.json();
+        if (response.ok && data.approval_requested) {
             showEventModal.value = false;
-            fetchEvents();
-            triggerToast('Ziyaret başarıyla silindi.', 'success');
+            await fetchEvents();
+            triggerToast('Silme talebiniz yönetici onayına gönderildi. Kayıt onaylanana kadar takvimde kalacak.', 'success');
+        } else if (response.ok) {
+            showEventModal.value = false;
+            await fetchEvents();
+            triggerToast('Ziyaret kaydı silindi.', 'success');
         } else {
-            triggerToast('Ziyaret silinemedi.', 'error');
+            triggerToast(data.error || 'Ziyaret silinemedi.', 'error');
         }
     } catch (err) {
         triggerToast('Sunucu hatası oluştu.', 'error');
@@ -358,13 +368,21 @@ const saveVisit = async ({ requestApproval = false, adminOverride = false } = {}
 
         if (data.same_day_conflict) {
             sameDayConflict.value = true;
+            monthlyLimitConflict.value = null;
+            errorMsg.value = '';
+        } else if (data.monthly_limit_conflict) {
+            sameDayConflict.value = false;
+            monthlyLimitConflict.value = data;
             errorMsg.value = '';
         } else if (data.conflict_cleared) {
             sameDayConflict.value = false;
+            monthlyLimitConflict.value = null;
             errorMsg.value = data.error || '';
         } else if (data.approval_requested) {
             showAddModal.value = false;
-            triggerToast('Onay isteğiniz yöneticiye iletildi. Atama, onaylandıktan sonra takvime eklenecek.', 'success');
+            triggerToast(data.request_type === 'monthly_override'
+                ? 'Aylık ziyaret sınırı istisnası yöneticiye gönderildi. Onaylanırsa takvime eklenecek.'
+                : 'Onay isteğiniz yöneticiye iletildi. Atama, onaylandıktan sonra takvime eklenecek.', 'success');
         } else if (response.ok) {
             showAddModal.value = false;
             fetchEvents();
@@ -394,14 +412,18 @@ const decideApproval = async (approval, decision) => {
         const data = await response.json();
         if (data.status === 'expired') {
             approvalRequests.value = approvalRequests.value.filter(item => item.id !== approval.id);
+            if (approval.request_type === 'delete') await fetchEvents();
         }
         if (!response.ok) {
             triggerToast(data.error || data.message || 'İstek sonuçlandırılamadı.', 'error');
             return;
         }
         approvalRequests.value = approvalRequests.value.filter(item => item.id !== approval.id);
-        if (decision === 'approve') fetchEvents();
-        triggerToast(decision === 'approve' ? 'İstek onaylandı ve takvime eklendi.' : 'İstek reddedildi.', 'success');
+        if (approval.request_type === 'delete' || decision === 'approve') await fetchEvents();
+        const toast = approval.request_type === 'delete'
+            ? (data.status === 'deleted' ? 'Silme talebi onaylandı; ziyaret takvimden kaldırıldı.' : 'Silme talebi reddedildi; kayıt takvimde kaldı.')
+            : (decision === 'approve' ? 'İstek onaylandı ve takvime eklendi.' : 'İstek reddedildi.');
+        triggerToast(toast, 'success');
     } catch (err) {
         triggerToast('Sunucu hatası oluştu.', 'error');
     } finally {
@@ -459,19 +481,34 @@ onUnmounted(() => {
 
         <section v-if="isAdmin && approvalRequests.length" class="space-y-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <h2 class="font-bold">Aynı gün atama için yönetici onayı bekliyor</h2>
+                <h2 class="font-bold">Takvim işlemleri için yönetici onayı bekliyor</h2>
                 <span class="rounded-full bg-amber-200 px-2.5 py-1 text-xs font-bold text-amber-900 dark:bg-amber-400/20 dark:text-amber-100">{{ approvalRequests.length }} bekleyen</span>
             </div>
             <article v-for="approval in approvalRequests" :key="approval.id" class="rounded-lg border border-amber-200 bg-white/80 p-3 dark:border-amber-500/30 dark:bg-slate-900/30">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div class="space-y-1 text-sm">
-                        <p class="font-semibold">{{ visitDateLabel(approval.visit_date) }} · {{ facilityDisplayName(approval.firm_name) }}</p>
-                        <p class="text-xs opacity-80">Atanacak danışman: {{ approval.assigned_user }}<template v-if="approval.requested_by !== approval.assigned_user"> · İsteği gönderen: {{ approval.requested_by }}</template></p>
-                        <p class="pt-1 text-xs font-semibold">Yöneticiye iletilen not</p>
-                        <p class="whitespace-pre-wrap text-sm">{{ approval.notes }}</p>
+                        <p class="flex flex-wrap items-center gap-2 font-semibold">
+                            <span>{{ visitDateLabel(approval.visit_date) }} · {{ facilityDisplayName(approval.firm_name) }}</span>
+                            <span v-if="approval.request_type === 'delete'" class="rounded-full bg-rose-200 px-2 py-0.5 text-[10px] font-bold text-rose-900 dark:bg-rose-400/20 dark:text-rose-100">SİLME TALEBİ</span>
+                            <span v-else-if="approval.request_type === 'monthly_override'" class="rounded-full bg-orange-200 px-2 py-0.5 text-[10px] font-bold text-orange-900 dark:bg-orange-400/20 dark:text-orange-100">AYLIK SINIR İSTİSNASI</span>
+                            <span v-else class="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-900 dark:bg-amber-400/20 dark:text-amber-100">AYNI GÜN ATAMA</span>
+                        </p>
+                        <template v-if="approval.request_type === 'delete'">
+                            <p class="text-xs">Ziyaret kaydı yönetici kararına kadar takvimde tutuluyor.</p>
+                            <p class="text-xs opacity-80">Danışman: {{ approval.assigned_user }} · Talep eden: {{ approval.requested_by }} · Kayıt no: {{ approval.visit_id }}</p>
+                            <p class="text-xs opacity-80">Bakanlık durumu: {{ transferStatusLabel(approval.ministry_transfer_status || 'untracked') }}</p>
+                            <p v-if="approval.visit_notes" class="whitespace-pre-wrap text-xs"><strong>Kayıt notu:</strong> {{ approval.visit_notes }}</p>
+                        </template>
+                        <template v-else>
+                            <p class="text-xs opacity-80">Atanacak danışman: {{ approval.assigned_user }}<template v-if="approval.requested_by !== approval.assigned_user"> · İsteği gönderen: {{ approval.requested_by }}</template></p>
+                            <p v-if="approval.request_type === 'monthly_override'" class="text-xs opacity-80">Ek kapsam: {{ approval.permit_scope }} · Aylık atama sayısı: {{ approval.monthly_visit_count }}/{{ approval.monthly_visit_limit }}. Yönetici onayı olmadan takvime eklenmez.</p>
+                            <p v-else-if="approval.monthly_visit_count >= approval.monthly_visit_limit" class="text-xs font-semibold text-orange-800 dark:text-orange-200">Not: Bu onayla aylık ziyaret sınırı aşılabilir ({{ approval.monthly_visit_count }}/{{ approval.monthly_visit_limit }}).</p>
+                            <p class="pt-1 text-xs font-semibold">Yöneticiye iletilen not</p>
+                            <p class="whitespace-pre-wrap text-sm">{{ approval.notes }}</p>
+                        </template>
                     </div>
                     <div class="flex shrink-0 gap-2">
-                        <button type="button" :disabled="reviewingApprovalId === approval.id" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50" @click="decideApproval(approval, 'approve')">Onayla</button>
+                        <button type="button" :disabled="reviewingApprovalId === approval.id" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50" @click="decideApproval(approval, 'approve')">{{ approval.request_type === 'delete' ? 'Silme talebini onayla' : 'Onayla' }}</button>
                         <button type="button" :disabled="reviewingApprovalId === approval.id" class="rounded-lg border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-500/40 dark:text-rose-300 dark:hover:bg-rose-500/10 disabled:opacity-50" @click="decideApproval(approval, 'reject')">Reddet</button>
                     </div>
                 </div>
@@ -546,10 +583,17 @@ onUnmounted(() => {
                 </div>
 
                 <div v-if="errorMsg" class="mb-4 p-3 bg-rose-50 text-rose-700 text-xs rounded-lg border border-rose-200">{{ errorMsg }}</div>
-                <div v-if="sameDayConflict" class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
-                    <p class="font-bold">Takvim ataması aynı güne denk geliyor.</p>
-                    <p v-if="isAdmin" class="mt-1">Yönetici olarak istisnayı onaylayıp atamayı kaydedebilirsiniz.</p>
-                    <p v-else class="mt-1">Bu istisna için yönetici onayı gerekiyor. İstek gönderilirken açıklama notu zorunludur.</p>
+                <div v-if="sameDayConflict || monthlyLimitConflict" class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+                    <template v-if="sameDayConflict">
+                        <p class="font-bold">Takvim ataması aynı güne denk geliyor.</p>
+                        <p v-if="isAdmin" class="mt-1">Yönetici olarak istisnayı onaylayıp atamayı kaydedebilirsiniz.</p>
+                        <p v-else class="mt-1">Bu istisna için yönetici onayı gerekiyor. İstek gönderilirken açıklama notu zorunludur.</p>
+                    </template>
+                    <template v-else>
+                        <p class="font-bold">Bu tesis için {{ monthlyLimitConflict.monthly_visit_count }} ziyaret planlanmış veya onay bekliyor.</p>
+                        <p class="mt-1">Ek kapsam: {{ monthlyLimitConflict.permit_scope }} · Aylık sınır: {{ monthlyLimitConflict.monthly_visit_limit }} ziyaret.</p>
+                        <p class="mt-1">Ek atama yönetici onayına gönderilecek; onaylanana kadar takvime eklenmeyecek. Açıklama notu yazın.</p>
+                    </template>
                 </div>
 
                 <div class="space-y-4">
@@ -593,15 +637,15 @@ onUnmounted(() => {
                     </div>
                     
                     <div>
-                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Notlar<span v-if="sameDayConflict && !isAdmin" class="text-rose-500"> *</span></label>
+                        <label class="block text-xs font-medium mb-1 dark:text-slate-300">Notlar<span v-if="(sameDayConflict || monthlyLimitConflict) && !isAdmin" class="text-rose-500"> *</span></label>
                         <textarea v-model="form.notes" rows="2" class="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 dark:text-white text-sm"></textarea>
-                        <p v-if="sameDayConflict && !isAdmin" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Yöneticiye neden aynı gün için ek atama gerektiğini açıklayın.</p>
+                        <p v-if="(sameDayConflict || monthlyLimitConflict) && !isAdmin" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Yöneticiye onay gerekçesini açıklayın.</p>
                     </div>
                 </div>
 
                 <div class="flex justify-end space-x-2 mt-6">
                     <button @click="showAddModal = false" class="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition">İptal</button>
-                    <button v-if="!sameDayConflict" @click="saveVisit()" :disabled="isSaving" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50">
+                    <button v-if="!sameDayConflict && !monthlyLimitConflict" @click="saveVisit()" :disabled="isSaving" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50">
                         {{ isSaving ? 'Kaydediliyor...' : 'Kaydet' }}
                     </button>
                     <button v-else @click="isAdmin ? saveVisit({ adminOverride: true }) : saveVisit({ requestApproval: true })" :disabled="isSaving || (!isAdmin && !form.notes.trim())" class="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-lg transition disabled:opacity-50">
@@ -671,6 +715,10 @@ onUnmounted(() => {
                             </button>
                         </div>
                     </div>
+
+                    <div v-if="selectedEvent.deletionPending" class="rounded-lg border border-rose-300 bg-rose-50 p-3 text-xs text-rose-900 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100">
+                        Bu ziyaret için silme talebi yönetici onayını bekliyor. Kayıt onaylanana kadar takvimde tutulur.
+                    </div>
                     
                     <!-- DURUM 1: İlk Ekran (Silme İsteği) -->
                     <div v-if="!showDeleteConfirm" class="text-center pt-2">
@@ -679,7 +727,7 @@ onUnmounted(() => {
                             Ziyareti İptal Et / Sil
                         </button>
                         <p v-else class="text-xs text-slate-500">
-                            {{ selectedEvent.date < todayInAppTimezone ? 'Geçmiş tarihli ziyaretler silinemez.' : 'Bugün tarihli ziyaretler saat 16.00’dan sonra silinemez.' }}
+                            {{ selectedEvent.deletionPending ? 'Silme talebi yönetici onayını bekliyor.' : selectedEvent.date < todayInAppTimezone ? 'Geçmiş tarihli ziyaretler silinemez.' : 'Bugün tarihli ziyaretler saat 16.00’dan sonra silinemez.' }}
                         </p>
                     </div>
 
@@ -687,7 +735,7 @@ onUnmounted(() => {
                     <div v-if="showDeleteConfirm" class="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-lg border border-rose-200 dark:border-rose-800/50 text-center">
                         <svg class="w-8 h-8 text-rose-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         <p class="text-xs font-bold text-rose-700 dark:text-rose-400 mb-1">Emin misiniz?</p>
-                        <p class="text-[11px] text-rose-600 dark:text-rose-300 mb-4">Bu işlem geri alınamaz. Ziyaret kalıcı olarak silinecektir.</p>
+                        <p class="text-[11px] text-rose-600 dark:text-rose-300 mb-4">{{ isAdmin ? 'Bu işlem geri alınamaz. Ziyaret kaydı kalıcı olarak silinecektir.' : 'Silme talebiniz yöneticiye iletilecek. Kayıt, onay verilene kadar takvimde kalacaktır.' }}</p>
                         
                         <div class="flex space-x-2">
                             <button @click="showDeleteConfirm = false" class="flex-1 py-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-lg transition text-xs font-medium">
@@ -695,7 +743,7 @@ onUnmounted(() => {
                             </button>
                             <button @click="confirmDelete" :disabled="isDeleting || !canDeleteSelectedVisit" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition disabled:opacity-50 text-xs font-medium flex items-center justify-center space-x-1">
                                 <svg v-if="isDeleting" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                <span>{{ isDeleting ? 'Siliniyor...' : 'Evet, Sil' }}</span>
+                                <span>{{ isDeleting ? 'Gönderiliyor...' : isAdmin ? 'Evet, Sil' : 'Yönetici onayına gönder' }}</span>
                             </button>
                         </div>
                     </div>
@@ -730,6 +778,8 @@ onUnmounted(() => {
 .dark .fc-daygrid-day-number { color: #e2e8f0; }
 .custom-calendar .fc-event.visit-has-note .fc-event-title::after { content: ' ✎'; font-weight: 700; }
 .custom-calendar .fc-event[class*='visit-ministry-'] { border-width: 1px !important; border-left-width: 4px !important; }
+.custom-calendar .fc-event.visit-deletion-pending { border-style: dashed !important; border-width: 2px !important; }
+.custom-calendar .fc-event.visit-deletion-pending .fc-event-title::after { content: ' · Silme onayı bekliyor'; font-weight: 700; }
 
 @keyframes fade-in-down {
     from { opacity: 0; transform: translateY(-10px); }
