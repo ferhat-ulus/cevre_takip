@@ -9,7 +9,7 @@ class VisitApprovalRequest extends Model
 {
     protected $fillable = [
         'firm_id', 'assigned_user_id', 'requested_by_user_id', 'visit_date', 'title', 'notes', 'status',
-        'reviewed_by_user_id', 'visit_id', 'request_type', 'reviewed_at', 'decision_note',
+        'reviewed_by_user_id', 'visit_id', 'request_type', 'request_reason', 'reviewed_at', 'decision_note',
     ];
 
     protected function casts(): array

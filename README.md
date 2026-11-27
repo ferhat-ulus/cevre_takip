@@ -44,7 +44,7 @@ Canlı ortam kurulumu ve dağıtım adımları için [DEPLOYMENT.md](DEPLOYMENT.
 - Danışman için aynı güne ikinci ziyaret ataması yönetici onayına ve açıklama notuna bağlıdır.
 - Aylık ziyaret sınırı ek kapsamı Ek-1 olan tesislerde iki, diğer veya kapsamı belirtilmemiş tesislerde bir ziyarettir. Sınırın aşılması için açıklama ve yönetici onayı gerekir; onaylanana kadar ziyaret takvime eklenmez. Yönetici doğrudan istisna uygulayabilir.
 - Ayın 20'sinden itibaren ana sayfada takip eden ayın ziyaret planı hatırlatması gösterilir. Danışmana kendi aktif tesislerinden henüz ziyaret kaydı girilmemiş olanlar; yöneticiye ise tüm danışmanların eksik tesis sayıları sunulur. Toplam sayıya tıklanınca tüm eksik tesisler, yönetici görünümünde danışman adına veya danışman sayısına tıklanınca o danışmanın eksik tesisleri açılır. Tesis için takip eden ayda ilgili danışmana en az bir ziyaret girildiğinde o tesis hatırlatma listesinden çıkar.
-- Kayıtlı bir ziyaretin silinmesi danışman tarafından talep edilir; yönetici talebi inceleyip onaylayabilir veya reddedebilir. Silme ve aylık sınır istisnası süreçlerinde e-posta gönderilmez; talepler uygulamadaki yönetici takviminde gösterilir.
+- Kayıtlı bir ziyaretin silinmesi danışman tarafından zorunlu bir gerekçeyle talep edilir; yönetici gerekçeyi takvim ekranındaki talep kartında görüp onaylayabilir veya reddedebilir. Silme ve aylık sınır istisnası süreçlerinde e-posta gönderilmez; talepler uygulamadaki yönetici takviminde gösterilir.
 
 ### Duyurular ve doğrulamalar
 

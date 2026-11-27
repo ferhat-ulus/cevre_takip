@@ -35,6 +35,8 @@ const showEventModal = ref(false);
 const selectedEvent = ref({ id: null, title: '', consultant: '', notes: '', ministryTransferStatus: 'untracked', deletionPending: false });
 const isDeleting = ref(false);
 const showDeleteConfirm = ref(false); 
+const deleteReason = ref('');
+const deleteReasonError = ref('');
 const currentTime = ref(Date.now());
 let clockInterval;
 
@@ -235,6 +237,8 @@ const openVisitDetails = (event) => {
         deletionPending: Boolean(extendedProps.deletion_pending),
     };
     showDeleteConfirm.value = false; 
+    deleteReason.value = '';
+    deleteReasonError.value = '';
     showEventModal.value = true;
 };
 
@@ -283,10 +287,16 @@ const askDelete = () => {
         );
         return;
     }
+    deleteReason.value = '';
+    deleteReasonError.value = '';
     showDeleteConfirm.value = true;
 };
 
 const confirmDelete = async () => {
+    if (!props.isAdmin && !deleteReason.value.trim()) {
+        deleteReasonError.value = 'Silme talebini yöneticiye göndermek için nedenini yazın.';
+        return;
+    }
     if (!canDeleteSelectedVisit.value) {
         showDeleteConfirm.value = false;
         triggerToast(
@@ -303,9 +313,11 @@ const confirmDelete = async () => {
         const response = await fetch(`/api/visits/${selectedEvent.value.id}`, {
             method: 'DELETE',
             headers: {
+                'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-            }
+            },
+            body: JSON.stringify({ reason: deleteReason.value.trim() }),
         });
         const data = await response.json();
         if (response.ok && data.approval_requested) {
@@ -317,7 +329,8 @@ const confirmDelete = async () => {
             await fetchEvents();
             triggerToast('Ziyaret kaydı silindi.', 'success');
         } else {
-            triggerToast(data.error || 'Ziyaret silinemedi.', 'error');
+            deleteReasonError.value = data.errors?.reason?.[0] || '';
+            triggerToast(data.error || data.message || 'Ziyaret silinemedi.', 'error');
         }
     } catch (err) {
         triggerToast('Sunucu hatası oluştu.', 'error');
@@ -496,6 +509,7 @@ onUnmounted(() => {
                         <template v-if="approval.request_type === 'delete'">
                             <p class="text-xs">Ziyaret kaydı yönetici kararına kadar takvimde tutuluyor.</p>
                             <p class="text-xs opacity-80">Danışman: {{ approval.assigned_user }} · Talep eden: {{ approval.requested_by }} · Kayıt no: {{ approval.visit_id }}</p>
+                            <p class="whitespace-pre-wrap text-xs"><strong>Silme gerekçesi:</strong> {{ approval.request_reason || 'Eski talep · gerekçe kaydı yok' }}</p>
                             <p class="text-xs opacity-80">Bakanlık durumu: {{ transferStatusLabel(approval.ministry_transfer_status || 'untracked') }}</p>
                             <p v-if="approval.visit_notes" class="whitespace-pre-wrap text-xs"><strong>Kayıt notu:</strong> {{ approval.visit_notes }}</p>
                         </template>
@@ -736,12 +750,27 @@ onUnmounted(() => {
                         <svg class="w-8 h-8 text-rose-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         <p class="text-xs font-bold text-rose-700 dark:text-rose-400 mb-1">Emin misiniz?</p>
                         <p class="text-[11px] text-rose-600 dark:text-rose-300 mb-4">{{ isAdmin ? 'Bu işlem geri alınamaz. Ziyaret kaydı kalıcı olarak silinecektir.' : 'Silme talebiniz yöneticiye iletilecek. Kayıt, onay verilene kadar takvimde kalacaktır.' }}</p>
+
+                        <div v-if="!isAdmin" class="mb-4 text-left">
+                            <label for="visit-delete-reason" class="mb-1 block text-xs font-semibold text-rose-800 dark:text-rose-200">Silme nedeni <span aria-hidden="true">*</span></label>
+                            <textarea
+                                id="visit-delete-reason"
+                                v-model="deleteReason"
+                                rows="3"
+                                maxlength="2000"
+                                required
+                                class="w-full rounded-lg border border-rose-300 bg-white p-2 text-xs text-slate-800 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-200 dark:border-rose-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-rose-900"
+                                placeholder="Bu ziyaret neden silinmeli?"
+                                @input="deleteReasonError = ''"
+                            ></textarea>
+                            <p v-if="deleteReasonError" class="mt-1 text-xs font-medium text-rose-700 dark:text-rose-300">{{ deleteReasonError }}</p>
+                        </div>
                         
                         <div class="flex space-x-2">
                             <button @click="showDeleteConfirm = false" class="flex-1 py-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-lg transition text-xs font-medium">
                                 Vazgeç
                             </button>
-                            <button @click="confirmDelete" :disabled="isDeleting || !canDeleteSelectedVisit" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition disabled:opacity-50 text-xs font-medium flex items-center justify-center space-x-1">
+                            <button @click="confirmDelete" :disabled="isDeleting || !canDeleteSelectedVisit || (!isAdmin && !deleteReason.trim())" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition disabled:opacity-50 text-xs font-medium flex items-center justify-center space-x-1">
                                 <svg v-if="isDeleting" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 <span>{{ isDeleting ? 'Gönderiliyor...' : isAdmin ? 'Evet, Sil' : 'Yönetici onayına gönder' }}</span>
                             </button>

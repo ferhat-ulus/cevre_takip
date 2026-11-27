@@ -77,6 +77,7 @@ class VisitController extends Controller
                         'visit_date' => $request->visit_date->toDateString(),
                         'title' => $request->title ?? 'Tesis Ziyareti',
                         'notes' => $request->notes,
+                        'request_reason' => $request->request_reason,
                         'visit_notes' => $request->visit?->notes,
                         'ministry_transfer_status' => $request->visit?->ministry_transfer_status,
                         'created_at' => $request->created_at?->toIso8601String(),
@@ -591,7 +592,18 @@ class VisitController extends Controller
     public function destroy(Request $request, $id)
     {
         $user = $request->user();
-        $result = DB::transaction(function () use ($request, $id, $user) {
+        $deleteReason = null;
+        if ($user->role !== 'admin') {
+            $validated = $request->validate([
+                'reason' => ['required', 'string', 'min:3', 'max:2000'],
+            ]);
+            $deleteReason = trim($validated['reason']);
+            if ($deleteReason === '') {
+                return response()->json(['error' => 'Silme talebi için bir gerekçe yazın.'], 422);
+            }
+        }
+
+        $result = DB::transaction(function () use ($request, $id, $user, $deleteReason) {
             $visit = Visit::query()->with(['firm', 'user'])->lockForUpdate()->findOrFail($id);
 
             if ($user->role !== 'admin' && (int) $visit->user_id !== (int) $user->id) {
@@ -631,12 +643,13 @@ class VisitController extends Controller
                     'status' => 'pending',
                     'visit_id' => $visit->id,
                     'request_type' => 'delete',
+                    'request_reason' => $deleteReason,
                 ]);
 
                 ActivityLog::create([
                     'user_id' => $user->id,
                     'action' => 'visit_deletion_requested',
-                    'description' => "Takvim ziyareti için silme onayı istendi: {$firmName} / Tarih: {$dateLabel} / Danışman: {$consultantName} / Kayıt ID: {$visit->id}",
+                    'description' => "Takvim ziyareti için silme onayı istendi: {$firmName} / Tarih: {$dateLabel} / Danışman: {$consultantName} / Gerekçe: {$deleteReason} / Kayıt ID: {$visit->id}",
                     'ip_address' => $request->ip(),
                 ]);
 
