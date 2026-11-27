@@ -18,6 +18,8 @@ const props = defineProps({
 const page = usePage();
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
 const openConsultant = ref(null);
+const showAllMissingVisits = ref(false);
+const openVisitPlanningConsultant = ref(null);
 
 const ozet = computed(() => ({
     gecikmis: props.stats?.overdue || 0,
@@ -31,6 +33,10 @@ const kendiIsleri = computed(() => danismanlar.value[0]?.tasks || []);
 
 const toggleConsultant = (name) => {
     openConsultant.value = openConsultant.value === name ? null : name;
+};
+
+const toggleVisitPlanningConsultant = (id) => {
+    openVisitPlanningConsultant.value = openVisitPlanningConsultant.value === id ? null : id;
 };
 
 const getStatusColor = (state) => {
@@ -71,12 +77,36 @@ const kalanSure = (days) => (days === null || days === undefined ? 'Belirsiz' : 
         <div v-if="visitPlanningReminder?.visible" class="flex flex-col gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-100 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <p class="font-bold">{{ visitPlanningReminder.monthLabel }} takvim planı tamamlanmalı</p>
-                <p class="mt-0.5 text-xs sm:text-sm">
-                    {{ visitPlanningReminder.missingCount }} tesis için takvim girişi bekleniyor.
+                <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm">
+                    <button type="button" class="font-semibold underline decoration-dotted underline-offset-2 hover:text-indigo-700 dark:hover:text-indigo-200" :aria-expanded="showAllMissingVisits" @click="showAllMissingVisits = !showAllMissingVisits">
+                        {{ visitPlanningReminder.missingCount }} tesis için takvim girişi bekleniyor
+                    </button>
                     <template v-if="isAdmin && visitPlanningReminder.consultants?.length">
-                        {{ visitPlanningReminder.consultants.map((consultant) => `${consultant.name}: ${consultant.missingCount}`).join(' · ') }}
+                        <span aria-hidden="true">·</span>
+                        <button
+                            v-for="consultant in visitPlanningReminder.consultants"
+                            :key="consultant.id"
+                            type="button"
+                            class="underline decoration-dotted underline-offset-2 hover:text-indigo-700 dark:hover:text-indigo-200"
+                            :aria-expanded="openVisitPlanningConsultant === consultant.id"
+                            @click="toggleVisitPlanningConsultant(consultant.id)"
+                        >
+                            {{ consultant.name }} ({{ consultant.missingCount }})
+                        </button>
                     </template>
-                </p>
+                </div>
+                <ul v-if="showAllMissingVisits" class="mt-2 space-y-1 border-l-2 border-indigo-300 pl-3 text-xs dark:border-indigo-400/50">
+                    <li v-for="firm in visitPlanningReminder.firms" :key="firm.id">{{ facilityDisplayName(firm.name) }}</li>
+                </ul>
+                <div v-if="isAdmin && visitPlanningReminder.consultants?.some(consultant => openVisitPlanningConsultant === consultant.id)" class="mt-2 space-y-2">
+                    <ul
+                        v-for="consultant in visitPlanningReminder.consultants.filter(item => openVisitPlanningConsultant === item.id)"
+                        :key="consultant.id"
+                        class="space-y-1 border-l-2 border-indigo-300 pl-3 text-xs dark:border-indigo-400/50"
+                    >
+                        <li v-for="firm in consultant.firms" :key="firm.id">{{ facilityDisplayName(firm.name) }}</li>
+                    </ul>
+                </div>
             </div>
             <Link href="/ziyaret-takvimi" class="shrink-0 rounded-lg bg-indigo-700 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-800">Takvime Git</Link>
         </div>

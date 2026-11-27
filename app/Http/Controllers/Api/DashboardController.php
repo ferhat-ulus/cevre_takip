@@ -188,8 +188,16 @@ class DashboardController extends Controller
                 $first = $consultantFirms->first();
 
                 return [
+                    'id' => $first->consultant_user_id,
                     'name' => $first->consultantName(),
                     'missingCount' => $consultantFirms->count(),
+                    'firms' => $consultantFirms
+                        ->map(fn (Firm $firm) => [
+                            'id' => $firm->id,
+                            'name' => $firm->data['name'] ?? 'İsimsiz tesis',
+                        ])
+                        ->values()
+                        ->all(),
                 ];
             })
             ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
@@ -200,6 +208,13 @@ class DashboardController extends Controller
             'visible' => true,
             'monthLabel' => ucfirst($monthLabel),
             'missingCount' => $missingFirms->count(),
+            'firms' => $missingFirms
+                ->map(fn (Firm $firm) => [
+                    'id' => $firm->id,
+                    'name' => $firm->data['name'] ?? 'İsimsiz tesis',
+                ])
+                ->values()
+                ->all(),
             'consultants' => $consultants,
         ];
     }

@@ -1,59 +1,97 @@
-# Çevre Takip Sistemi (Ulus Çevre)
+# Çevre Takip ve Atık Takip Portalı
 
-Bu proje, çevre danışmanlığı yürütülen tesislerin mevzuat bağlamında takip edilmesi, uyarıların yönetilmesi ve raporlanması için geliştirilmiş bir web uygulamasıdır.
+Ulus Çevre'nin çevre danışmanlığı yaptığı tesisleri, mevzuat yükümlülüklerini, ziyaret takvimini ve atık taşıma kayıtlarını takip etmek için kullanılan web uygulamasıdır. Uygulama **Çevre Takip** ve **Atık Takip** modüllerini ayrı çalışma alanları olarak sunar.
 
-Canlı sunucu kurulumu için [DEPLOYMENT.md](DEPLOYMENT.md) dosyasındaki adımlar izlenmelidir.
+Canlı ortam kurulumu ve dağıtım adımları için [DEPLOYMENT.md](DEPLOYMENT.md) dosyasına bakın.
 
-## 🛠️ Kullanılan Teknolojiler
-- **Backend:** Laravel (PHP 8+)
-- **Frontend:** Vue 3 (Composition API), Inertia.js
-- **Tasarım:** Tailwind CSS (v4 kullanılıyor, `@tailwindcss/vite` eklentisi mevcut)
-- **Veritabanı:** SQLite (yerel varsayılan) veya MySQL/MariaDB
-- **Derleyici:** Vite (TypeScript kullanılıyor: `vite.config.ts` ve `app.ts`)
-- **Yedekleme:** `spatie/laravel-backup` paketi
+## Modüller
 
-## 📂 Önemli Mimari Detaylar ve Özel Yapılar
+### Çevre Takip
 
-### Veritabanı kurulumu
+- Genel bakışta gecikmiş, kritik ve yaklaşan yükümlülükleri görüntüleme.
+- Tesis kayıtları, danışman atamaları, arşiv ve tesis değişiklik geçmişi.
+- Mevzuat takvimi, tesis ziyaretleri, yönetici onayları ve görsel raporlar.
+- Çevre izin/lisans, GFB, ÇED, atıksu görüşü ve diğer belge takibi.
+- Excel içe/dışa aktarma, duyurular, kullanıcı yönetimi, sistem ayarları ve yedekler.
 
-Uygulama yerel geliştirmede SQLite kullanır; Laravel üzerinden MySQL/MariaDB ile de çalışacak şekilde yapılandırılmıştır. MySQL/MariaDB ortamında `.env` dosyasında `DB_CONNECTION=mysql` seçilmeli ve `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` ve `DB_PASSWORD` doldurulmalıdır. Sunucuda PHP `pdo_mysql` eklentisi etkin olmalı; veritabanı ve kullanıcısı cPanel'den oluşturulup bu veritabanına yetkilendirilmelidir.
+### Atık Takip
 
-Yeni bir MySQL veritabanında şemayı oluşturmak için dağıtım ortamında `php artisan migrate --force` çalıştırılır. Bu işlem mevcut SQLite verilerini MySQL'e taşımaz. Mevcut veriler gerekiyorsa ayrıca aktarılmalı ve kayıt sayıları ile uygulama ekranları doğrulanmalıdır. Geliştirme/testlerde SQLite varsayılanı değişmeden kalır.
+- Atık üreticisi ve atık işleme tesisi kayıtları.
+- Atık taşıma kayıtları ve taşıma geçmişi.
+- Taşıma listesinde haftalık (Pazartesi–Pazar), aylık ve tüm kayıtlar filtreleri.
+- Haftalık yapılacak taşımalarda kayıtları güne göre daraltılabilir biçimde görüntüleme; her gün için farklı tesis sayısı ve atık çeşitliliğini özetleme.
+- Araç istatistiklerini aylık ve yıllık inceleme; her iki görünümde de hedefleri takip etme.
+- İstatistik ekranıyla sınırlı kullanıcı rolü.
 
-Uygulama yedeklemesi MySQL/MariaDB bağlantısını yedeğe dahil eder. Veritabanı dökümü almak için sunucuda `mysqldump` erişimi de gerekir; barındırma sağlayıcısının bu aracı sunup sunmadığı doğrulanmalıdır. Yedekleme komutu başarılı görünse bile yedeğin sunucu dışında saklanması ve geri yüklemenin denenmesi gerekir.
+## Güncel iş akışları
 
-### 1. Veri Saklama (JSON Yapısı)
-Standart ilişkisel veritabanı yerine, esneklik sağlamak adına `Firm` (Tesis) modelindeki temel bilgiler `data` adı verilen bir **JSON sütununda** tutulur.
-- Örnek: `$firm->data['name']`, `$firm->data['consultant']`, `$firm->data['items']`
-- Sorgularda JSON yapısı kullanılır: `Firm::where('data->consultant', $user->name)->get()`
+### Tesis ve belge bilgileri
 
-### 2. Mevzuat Motoru (ComplianceEngine)
-Projenin beyni `app/Services/ComplianceEngine.php` dosyasıdır. 
-- Tesislerin mevzuat sürelerini (tebliğ tarihleri, periyotlar, kritik eşikler) hesaplar.
-- Varsayılan mevzuatlar bu dosyada sabittir (`OBLIGATIONS` sabiti). Ancak "Sistem Ayarları" üzerinden eklenen dinamik mevzuatlar veritabanındaki `custom_obligations` ayarından çekilerek birleştirilir.
-- Tüm mevzuatları (varsayılan + dinamik) çekmek için **her zaman `ComplianceEngine::getAll()`** metodu kullanılmalıdır.
+- Tesisin ekranda görünen adı Türkçe yazım ve okunabilirlik gözetilerek biçimlendirilir. Bu yalnızca görüntüleme katmanında yapılır; Excel'den gelen ve veri tabanında tutulan ad değiştirilmez. Böylece mevcut kaynak değer korunurken arayüzde boşluklar ve yaygın şirket unvanları tutarlı gösterilir.
+- İzin ve lisans konuları tesis detayında ayrı, çoklu seçim listelerinde tutulur. Konular katalogdan gelir; tesisin seçimi düzenlenebilir ve GFB'den izin sürecine aktarılabilir.
+- Çevre izin/lisans başlığı altında belge türü seçilebilir: GFB veya Çevre İzin/Lisans. Eski kayıtların bilgileri korunur.
+- GFB, ilk kez izin/lisans alacak tesislere özgü, tekrarlanmayan belge olarak izlenir. Başvuru son günü GFB başlangıcından 180 gün sonrası kabul edilir; uyarılar son tarihten 60 ve 30 gün önce hesaplanır.
+- İzin konularının ve lisans konularının ekrandaki seçenekleri katalog üzerinden yönetilir. 2026 belge bedeli kataloğu ayrı yapılandırmadadır; tesis detayındaki konu seçimleriyle aynı katalog yapısını paylaşır.
+- ÇED kararlarında “ÇED GEREKLİ DEĞİLDİR” seçeneği bulunur.
+- Atıksu görüşünde OSB dışındaki tesisler için isteğe bağlı yıllık geçerlilik doğrulaması vardır. OSB tesislerinde olağan yenileme takibi sürer.
+- ÇİLY Ek Kapsamı bilgisi, izin/lisans kapsamından bağımsız tesis detay alanıdır.
 
-### 3. Loglama Sistemi
-- **Aktivite Logları:** `ActivityLog` modeli üzerinden sistem genelindeki (kullanıcı ekleme, ayar değiştirme, ziyaret oluşturma, yedek alma vb.) işlemler kaydedilir.
-- **Tesis Logları:** `FirmLog` modeli üzerinden sadece bir tesisin danışman değişimi gibi kendi iç geçmişi kaydedilir.
+### Ziyaret takvimi
 
-### 4. Yetkilendirme ve Güvenlik (Middleware)
-- Rotalarda `auth` (giriş yapmış olma) ve `admin` (Sistem Yöneticisi olma) korumaları vardır.
-- Admin koruması `app/Http/Middleware/EnsureUserIsAdmin.php` dosyasındadır ve rol kontrolü büyük/küçük harf duyarsız (`strtolower`) yapılır.
-- `app/Http/Middleware/HandleInertiaRequests.php` dosyası, kullanıcı oturumunu ve rollerini (her zaman küçük harf olarak) Vue tarafına aktarır.
-- Kullanıcı hesapları yönetici tarafından oluşturulur ve giriş kullanıcı adıyla yapılır. Genel kayıt, parola sıfırlama, e-posta doğrulama, iki aşamalı giriş ve passkey akışları henüz etkin değildir.
-- Yetkisiz erişimlerde 403 hatası yerine kullanıcı dostu yönlendirmeler ve "Toast" (kırmızı uyarı) mesajları gösterilir.
+- Ziyaretler tesis, danışman, tarih ve not bilgileriyle kaydedilir; tesis adı yazılarak arama/öneri listesinden seçim yapılabilir.
+- Takvimde not içeren ziyaretler görsel olarak ayırt edilir. Yönetici takviminde ay ve hafta görünümleri bulunur.
+- Bakanlık sistemine aktarım durumu her ziyaret için “aktarılacak”, “aktarıldı” veya önceki aktarım sonrası kayıt değişmişse “güncel hali aktarılmalı” olarak izlenebilir. Liste üzerinden kaydı açmadan durum güncellenebilir.
+- Danışman için aynı güne ikinci ziyaret ataması yönetici onayına ve açıklama notuna bağlıdır.
+- Aylık ziyaret sınırı ek kapsamı Ek-1 olan tesislerde iki, diğer veya kapsamı belirtilmemiş tesislerde bir ziyarettir. Sınırın aşılması için açıklama ve yönetici onayı gerekir; onaylanana kadar ziyaret takvime eklenmez. Yönetici doğrudan istisna uygulayabilir.
+- Ayın 20'sinden itibaren ana sayfada takip eden ayın ziyaret planı hatırlatması gösterilir. Danışmana kendi aktif tesislerinden henüz ziyaret kaydı girilmemiş olanlar; yöneticiye ise tüm danışmanların eksik tesis sayıları sunulur. Toplam sayıya tıklanınca tüm eksik tesisler, yönetici görünümünde danışman adına veya danışman sayısına tıklanınca o danışmanın eksik tesisleri açılır. Tesis için takip eden ayda ilgili danışmana en az bir ziyaret girildiğinde o tesis hatırlatma listesinden çıkar.
+- Kayıtlı bir ziyaretin silinmesi danışman tarafından talep edilir; yönetici talebi inceleyip onaylayabilir veya reddedebilir. Silme ve aylık sınır istisnası süreçlerinde e-posta gönderilmez; talepler uygulamadaki yönetici takviminde gösterilir.
 
-### 5. Rotalar (Routing)
-- SPA (Single Page Application) mantığı gereği ve oturum (session) yönetiminin sorunsuz çalışması için API rotaları dahi `routes/web.php` içerisinde tanımlanmıştır. `routes/api.php` kullanılmamaktadır.
-- Inertia.js ile sayfa yönlendirmeleri (redirect) yapılırken dikkatli olunmalı, JSON dönen yerlerde `return response()->json()` kullanılmalıdır.
+### Duyurular ve doğrulamalar
 
-## 🚀 Tamamlanan Ana Modüller
-1. **Dashboard (Genel Bakış):** Gecikmiş, Kritik (14 Gün), Yaklaşan (30 Gün) işler.
-2. **Tesisler (Firms):** Tesis ekleme, silme, arşivleme ve tesis detay sayfası. Tesis detayında mevzuat takibi (Tarih, Kapsam Dışı, Notlar) yapılır. Yetki kontrolü mevcuttur.
-3. **Ziyaret Takvimi:** FullCalendar kullanılarak yapıldı. Hafta sonu ve resmi tatil kontrolü vardır. Çift aşamalı silme onayı mevcuttur.
-4. **Kullanıcı Yönetimi:** Admin, danışmanları yönetebilir (pasife alma/loglama, şifre sıfırlama).
-5. **Sistem Ayarları:** Süreler, eşikler ve dinamik mevzuat ekleme/silme (Admin yetkisi gerektirir).
-6. **Excel İşlemleri:** Şablonlu veya şablonsuz içe/dışa aktarma. Sistemde olmayan yeni mevzuatlar Excel'e otomatik sütun olarak eklenir.
-7. **Yedekleme Sistemi:** `spatie/laravel-backup` entegre edilmiştir. Admin panelinden (Yedekler sayfası) tek tıkla yedek alınabilir, indirilebilir ve silinebilir. `BackupController.php` ile yönetilir.
-8. **Güvenlik:** Yetkisiz tesis erişimleri ve admin sayfası erişimleri engellenmiştir.
+- Önemli kullanıcı değişiklikleri duyuru olarak yayımlanabilir. Duyurular ana sayfada ve ilgili sayfada görünür; ayrıntı açılıp kapatılabilir.
+- Duyurularda yayımlanma tarihi ve kullanıcı duyuruyu onayladıysa onay tarihi gösterilir. Kullanıcı “Okudum, anladım” ile okuduğunu kaydeder.
+
+## Mimari ve veri yapısı
+
+- **Sunucu:** PHP 8.3+, Laravel 13.
+- **Arayüz:** Vue 3, Inertia.js, Tailwind CSS 4 ve Vite Plus.
+- **Veritabanı:** Yerel geliştirmede SQLite; canlı ortamda yapılandırmaya göre MySQL/MariaDB.
+- **Başlıca paketler:** Laravel Fortify, PhpSpreadsheet, DomPDF ve Spatie Laravel Backup.
+- **Grafikler ve raporlar:** Chart.js, Vue Chart.js ve PDF/görsel dışa aktarma araçları.
+
+Tesisin esnek profil verilerinin önemli bir kısmı firms tablosundaki data JSON alanında tutulur. Ziyaretler, kullanıcılar, onay talepleri ve günlük işlem kayıtları ayrı modeller/tablolardadır. Tesis profilindeki izin/lisans konu seçimleri profile.permitTopicKeys ve profile.licenseTopicKeys alanlarıyla saklanır.
+
+Mevzuat yükümlülüklerinin hesaplanması app/Services/ComplianceEngine.php içindedir. Varsayılan ve dinamik yükümlülükleri birlikte almak için ComplianceEngine::getAll() kullanılmalıdır.
+
+API uçları oturum ve Inertia davranışlarıyla uyum için routes/web.php içinde tanımlanmıştır. Kullanıcıya ve yöneticiye özel sayfalar oturum/rol kontrolleriyle korunur. Kullanıcı hesapları yönetici tarafından oluşturulur; genel kayıt ve parola sıfırlama akışları açık değildir.
+
+## Yedekleme ve dağıtım
+
+- Yedekleme Spatie Laravel Backup ile yapılır. Zamanlanmış görevler her gün 02.00'de yalnızca veritabanını, Pazar günü 02.15'te tam yedeği çalıştırır; temizleme günlük 01.30'da, yedek denetimi günlük 02.30'da çalışır. Sunucunun Laravel scheduler'ı çalışır durumda olmalıdır.
+- Canlı dağıtım betiği veritabanı yedeği alır, önceki ön yüz derlemesini korur, dağıtım paketini uygular, yapılandırma/rota/görünüm önbelleklerini temizler ve portalın HTTP yanıtını kontrol eder.
+- Canlıya aktarım için PowerShell betiği scripts/deploy-live.ps1, sunucu tarafındaki uygulama betiği scripts/deploy-live-remote.sh kullanılır. Sunucuya erişim anahtarı, yedek hedefi ve diğer gizli değerler depoda tutulmamalı; yerel yapılandırmada kalmalıdır.
+- Dağıtım adımlarının, yedek geri yükleme yaklaşımının ve sunucu ön koşullarının ayrıntısı [DEPLOYMENT.md](DEPLOYMENT.md) içinde yer alır.
+
+## Yerel geliştirme
+
+Ön koşullar: PHP 8.3 ve Composer; Node.js/NPM ve Vite Plus. Proje kökünde bağımlılıkları kurun, .env.example dosyasını .env olarak kopyalayıp uygulama anahtarı oluşturun, veritabanı ayarlarını yapın ve migration'ları çalıştırın. Ardından geliştirme sunucusunu ve ön yüz derleyicisini başlatın.
+
+Önemli Composer/NPM komutları:
+
+- composer install — PHP bağımlılıklarını kurar.
+- php artisan migrate — veritabanı şemasını günceller.
+- npm install — ön yüz bağımlılıklarını kurar.
+- npm run dev — yerel arayüz geliştirme sunucusunu başlatır.
+- npm run build — canlıya alınabilir ön yüz çıktısını üretir.
+- php artisan app:create-admin — ilk yönetici hesabını etkileşimli ve geçici parola ile oluşturur.
+
+Canlı veritabanında migration çalıştırırken dağıtım kılavuzunu izleyin; migrate:fresh mevcut verileri siler ve canlıda kullanılmamalıdır.
+
+## İlgili dosyalar
+
+- DEPLOYMENT.md — canlı sunucu kurulumu ve dağıtımı.
+- routes/web.php, routes/console.php — web rotaları ve zamanlanmış işler.
+- app/Services/ComplianceEngine.php — mevzuat yükümlülük motoru.
+- config/environment_permit_catalog.php — izin/lisans konu ve ücret kataloğu.
+- config/portal_announcements.php — uygulama duyuruları.
+- scripts/deploy-live.ps1, scripts/deploy-live-remote.sh — canlı dağıtım yardımcıları.
